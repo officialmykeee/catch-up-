@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hi-Lite Messenger</title>
+<link rel="stylesheet" href="story-popup.css">
 <style>
 /* Reset and base styles */
 * {
@@ -25,6 +26,8 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    position: relative;
+    overflow: hidden;
 }
 
 /* Header styles */
@@ -154,6 +157,7 @@ body {
     align-items: center;
     gap: 4px;
     flex-shrink: 0;
+    cursor: pointer;
 }
 
 .story-avatar-container {
@@ -558,15 +562,29 @@ body {
         <line class="plus-shape" x1="25" y1="50" x2="75" y2="50"/>
     </svg>
 </button>
+
+<div class="story-popup hidden" id="storyPopup">
+    <div class="story-popup-content">
+        <div class="story-header">
+            <img class="story-avatar-sm" src="" alt="Story User">
+            <span class="story-username-lg"></span>
+            <span class="story-timestamp-sm"></span>
+        </div>
+        <div class="story-content">
+            <div class="story-popup-loader"></div>
+            </div>
+    </div>
+</div>
+
 <script>
     // Stories data
     const stories = [
-        { id: "your-story", username: "Your story", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face", hasNewStory: false, isYourStory: true, },
-        { id: "1", username: "Emily", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=face", hasNewStory: true, },
-        { id: "2", username: "Michael", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face", hasNewStory: true, },
-        { id: "3", username: "Sarah", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&crop=face", hasNewStory: true, },
-        { id: "4", username: "David", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face", hasNewStory: true, },
-        { id: "5", username: "Jessica", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=face", hasNewStory: true, },
+        { id: "your-story", username: "Your story", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face", hasNewStory: false, isYourStory: true, content: { type: "image", src: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800&q=80", timestamp: "5m" } },
+        { id: "1", username: "Emily", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=face", hasNewStory: true, content: { type: "text", text: "Having a great day!", timestamp: "2h" } },
+        { id: "2", username: "Michael", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face", hasNewStory: true, content: { type: "image", src: "https://images.unsplash.com/photo-1519085360753-af0fd94bca95?w=800&q=80", timestamp: "1d" } },
+        { id: "3", username: "Sarah", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&crop=face", hasNewStory: true, content: { type: "image", src: "https://images.unsplash.com/photo-1542157577-789a7f347895?w=800&q=80", timestamp: "1d" } },
+        { id: "4", username: "David", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face", hasNewStory: true, content: { type: "text", text: "Happy Friday!", timestamp: "1d" } },
+        { id: "5", username: "Jessica", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=face", hasNewStory: true, content: { type: "image", src: "https://images.unsplash.com/photo-1549044243-71822c95459b?w=800&q=80", timestamp: "2d" } },
     ];
     // Chat data
     const chats = [
@@ -592,9 +610,12 @@ body {
                 </div>
                 <span class="story-username">${story.username}</span>
             `;
+            // Add click event listener to each story item
+            storyElement.addEventListener('click', () => showStoryPopup(story));
             storiesList.appendChild(storyElement);
         });
     }
+
     // Function to render chat items
     function renderChats() {
         const chatList = document.getElementById('chatList');
@@ -643,6 +664,7 @@ body {
             chatList.appendChild(chatElement);
         });
     }
+
     // Function to render stories skeleton loading
     function renderStoriesSkeleton() {
         const skeletonStoriesList = document.getElementById('skeletonStoriesList');
@@ -657,6 +679,7 @@ body {
             skeletonStoriesList.appendChild(skeletonStoryElement);
         }
     }
+
     // Function to render skeleton loading
     function renderSkeleton() {
         const loadingSkeleton = document.getElementById('loadingSkeleton');
@@ -681,6 +704,7 @@ body {
             loadingSkeleton.appendChild(skeletonElement);
         }
     }
+
     // Function to update UI based on network status
     function updateNetworkStatus() {
         const isOnline = navigator.onLine;
@@ -691,6 +715,7 @@ body {
         const chatList = document.getElementById('chatList');
         const storiesLoadingSkeleton = document.getElementById('storiesLoadingSkeleton');
         const loadingSkeleton = document.getElementById('loadingSkeleton');
+
         if (isOnline) {
             // Show "Connecting" with loader for 1 second
             messagesIcon.classList.add('hidden');
@@ -723,6 +748,17 @@ body {
             loadingSkeleton.classList.remove('hidden');
         }
     }
+
+    // Add FAB click handler
+    const fab = document.querySelector('.fab');
+    fab.addEventListener('click', () => {
+        if (navigator.onLine) {
+            console.log('FAB clicked! Add your action here (e.g., open new chat modal).');
+        } else {
+            console.log('Cannot perform action: Device is offline.');
+        }
+    });
+
     // Initialize the app
     function init() {
         renderStoriesSkeleton();
@@ -732,18 +768,10 @@ body {
         // Listen for network status changes
         window.addEventListener('online', updateNetworkStatus);
         window.addEventListener('offline', updateNetworkStatus);
-        // Add FAB click handler
-        const fab = document.querySelector('.fab');
-        fab.addEventListener('click', () => {
-            if (navigator.onLine) {
-                console.log('FAB clicked! Add your action here (e.g., open new chat modal).');
-            } else {
-                console.log('Cannot perform action: Device is offline.');
-            }
-        });
     }
     document.addEventListener('DOMContentLoaded', init);
 </script>
+<script src="story-popup.js"></script>
 </body>
 </html>
 
