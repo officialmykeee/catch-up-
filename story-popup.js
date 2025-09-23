@@ -33,7 +33,7 @@ async function showStoryPopup(story) {
 
     // Fetch and load content
     const content = await fetchStoryContent(story.id);
-
+    
     // Update the pop-up
     storyTimestampSm.textContent = content.timestamp;
     let contentHtml = '';
@@ -52,39 +52,47 @@ function hideStoryPopup() {
     storyPopup.classList.remove('active');
     setTimeout(() => {
         storyPopup.classList.add('hidden');
+        storyPopup.style.transform = ''; // Reset transform
     }, 300);
 }
 
-// Hand gesture (live drag) logic
+// Smoother drag-down logic
 let startY = 0;
-let currentY = 0;
-const closeThreshold = 100; // How far to drag before closing
+const swipeThreshold = 60; // Increased threshold for a deliberate swipe
 
 storyPopup.addEventListener('touchstart', (e) => {
     startY = e.touches[0].clientY;
-    storyPopup.style.transition = 'none'; // Disable transition for live drag
+    // Temporarily disable CSS transition for smooth real-time dragging
+    storyPopup.style.transition = 'none';
 });
 
 storyPopup.addEventListener('touchmove', (e) => {
-    currentY = e.touches[0].clientY;
+    const currentY = e.touches[0].clientY;
     const deltaY = currentY - startY;
 
+    // Only allow swiping down
     if (deltaY > 0) {
-        // Only allow downward movement
+        // Visually slide the pop-up down as the finger moves
         storyPopup.style.transform = `translateY(${deltaY}px)`;
+        
+        // Prevent default browser behavior (e.g., pull-to-refresh)
+        e.preventDefault();
     }
 });
 
 storyPopup.addEventListener('touchend', (e) => {
-    const deltaY = currentY - startY;
-    storyPopup.style.transition = 'transform 0.3s ease-in-out'; // Re-enable transition
+    // Re-enable CSS transition for the snap-back effect
+    storyPopup.style.transition = 'transform 0.3s ease-in-out';
+    
+    const endY = e.changedTouches[0].clientY;
+    const deltaY = endY - startY;
 
-    if (deltaY > closeThreshold) {
-        // User dragged down far enough, close the pop-up
+    if (deltaY > swipeThreshold) {
+        // If swipe distance is past threshold, hide the pop-up
         hideStoryPopup();
     } else {
-        // Snap back to the original position
+        // Otherwise, snap it back to the top
         storyPopup.style.transform = 'translateY(0)';
     }
 });
-
+            
