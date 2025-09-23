@@ -1,11 +1,27 @@
-// Function to show the story pop-up
-const storyPopup = document.getElementById('storyPopup');
-const storyContentDiv = storyPopup.querySelector('.story-popup-content');
+// 🔥 Create story popup dynamically
+const storyPopup = document.createElement("div");
+storyPopup.id = "storyPopup";
+storyPopup.className = "story-popup hidden";
 
-// This is a placeholder for fetching content from another page/API
+// Create the content container
+const storyContentDiv = document.createElement("div");
+storyContentDiv.className = "story-popup-content";
+
+// Add static curved placeholder
+const placeholderDiv = document.createElement("div");
+placeholderDiv.className = "story-popup-placeholder";
+storyContentDiv.appendChild(placeholderDiv);
+
+// Append content container into popup
+storyPopup.appendChild(storyContentDiv);
+
+// Append popup into body
+document.body.appendChild(storyPopup);
+
+// ------------------------------
+// Function to fetch story content
+// ------------------------------
 async function fetchStoryContent(storyId) {
-    // In a real app, you would fetch data from an API
-    // For this example, we'll use the data already in the stories array.
     const story = stories.find(s => s.id === storyId);
     return new Promise(resolve => {
         setTimeout(() => {
@@ -14,21 +30,23 @@ async function fetchStoryContent(storyId) {
     });
 }
 
+// ------------------------------
+// Function to show story popup
+// ------------------------------
 async function showStoryPopup(story) {
-    // Start with a loader inside the pop-up content area
-    storyContentDiv.innerHTML = '<div class="story-popup-loader"></div>';
+    // Reset with curved placeholder
+    storyContentDiv.innerHTML = '<div class="story-popup-placeholder"></div>';
 
-    // Show the pop-up
+    // Show popup
     storyPopup.classList.remove('hidden');
-    // A short delay is needed for the CSS transition to work
     setTimeout(() => {
         storyPopup.classList.add('active');
     }, 10);
 
-    // Fetch and load content
+    // Fetch story content
     const content = await fetchStoryContent(story.id);
-    
-    // Update the pop-up with the fetched content
+
+    // Replace placeholder with content
     let contentHtml = '';
     if (content.type === 'image') {
         contentHtml = `<img src="${content.src}" alt="Story image">`;
@@ -40,7 +58,9 @@ async function showStoryPopup(story) {
     storyContentDiv.innerHTML = contentHtml;
 }
 
-// Function to hide the story pop-up
+// ------------------------------
+// Function to hide story popup
+// ------------------------------
 function hideStoryPopup() {
     storyPopup.classList.remove('active');
     setTimeout(() => {
@@ -49,13 +69,14 @@ function hideStoryPopup() {
     }, 300);
 }
 
-// Smoother drag-down logic
+// ------------------------------
+// Swipe down to dismiss logic
+// ------------------------------
 let startY = 0;
-const swipeThreshold = 60; // Increased threshold for a deliberate swipe
+const swipeThreshold = 60;
 
 storyPopup.addEventListener('touchstart', (e) => {
     startY = e.touches[0].clientY;
-    // Temporarily disable CSS transition for smooth real-time dragging
     storyPopup.style.transition = 'none';
 });
 
@@ -63,28 +84,21 @@ storyPopup.addEventListener('touchmove', (e) => {
     const currentY = e.touches[0].clientY;
     const deltaY = currentY - startY;
 
-    // Only allow swiping down
     if (deltaY > 0) {
-        // Visually slide the pop-up down as the finger moves
         storyPopup.style.transform = `translateY(${deltaY}px)`;
-        
-        // Prevent default browser behavior (e.g., pull-to-refresh)
         e.preventDefault();
     }
 });
 
 storyPopup.addEventListener('touchend', (e) => {
-    // Re-enable CSS transition for the snap-back effect
     storyPopup.style.transition = 'transform 0.3s ease-in-out';
-    
+
     const endY = e.changedTouches[0].clientY;
     const deltaY = endY - startY;
 
     if (deltaY > swipeThreshold) {
-        // If swipe distance is past threshold, hide the pop-up
         hideStoryPopup();
     } else {
-        // Otherwise, snap it back to the top
         storyPopup.style.transform = 'translateY(0)';
     }
 });
