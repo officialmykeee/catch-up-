@@ -7,7 +7,7 @@ storyPopup.className = "story-popup hidden";
 const storyContentDiv = document.createElement("div");
 storyContentDiv.className = "story-popup-content";
 
-// Add static curved placeholder
+// Add static curved placeholder card
 const placeholderDiv = document.createElement("div");
 placeholderDiv.className = "story-popup-placeholder";
 storyContentDiv.appendChild(placeholderDiv);
@@ -34,7 +34,7 @@ async function fetchStoryContent(storyId) {
 // Function to show story popup
 // ------------------------------
 async function showStoryPopup(story) {
-    // Reset with curved placeholder
+    // Reset with curved placeholder card
     storyContentDiv.innerHTML = '<div class="story-popup-placeholder"></div>';
 
     // Show popup
@@ -46,60 +46,15 @@ async function showStoryPopup(story) {
     // Fetch story content
     const content = await fetchStoryContent(story.id);
 
-    // Replace placeholder with content
+    // Replace placeholder with real content
     let contentHtml = '';
     if (content.type === 'image') {
-        contentHtml = `<img src="${content.src}" alt="Story image">`;
+        contentHtml = `<img src="${content.src}" alt="Story image" style="border-radius:20px;max-width:100%;max-height:100%;">`;
     } else if (content.type === 'video') {
-        contentHtml = `<video src="${content.src}" controls autoplay></video>`;
+        contentHtml = `<video src="${content.src}" controls autoplay style="border-radius:20px;max-width:100%;max-height:100%;"></video>`;
     } else if (content.type === 'text') {
-        contentHtml = `<p>${content.text}</p>`;
+        contentHtml = `<div class="story-popup-placeholder"><p>${content.text}</p></div>`;
     }
     storyContentDiv.innerHTML = contentHtml;
 }
-
-// ------------------------------
-// Function to hide story popup
-// ------------------------------
-function hideStoryPopup() {
-    storyPopup.classList.remove('active');
-    setTimeout(() => {
-        storyPopup.classList.add('hidden');
-        storyPopup.style.transform = ''; // Reset transform
-    }, 300);
-}
-
-// ------------------------------
-// Swipe down to dismiss logic
-// ------------------------------
-let startY = 0;
-const swipeThreshold = 60;
-
-storyPopup.addEventListener('touchstart', (e) => {
-    startY = e.touches[0].clientY;
-    storyPopup.style.transition = 'none';
-});
-
-storyPopup.addEventListener('touchmove', (e) => {
-    const currentY = e.touches[0].clientY;
-    const deltaY = currentY - startY;
-
-    if (deltaY > 0) {
-        storyPopup.style.transform = `translateY(${deltaY}px)`;
-        e.preventDefault();
-    }
-});
-
-storyPopup.addEventListener('touchend', (e) => {
-    storyPopup.style.transition = 'transform 0.3s ease-in-out';
-
-    const endY = e.changedTouches[0].clientY;
-    const deltaY = endY - startY;
-
-    if (deltaY > swipeThreshold) {
-        hideStoryPopup();
-    } else {
-        storyPopup.style.transform = 'translateY(0)';
-    }
-});
 
