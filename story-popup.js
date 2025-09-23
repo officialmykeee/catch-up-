@@ -57,7 +57,7 @@ function hideStoryPopup() {
 
 // Hand gesture (swipe down) logic
 let startY = 0;
-const swipeThreshold = 20; // Decreased value for increased sensitivity
+const swipeThreshold = 10; // Even more sensitive
 
 storyPopup.addEventListener('touchstart', (e) => {
     startY = e.touches[0].clientY;
@@ -71,3 +71,5 @@ storyPopup.addEventListener('touchmove', (e) => {
         hideStoryPopup();
     }
 });
+
+        
