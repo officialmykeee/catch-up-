@@ -35,18 +35,7 @@ async function showStoryPopup(story) {
     const content = await fetchStoryContent(story.id);
     
     // Update the pop-up
-    storyTimestampSm.textContent = content.timestamp;
-    let contentHtml = '';
-    if (content.type === 'image') {
-        contentHtml = `<img src="${content.src}" alt="Story image">`;
-    } else if (content.type === 'video') {
-        contentHtml = `<video src="${content.src}" controls autoplay></video>`;
-    } else if (content.type === 'text') {
-        contentHtml = `<p>${content.text}</p>`;
-    }
-    storyContentDiv.innerHTML = contentHtml;
-}
-
+    
 // Function to hide the story pop-up
 function hideStoryPopup() {
     storyPopup.classList.remove('active');
