@@ -33,7 +33,7 @@ async function showStoryPopup(story) {
 
     // Fetch and load content
     const content = await fetchStoryContent(story.id);
-    
+
     // Update the pop-up
     storyTimestampSm.textContent = content.timestamp;
     let contentHtml = '';
@@ -55,21 +55,36 @@ function hideStoryPopup() {
     }, 300);
 }
 
-// Hand gesture (swipe down) logic
+// Hand gesture (live drag) logic
 let startY = 0;
-const swipeThreshold = 10; // Even more sensitive
+let currentY = 0;
+const closeThreshold = 100; // How far to drag before closing
 
 storyPopup.addEventListener('touchstart', (e) => {
     startY = e.touches[0].clientY;
+    storyPopup.style.transition = 'none'; // Disable transition for live drag
 });
 
 storyPopup.addEventListener('touchmove', (e) => {
-    const currentY = e.touches[0].clientY;
+    currentY = e.touches[0].clientY;
     const deltaY = currentY - startY;
 
-    if (deltaY > swipeThreshold) {
-        hideStoryPopup();
+    if (deltaY > 0) {
+        // Only allow downward movement
+        storyPopup.style.transform = `translateY(${deltaY}px)`;
     }
 });
 
-        
+storyPopup.addEventListener('touchend', (e) => {
+    const deltaY = currentY - startY;
+    storyPopup.style.transition = 'transform 0.3s ease-in-out'; // Re-enable transition
+
+    if (deltaY > closeThreshold) {
+        // User dragged down far enough, close the pop-up
+        hideStoryPopup();
+    } else {
+        // Snap back to the original position
+        storyPopup.style.transform = 'translateY(0)';
+    }
+});
+
