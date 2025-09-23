@@ -1,11 +1,30 @@
-const cube = document.getElementById("cube");
-const container = document.getElementById("storyContainer");
+const storyPopup = document.getElementById("storyPopup");
+const closeButton = storyPopup.querySelector(".close-button");
+const cube = storyPopup.querySelector("#cube");
 
 let current = 0;
 let startX = 0;
 let currentRotation = 0;
 let dragging = false;
 
+// Function to open the story pop-up
+function showStoryPopup() {
+  storyPopup.classList.add("active");
+  // Show faces only when pop-up is visible
+  document.querySelectorAll(".face").forEach(f => f.style.visibility = "visible");
+  updateCube();
+}
+
+// Function to close the story pop-up
+function hideStoryPopup() {
+  storyPopup.classList.remove("active");
+  // After the transition, hide the element completely
+  setTimeout(() => {
+    document.querySelectorAll(".face").forEach(f => f.style.visibility = "hidden");
+  }, 300); // This delay should match your CSS transition time
+}
+
+// Function to handle the cube's rotation and progress bars
 function updateCube() {
   requestAnimationFrame(() => {
     cube.style.transition = "transform 0.6s ease-in-out";
@@ -13,7 +32,7 @@ function updateCube() {
     currentRotation = current * -90;
 
     // reset progress bars
-    const progressBars = container.querySelectorAll(".progress-inner");
+    const progressBars = storyPopup.querySelectorAll(".progress-inner");
     progressBars.forEach(p => {
       p.style.transition = "none";
       p.style.width = "0%";
@@ -28,7 +47,7 @@ function updateCube() {
   });
 }
 
-// Drag control
+// Horizontal Drag control
 function startDrag(x) {
   dragging = true;
   startX = x;
@@ -38,7 +57,7 @@ function startDrag(x) {
 function moveDrag(x) {
   if (!dragging) return;
   let deltaX = x - startX;
-  let rotation = currentRotation + (deltaX / container.offsetWidth) * 90;
+  let rotation = currentRotation + (deltaX / cube.offsetWidth) * 90;
   cube.style.transform = `rotateY(${rotation}deg)`;
 }
 
@@ -54,20 +73,19 @@ function endDrag(x) {
   updateCube();
 }
 
-// Mouse events
-container.addEventListener("mousedown", e => startDrag(e.clientX));
-container.addEventListener("mousemove", e => moveDrag(e.clientX));
-container.addEventListener("mouseup", e => endDrag(e.clientX));
-container.addEventListener("mouseleave", e => { if (dragging) endDrag(e.clientX); });
+// Mouse events on the pop-up container
+storyPopup.addEventListener("mousedown", e => startDrag(e.clientX));
+storyPopup.addEventListener("mousemove", e => moveDrag(e.clientX));
+storyPopup.addEventListener("mouseup", e => endDrag(e.clientX));
+storyPopup.addEventListener("mouseleave", e => { if (dragging) endDrag(e.clientX); });
 
-// Touch events
-container.addEventListener("touchstart", e => startDrag(e.touches[0].clientX));
-container.addEventListener("touchmove", e => moveDrag(e.touches[0].clientX));
-container.addEventListener("touchend", e => endDrag(e.changedTouches[0].clientX));
+// Touch events on the pop-up container
+storyPopup.addEventListener("touchstart", e => startDrag(e.touches[0].clientX));
+storyPopup.addEventListener("touchmove", e => moveDrag(e.touches[0].clientX));
+storyPopup.addEventListener("touchend", e => endDrag(e.changedTouches[0].clientX));
 
-// Show faces only when page is ready
-window.addEventListener("load", () => {
-  document.querySelectorAll(".face").forEach(f => f.style.visibility = "visible");
-  updateCube();
-});
+// Close button event
+closeButton.addEventListener("click", hideStoryPopup);
+
+
 
