@@ -40,6 +40,6 @@
 .story-popup-card {
   width: 90%;
   aspect-ratio: 9/16;      /* vertical story-like ratio */
-  background: #e0e0e0;     /* ash white */
+  background: red;     /* ash white */
   border-radius: 20px;     /* curved edges */
 }
