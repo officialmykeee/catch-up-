@@ -21,13 +21,13 @@ async function showStoryPopup(story) {
     
     let contentHtml = '';
     if (content && content.type === 'image') {
-        contentHtml = `<img src="${content.src}" alt="Story image" class="story-image">`;
+        contentHtml = `<div class="story-content"><img src="${content.src}" alt="Story image" class="story-image"></div>`;
     } else if (content && content.type === 'video') {
-        contentHtml = `<video src="${content.src}" controls autoplay class="story-video"></video>`;
+        contentHtml = `<div class="story-content"><video src="${content.src}" controls autoplay class="story-video"></video></div>`;
     } else if (content && content.type === 'text') {
-        contentHtml = `<p class="story-text">${content.text}</p>`;
+        contentHtml = `<div class="story-content"><p class="story-text">${content.text}</p></div>`;
     } else {
-        contentHtml = `<p class="story-text">No content available</p>`;
+        contentHtml = `<div class="story-content"><p class="story-text">No content available</p></div>`;
     }
     storyContentDiv.innerHTML = contentHtml;
 }
