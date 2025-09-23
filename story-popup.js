@@ -1,91 +1,101 @@
-const storyPopup = document.getElementById("storyPopup");
-const closeButton = storyPopup.querySelector(".close-button");
-const cube = storyPopup.querySelector("#cube");
+// Function to show the story pop-up
+const storyPopup = document.getElementById('storyPopup');
+const storyContentDiv = storyPopup.querySelector('.story-content');
+const storyAvatarSm = storyPopup.querySelector('.story-avatar-sm');
+const storyUsernameLg = storyPopup.querySelector('.story-username-lg');
+const storyTimestampSm = storyPopup.querySelector('.story-timestamp-sm');
 
-let current = 0;
-let startX = 0;
-let currentRotation = 0;
-let dragging = false;
-
-// Function to open the story pop-up
-function showStoryPopup() {
-  storyPopup.classList.add("active");
-  // Show faces only when pop-up is visible
-  document.querySelectorAll(".face").forEach(f => f.style.visibility = "visible");
-  updateCube();
+// This is a placeholder for fetching content from another page/API
+async function fetchStoryContent(storyId) {
+    // In a real app, you would fetch data from an API
+    // For this example, we'll use the data already in the stories array.
+    const story = stories.find(s => s.id === storyId);
+    return new Promise(resolve => {
+        setTimeout(() => {
+            resolve(story.content);
+        }, 500); // Simulate network delay
+    });
 }
 
-// Function to close the story pop-up
+async function showStoryPopup(story) {
+    // Set header details
+    storyAvatarSm.src = story.avatar;
+    storyUsernameLg.textContent = story.username;
+    storyTimestampSm.textContent = '';
+    storyContentDiv.innerHTML = '<div class="story-popup-loader"></div>';
+
+    // Show the pop-up
+    storyPopup.classList.remove('hidden');
+    // A short delay is needed for the CSS transition to work
+    setTimeout(() => {
+        storyPopup.classList.add('active');
+    }, 10);
+
+    // Fetch and load content
+    const content = await fetchStoryContent(story.id);
+    
+    // Update the pop-up
+    storyTimestampSm.textContent = content.timestamp;
+    let contentHtml = '';
+    if (content.type === 'image') {
+        contentHtml = `<img src="${content.src}" alt="Story image">`;
+    } else if (content.type === 'video') {
+        contentHtml = `<video src="${content.src}" controls autoplay></video>`;
+    } else if (content.type === 'text') {
+        contentHtml = `<p>${content.text}</p>`;
+    }
+    storyContentDiv.innerHTML = contentHtml;
+}
+
+// Function to hide the story pop-up
 function hideStoryPopup() {
-  storyPopup.classList.remove("active");
-  // After the transition, hide the element completely
-  setTimeout(() => {
-    document.querySelectorAll(".face").forEach(f => f.style.visibility = "hidden");
-  }, 300); // This delay should match your CSS transition time
+    storyPopup.classList.remove('active');
+    setTimeout(() => {
+        storyPopup.classList.add('hidden');
+        storyPopup.style.transform = ''; // Reset transform
+    }, 300);
 }
 
-// Function to handle the cube's rotation and progress bars
-function updateCube() {
-  requestAnimationFrame(() => {
-    cube.style.transition = "transform 0.6s ease-in-out";
-    cube.style.transform = `rotateY(${current * -90}deg)`;
-    currentRotation = current * -90;
+// Smoother drag-down logic
+let startY = 0;
+const swipeThreshold = 60; // Increased threshold for a deliberate swipe
 
-    // reset progress bars
-    const progressBars = storyPopup.querySelectorAll(".progress-inner");
-    progressBars.forEach(p => {
-      p.style.transition = "none";
-      p.style.width = "0%";
-    });
+storyPopup.addEventListener('touchstart', (e) => {
+    startY = e.touches[0].clientY;
+    // Temporarily disable CSS transition for smooth real-time dragging
+    storyPopup.style.transition = 'none';
+});
 
-    // run animation on active bar
-    const active = progressBars[current % progressBars.length];
-    requestAnimationFrame(() => {
-      active.style.transition = "width 5s linear";
-      active.style.width = "100%";
-    });
-  });
-}
+storyPopup.addEventListener('touchmove', (e) => {
+    const currentY = e.touches[0].clientY;
+    const deltaY = currentY - startY;
 
-// Horizontal Drag control
-function startDrag(x) {
-  dragging = true;
-  startX = x;
-  cube.style.transition = "none";
-}
+    // Only allow swiping down
+    if (deltaY > 0) {
+        // Visually slide the pop-up down as the finger moves
+        storyPopup.style.transform = `translateY(${deltaY}px)`;
+        
+        // Prevent default browser behavior (e.g., pull-to-refresh)
+        e.preventDefault();
+    }
+});
 
-function moveDrag(x) {
-  if (!dragging) return;
-  let deltaX = x - startX;
-  let rotation = currentRotation + (deltaX / cube.offsetWidth) * 90;
-  cube.style.transform = `rotateY(${rotation}deg)`;
-}
+storyPopup.addEventListener('touchend', (e) => {
+    // Re-enable CSS transition for the snap-back effect
+    storyPopup.style.transition = 'transform 0.3s ease-in-out';
+    
+    const endY = e.changedTouches[0].clientY;
+    const deltaY = endY - startY;
 
-function endDrag(x) {
-  if (!dragging) return;
-  dragging = false;
-  let deltaX = x - startX;
+    if (deltaY > swipeThreshold) {
+        // If swipe distance is past threshold, hide the pop-up
+        hideStoryPopup();
+    } else {
+        // Otherwise, snap it back to the top
+        storyPopup.style.transform = 'translateY(0)';
+    }
+});
 
-  if (Math.abs(deltaX) > 50) {
-    if (deltaX < 0) current = (current + 1) % 4;
-    else current = (current - 1 + 4) % 4;
-  }
-  updateCube();
-}
-
-// Mouse events on the pop-up container
-storyPopup.addEventListener("mousedown", e => startDrag(e.clientX));
-storyPopup.addEventListener("mousemove", e => moveDrag(e.clientX));
-storyPopup.addEventListener("mouseup", e => endDrag(e.clientX));
-storyPopup.addEventListener("mouseleave", e => { if (dragging) endDrag(e.clientX); });
-
-// Touch events on the pop-up container
-storyPopup.addEventListener("touchstart", e => startDrag(e.touches[0].clientX));
-storyPopup.addEventListener("touchmove", e => moveDrag(e.touches[0].clientX));
-storyPopup.addEventListener("touchend", e => endDrag(e.changedTouches[0].clientX));
-
-// Close button event
-closeButton.addEventListener("click", hideStoryPopup);
 
 
 
