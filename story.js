@@ -1,60 +1,54 @@
-// 🔥 Create story popup dynamically
-const storyPopup = document.createElement("div");
-storyPopup.id = "storyPopup";
-storyPopup.className = "story-popup hidden";
+// Function to show the story pop-up
+const storyPopup = document.getElementById('storyPopup');
+const storyContentDiv = storyPopup.querySelector('.story-popup-content');
 
-// Create the content container
-const storyContentDiv = document.createElement("div");
-storyContentDiv.className = "story-popup-content";
+function showStoryPopup() {
+  // Always just show the centered card
+  storyContentDiv.innerHTML = '<div class="story-popup-card"></div>';
 
-// Add static curved placeholder card
-const placeholderDiv = document.createElement("div");
-placeholderDiv.className = "story-popup-placeholder";
-storyContentDiv.appendChild(placeholderDiv);
-
-// Append content container into popup
-storyPopup.appendChild(storyContentDiv);
-
-// Append popup into body
-document.body.appendChild(storyPopup);
-
-// ------------------------------
-// Function to fetch story content
-// ------------------------------
-async function fetchStoryContent(storyId) {
-    const story = stories.find(s => s.id === storyId);
-    return new Promise(resolve => {
-        setTimeout(() => {
-            resolve(story.content);
-        }, 500); // Simulate network delay
-    });
+  // Show the pop-up
+  storyPopup.classList.remove('hidden');
+  setTimeout(() => {
+    storyPopup.classList.add('active');
+  }, 10);
 }
 
-// ------------------------------
-// Function to show story popup
-// ------------------------------
-async function showStoryPopup(story) {
-    // Reset with curved placeholder card
-    storyContentDiv.innerHTML = '<div class="story-popup-placeholder"></div>';
-
-    // Show popup
-    storyPopup.classList.remove('hidden');
-    setTimeout(() => {
-        storyPopup.classList.add('active');
-    }, 10);
-
-    // Fetch story content
-    const content = await fetchStoryContent(story.id);
-
-    // Replace placeholder with real content
-    let contentHtml = '';
-    if (content.type === 'image') {
-        contentHtml = `<img src="${content.src}" alt="Story image" style="border-radius:20px;max-width:100%;max-height:100%;">`;
-    } else if (content.type === 'video') {
-        contentHtml = `<video src="${content.src}" controls autoplay style="border-radius:20px;max-width:100%;max-height:100%;"></video>`;
-    } else if (content.type === 'text') {
-        contentHtml = `<div class="story-popup-placeholder"><p>${content.text}</p></div>`;
-    }
-    storyContentDiv.innerHTML = contentHtml;
+// Function to hide the story pop-up
+function hideStoryPopup() {
+  storyPopup.classList.remove('active');
+  setTimeout(() => {
+    storyPopup.classList.add('hidden');
+    storyPopup.style.transform = ''; // Reset transform
+  }, 300);
 }
 
+// Smoother drag-down logic
+let startY = 0;
+const swipeThreshold = 60;
+
+storyPopup.addEventListener('touchstart', (e) => {
+  startY = e.touches[0].clientY;
+  storyPopup.style.transition = 'none';
+});
+
+storyPopup.addEventListener('touchmove', (e) => {
+  const currentY = e.touches[0].clientY;
+  const deltaY = currentY - startY;
+
+  if (deltaY > 0) {
+    storyPopup.style.transform = `translateY(${deltaY}px)`;
+    e.preventDefault();
+  }
+});
+
+storyPopup.addEventListener('touchend', (e) => {
+  storyPopup.style.transition = 'transform 0.3s ease-in-out';
+  const endY = e.changedTouches[0].clientY;
+  const deltaY = endY - startY;
+
+  if (deltaY > swipeThreshold) {
+    hideStoryPopup();
+  } else {
+    storyPopup.style.transform = 'translateY(0)';
+  }
+});
