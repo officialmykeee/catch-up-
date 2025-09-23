@@ -1,9 +1,6 @@
 // Function to show the story pop-up
 const storyPopup = document.getElementById('storyPopup');
-const storyContentDiv = storyPopup.querySelector('.story-content');
-const storyAvatarSm = storyPopup.querySelector('.story-avatar-sm');
-const storyUsernameLg = storyPopup.querySelector('.story-username-lg');
-const storyTimestampSm = storyPopup.querySelector('.story-timestamp-sm');
+const storyContentDiv = storyPopup.querySelector('.story-popup-content');
 
 // This is a placeholder for fetching content from another page/API
 async function fetchStoryContent(storyId) {
@@ -18,10 +15,7 @@ async function fetchStoryContent(storyId) {
 }
 
 async function showStoryPopup(story) {
-    // Set header details
-    storyAvatarSm.src = story.avatar;
-    storyUsernameLg.textContent = story.username;
-    storyTimestampSm.textContent = '';
+    // Start with a loader inside the pop-up content area
     storyContentDiv.innerHTML = '<div class="story-popup-loader"></div>';
 
     // Show the pop-up
@@ -34,8 +28,18 @@ async function showStoryPopup(story) {
     // Fetch and load content
     const content = await fetchStoryContent(story.id);
     
-    // Update the pop-up
-    
+    // Update the pop-up with the fetched content
+    let contentHtml = '';
+    if (content.type === 'image') {
+        contentHtml = `<img src="${content.src}" alt="Story image">`;
+    } else if (content.type === 'video') {
+        contentHtml = `<video src="${content.src}" controls autoplay></video>`;
+    } else if (content.type === 'text') {
+        contentHtml = `<p>${content.text}</p>`;
+    }
+    storyContentDiv.innerHTML = contentHtml;
+}
+
 // Function to hide the story pop-up
 function hideStoryPopup() {
     storyPopup.classList.remove('active');
