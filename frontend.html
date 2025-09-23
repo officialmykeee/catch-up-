@@ -563,17 +563,34 @@ body {
     </svg>
 </button>
 
-<div class="story-popup hidden" id="storyPopup">
-    <div class="story-popup-content">
+<div id="storyPopup" class="story-popup hidden">
+  <div class="story-cube">
+    <div class="story-cube-inner">
+
+      <!-- Story face -->
+      <div class="story-face front">
         <div class="story-header">
-            <img class="story-avatar-sm" src="" alt="Story User">
-            <span class="story-username-lg"></span>
-            <span class="story-timestamp-sm"></span>
-        </div>
-        <div class="story-content">
-            <div class="story-popup-loader"></div>
+          <div class="story-progress">
+            <div class="progress-bar"></div>
+          </div>
+          <div class="story-user-info">
+            <img src="" alt="avatar" class="story-avatar-lg">
+            <div class="story-user-meta">
+              <span class="story-username-lg"></span>
+              <span class="story-timestamp-sm"></span>
             </div>
+          </div>
+        </div>
+        <div class="story-content"></div>
+      </div>
+
+      <!-- Add more cube faces (right, back, left) dynamically -->
+      <div class="story-face right"></div>
+      <div class="story-face back"></div>
+      <div class="story-face left"></div>
+
     </div>
+  </div>
 </div>
 
 <script>
