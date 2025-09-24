@@ -25,27 +25,27 @@ async function showStoryPopup(story, index, direction = 'none') {
     // Store current story index
     currentStoryIndex = index;
 
-    // Apply horizontal slide transition
+    // Apply subtle horizontal slide transition
     if (direction === 'next') {
-        storyPopupContent.style.transform = 'translateX(-100%)';
+        storyPopupContent.style.transform = 'translateX(-50%)'; // Reduced slide distance
         setTimeout(() => {
             storyPopupContent.style.transition = 'none';
-            storyPopupContent.style.transform = 'translateX(100%)';
+            storyPopupContent.style.transform = 'translateX(50%)';
             setTimeout(() => {
-                storyPopupContent.style.transition = 'transform 0.3s ease-in-out';
+                storyPopupContent.style.transition = 'transform 0.15s linear'; // Faster, linear transition
                 storyPopupContent.style.transform = 'translateX(0)';
             }, 10);
-        }, 300);
+        }, 150); // Match shorter duration
     } else if (direction === 'prev') {
-        storyPopupContent.style.transform = 'translateX(100%)';
+        storyPopupContent.style.transform = 'translateX(50%)'; // Reduced slide distance
         setTimeout(() => {
             storyPopupContent.style.transition = 'none';
-            storyPopupContent.style.transform = 'translateX(-100%)';
+            storyPopupContent.style.transform = 'translateX(-50%)';
             setTimeout(() => {
-                storyPopupContent.style.transition = 'transform 0.3s ease-in-out';
+                storyPopupContent.style.transition = 'transform 0.15s linear'; // Faster, linear transition
                 storyPopupContent.style.transform = 'translateX(0)';
             }, 10);
-        }, 300);
+        }, 150); // Match shorter duration
     }
 
     // Reset progress bar and show loading ring
@@ -161,8 +161,8 @@ storyPopup.addEventListener('touchmove', (e) => {
         storyPopup.style.transform = `translateY(${deltaY}px)`;
         e.preventDefault();
     } else if (Math.abs(deltaX) > Math.abs(deltaY)) {
-        // Horizontal swipe for navigation
-        storyPopupContent.style.transform = `translateX(${deltaX}px)`;
+        // Horizontal swipe for navigation (reduced distance)
+        storyPopupContent.style.transform = `translateX(${deltaX / 2}px)`; // Scale down swipe distance
         e.preventDefault();
     }
 });
@@ -177,7 +177,7 @@ storyPopup.addEventListener('touchend', (e) => {
         // Vertical swipe down to close
         hideStoryPopup();
     } else if (Math.abs(deltaX) > swipeThreshold) {
-        storyPopupContent.style.transition = 'transform 0.3s ease-in-out';
+        storyPopupContent.style.transition = 'transform 0.15s linear';
         if (deltaX > 0 && currentStoryIndex > 0) {
             // Swipe right: previous story (right-to-left)
             const prevIndex = currentStoryIndex - 1;
@@ -191,7 +191,7 @@ storyPopup.addEventListener('touchend', (e) => {
         }
     } else {
         storyPopup.style.transition = 'transform 0.3s ease-in-out';
-        storyPopupContent.style.transition = 'transform 0.3s ease-in-out';
+        storyPopupContent.style.transition = 'transform 0.15s linear';
         storyPopup.style.transform = 'translateY(0)';
         storyPopupContent.style.transform = 'translateX(0)';
     }
