@@ -552,10 +552,10 @@
         }
 
         .progress-bar-container {
-            width: calc(100% - 20px); /* Matches story-content width */
+            width: calc(100% - 20px);
             height: 4px;
             background-color: rgba(255, 255, 255, 0.3);
-            margin: 10px 10px 4px 10px; /* 10px top/left/right, 4px bottom gap */
+            margin: 10px 10px 4px 10px;
             border-radius: 2px;
             overflow: hidden;
         }
@@ -569,9 +569,9 @@
 
         .story-content {
             width: calc(100% - 20px);
-            height: calc(100% - 28px); /* Adjusted for progress bar (4px height + 4px gap + 10px top margin) */
-            margin: 0 10px 10px 10px; /* 10px left/right/bottom, 0 top */
-            background: linear-gradient(180deg, rgb(66 66 66 / 70%), rgb(65 62 62 / 30%));
+            height: calc(100% - 20px);
+            margin: 10px;
+            background: linear-gradient(180deg, rgb(37 36 36 / 77%), rgb(1 1 1 / 63%));
             border-radius: 8px;
             display: flex;
             box-shadow: 0 0 3px 0 rgb(0,0,0,0.3);
@@ -600,23 +600,12 @@
             padding: 20px;
         }
 
-        .story-popup-loader {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3b82f6;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: auto;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-
-        @keyframes spin {
-            0% { transform: translate(-50%, -50%) rotate(0deg); }
-            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        .story-skeleton {
+            max-height: 65vh;
+            width: 45vh;
+            background-color: #e5e7eb;
+            border-radius: 4px;
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
     </style>
 </head>
@@ -666,6 +655,7 @@
             <div class="progress-bar-container">
                 <div class="progress-bar"></div>
             </div>
+            <div class="story-skeleton hidden"></div>
             <div class="story-content"></div>
         </div>
     </div>
