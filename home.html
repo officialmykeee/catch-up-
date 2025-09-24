@@ -82,15 +82,19 @@
         }
 
         .telegram-ring {
-            width: 24px;
-            height: 24px;
+            width: 40px;
+            height: 40px;
             animation: rotate 2s linear infinite;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
 
         .telegram-ring circle {
             fill: none;
             stroke: #d1d4db;
-            stroke-width: 2;
+            stroke-width: 4;
             stroke-linecap: round;
             stroke-dasharray: 1, 200;
             stroke-dashoffset: 0;
@@ -99,7 +103,7 @@
 
         @keyframes rotate {
             100% {
-                transform: rotate(360deg);
+                transform: translate(-50%, -50%) rotate(360deg);
             }
         }
 
@@ -599,26 +603,6 @@
             text-align: center;
             padding: 20px;
         }
-
-        .skeleton-story-content {
-            width: calc(100% - 20px);
-            height: calc(100% - 20px);
-            margin: 10px;
-            background: linear-gradient(180deg, rgb(37 36 36 / 77%), rgb(1 1 1 / 63%));
-            border-radius: 8px;
-            box-shadow: 0 0 3px 0 rgb(0,0,0,0.3);
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-
-        .skeleton-story-content::before {
-            content: '';
-            width: 45vh;
-            height: 65vh;
-            background-color: #e5e7eb;
-            border-radius: 4px;
-            margin: auto;
-            display: block;
-        }
     </style>
 </head>
 <body>
@@ -668,7 +652,9 @@
                 <div class="progress-bar"></div>
             </div>
             <div class="story-content"></div>
-            <div class="skeleton-story-content hidden"></div>
+            <svg class="telegram-ring" viewBox="25 25 50 50">
+                <circle cx="50" cy="50" r="20"></circle>
+            </svg>
         </div>
     </div>
 
@@ -838,7 +824,7 @@
         function updateNetworkStatus() {
             const isOnline = navigator.onLine;
             const messagesIcon = document.querySelector('.messages-icon');
-            const telegramRing = document.querySelector('.telegram-ring');
+            const telegramRing = document.querySelector('.header .telegram-ring');
             const headerTitle = document.querySelector('.header-title');
             const storiesContainer = document.getElementById('storiesContainer');
             const chatList = document.getElementById('chatList');
