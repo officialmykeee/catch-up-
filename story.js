@@ -5,9 +5,14 @@ const loadingRing = document.querySelector('.story-telegram-ring');
 const storyPopupContent = document.querySelector('.story-popup-content');
 let progressTimeout = null;
 let currentStoryIndex = 0;
-let isDragging = false;
-let progressStartTime = 0;
-let progressDuration = 0;
+
+// Cube switch-specific variables
+const cubeSwitch = document.querySelector('.cube-switch'); // Assumed to exist in DOM
+let isDraggingCube = false;
+let cubeStartX = 0;
+let longPressTimer = null;
+const longPressDuration = 300; // Milliseconds for long press detection
+const cubeDragThreshold = 60; // Same as swipe threshold for consistency
 
 async function fetchStoryContent(storyId) {
     const story = stories.find(s => s.id === storyId);
@@ -67,7 +72,7 @@ async function showStoryPopup(story, index, direction = 'none') {
 
     // Render content in story-content-inner
     const storyCount = contents.length || 1;
-    progressDuration = storyCount <= 5 ? 5000 : 8000;
+    const duration = storyCount <= 5 ? 5000 : 8000;
     let contentHtml = '';
     if (contents.length > 0 && contents[0].type === 'image') {
         contentHtml = `<img src="${contents[0].src}" alt="Story image" class="story-image">`;
@@ -78,11 +83,12 @@ async function showStoryPopup(story, index, direction = 'none') {
     } else {
         contentHtml = `<p class="story-text">No content available</p>`;
     }
+    // Add cube switch to content (assuming it's part of the story UI)
+    contentHtml += `<div class="cube-switch"></div>`;
     storyContentDiv.innerHTML = contentHtml;
 
     // Start progress bar after loading completes
-    progressBar.style.transition = `width ${progressDuration}ms linear`;
-    progressStartTime = Date.now();
+    progressBar.style.transition = `width ${duration}ms linear`;
     setTimeout(() => {
         progressBar.style.width = '100%';
     }, 10);
@@ -95,7 +101,7 @@ async function showStoryPopup(story, index, direction = 'none') {
             const nextIndex = currentStoryIndex + 1;
             showStoryPopup(stories[nextIndex], nextIndex, 'next');
         }
-    }, progressDuration);
+    }, duration);
 }
 
 function hideStoryPopup() {
@@ -114,138 +120,127 @@ function hideStoryPopup() {
         loadingRing.classList.add('hidden');
         storyContentDiv.innerHTML = '';
         storyPopupContent.style.transform = 'translateX(0)';
-        isDragging = false;
     }, 300);
 }
 
-// Twitter Fleets-style navigation
+// Twitter Fleets-style navigation (unchanged)
 storyPopup.addEventListener('click', (e) => {
     if (e.target === storyPopup || e.target.classList.contains('story-content')) {
         const rect = storyPopup.getBoundingClientRect();
         const tapX = e.clientX - rect.left;
         const halfWidth = rect.width / 2;
 
-        if (!isDragging) {
-            if (tapX < halfWidth) {
-                // Tap left: go to previous story
-                if (currentStoryIndex > 0) {
-                    const prevIndex = currentStoryIndex - 1;
-                    showStoryPopup(stories[prevIndex], prevIndex, 'prev');
-                }
+        if (tapX < halfWidth) {
+            // Tap left: go to previous story
+            if (currentStoryIndex > 0) {
+                const prevIndex = currentStoryIndex - 1;
+                showStoryPopup(stories[prevIndex], prevIndex, 'prev');
+            }
+        } else {
+            // Tap right: go to next story or close
+            if (currentStoryIndex < stories.length - 1) {
+                const nextIndex = currentStoryIndex + 1;
+                showStoryPopup(stories[nextIndex], nextIndex, 'next');
             } else {
-                // Tap right: go to next story or close
-                if (currentStoryIndex < stories.length - 1) {
-                    const nextIndex = currentStoryIndex + 1;
-                    showStoryPopup(stories[nextIndex], nextIndex, 'next');
-                } else {
-                    hideStoryPopup();
-                }
+                hideStoryPopup();
             }
         }
     }
 });
 
-// Drag control navigation
+// Swipe navigation (modified to avoid conflict with cube drag)
 let startX = 0;
 let startY = 0;
-const swipeThreshold = 0.3 * window.innerWidth; // 30% of screen width
+const swipeThreshold = 60;
 const swipeDownThreshold = 60;
 
 storyPopup.addEventListener('touchstart', (e) => {
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
     storyPopup.style.transition = 'none';
-    storyPopupContent.style.transition = 'none';
-    isDragging = true;
 
-    // Pause progress bar
-    if (progressTimeout) {
-        clearTimeout(progressTimeout);
-        const elapsed = Date.now() - progressStartTime;
-        const progress = Math.min(elapsed / progressDuration, 1);
-        progressBar.style.transition = 'none';
-        progressBar.style.width = `${progress * 100}%`;
+    // Check if touch is on cube switch for long press
+    if (e.target.classList.contains('cube-switch')) {
+        longPressTimer = setTimeout(() => {
+            isDraggingCube = true;
+            cubeStartX = startX;
+        }, longPressDuration);
     }
 });
 
 storyPopup.addEventListener('touchmove', (e) => {
-    if (!isDragging) return;
-
     const currentX = e.touches[0].clientX;
     const currentY = e.touches[0].clientY;
     const deltaX = currentX - startX;
     const deltaY = currentY - startY;
 
-    // Prioritize vertical swipe for closing
-    if (Math.abs(deltaY) > Math.abs(deltaX) && deltaY > 0) {
-        storyPopup.style.transform = `translateY(${deltaY}px)`;
-        storyPopupContent.style.transform = 'translateX(0)';
+    if (isDraggingCube) {
+        // Cube drag: move cube visually (optional, can adjust based on design)
+        cubeSwitch.style.transform = `translateX(${deltaX / 2}px)`; // Scale down drag distance
         e.preventDefault();
-    } else if (Math.abs(deltaX) > Math.abs(deltaY)) {
-        // Horizontal drag: content follows finger
-        storyPopupContent.style.transform = `translateX(${deltaX}px)`;
-        storyPopup.style.transform = 'translateY(0)';
-        e.preventDefault();
+    } else {
+        // Prioritize vertical swipe for closing
+        if (Math.abs(deltaY) > Math.abs(deltaX) && deltaY > 0) {
+            storyPopup.style.transform = `translateY(${deltaY}px)`;
+            e.preventDefault();
+        } else if (Math.abs(deltaX) > Math.abs(deltaY)) {
+            // Horizontal swipe for navigation
+            storyPopupContent.style.transform = `translateX(${deltaX / 2}px)`;
+            e.preventDefault();
+        }
     }
 });
 
 storyPopup.addEventListener('touchend', (e) => {
-    if (!isDragging) return;
-
     const currentX = e.changedTouches[0].clientX;
     const currentY = e.changedTouches[0].clientY;
     const deltaX = currentX - startX;
     const deltaY = currentY - startY;
 
-    isDragging = false;
-    storyPopup.style.transition = 'transform 0.3s ease-in-out';
-    storyPopupContent.style.transition = 'transform 0.15s linear';
+    // Clear long press timer
+    if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+    }
 
-    if (Math.abs(deltaY) > Math.abs(deltaX) && deltaY > swipeDownThreshold) {
+    if (isDraggingCube) {
+        // Handle cube drag navigation
+        cubeSwitch.style.transition = 'transform 0.15s linear';
+        cubeSwitch.style.transform = 'translateX(0)';
+        if (Math.abs(deltaX) > cubeDragThreshold) {
+            if (deltaX > 0 && currentStoryIndex > 0) {
+                // Drag right: previous story
+                const prevIndex = currentStoryIndex - 1;
+                showStoryPopup(stories[prevIndex], prevIndex, 'prev');
+            } else if (deltaX < 0 && currentStoryIndex < stories.length - 1) {
+                // Drag left: next story
+                const nextIndex = currentStoryIndex + 1;
+                showStoryPopup(stories[nextIndex], nextIndex, 'next');
+            }
+        }
+        isDraggingCube = false;
+    } else if (Math.abs(deltaY) > Math.abs(deltaX) && deltaY > swipeDownThreshold) {
         // Vertical swipe down to close
         hideStoryPopup();
     } else if (Math.abs(deltaX) > swipeThreshold) {
-        // Horizontal drag: navigate if threshold met
+        // Regular swipe navigation
+        storyPopupContent.style.transition = 'transform 0.15s linear';
         if (deltaX > 0 && currentStoryIndex > 0) {
-            // Drag right: previous story (right-to-left)
+            // Swipe right: previous story
             const prevIndex = currentStoryIndex - 1;
             showStoryPopup(stories[prevIndex], prevIndex, 'prev');
         } else if (deltaX < 0 && currentStoryIndex < stories.length - 1) {
-            // Drag left: next story (left-to-right)
+            // Swipe left: next story
             const nextIndex = currentStoryIndex + 1;
             showStoryPopup(stories[nextIndex], nextIndex, 'next');
         } else {
-            // Snap back
             storyPopupContent.style.transform = 'translateX(0)';
-            resumeProgressBar();
         }
     } else {
-        // Snap back if drag not far enough
-        storyPopupContent.style.transform = 'translateX(0)';
+        storyPopup.style.transition = 'transform 0.3s ease-in-out';
+        storyPopupContent.style.transition = 'transform 0.15s linear';
         storyPopup.style.transform = 'translateY(0)';
-        resumeProgressBar();
+        storyPopupContent.style.transform = 'translateX(0)';
     }
 });
-
-// Resume progress bar after drag
-function resumeProgressBar() {
-    if (progressTimeout) return; // Already running
-
-    const currentWidth = parseFloat(progressBar.style.width) || 0;
-    const remainingProgress = 1 - currentWidth / 100;
-    const remainingTime = remainingProgress * progressDuration;
-
-    progressBar.style.transition = `width ${remainingTime}ms linear`;
-    setTimeout(() => {
-        progressBar.style.width = '100%';
-    }, 10);
-
-    progressTimeout = setTimeout(() => {
-        if (stories[currentStoryIndex].isYourStory || currentStoryIndex === stories.length - 1) {
-            hideStoryPopup();
-        } else {
-            const nextIndex = currentStoryIndex + 1;
-            showStoryPopup(stories[nextIndex], nextIndex, 'next');
-        }
-    }, remainingTime);
-}
+    
