@@ -1,7 +1,8 @@
 const storyPopup = document.getElementById('storyPopup');
 const storyContentDiv = document.querySelector('.story-popup-content .story-content');
-const storySkeleton = document.querySelector('.story-skeleton');
+const skeletonStoryContent = document.querySelector('.skeleton-story-content');
 const progressBar = document.querySelector('.progress-bar');
+let progressTimeout = null;
 
 async function fetchStoryContent(storyId) {
     const story = stories.find(s => s.id === storyId);
@@ -13,11 +14,17 @@ async function fetchStoryContent(storyId) {
 }
 
 async function showStoryPopup(story) {
-    // Show skeleton loader
-    storySkeleton.classList.remove('hidden');
-    storyContentDiv.innerHTML = '';
-    progressBar.style.width = '0';
+    // Clear any existing timeout to prevent glitches
+    if (progressTimeout) {
+        clearTimeout(progressTimeout);
+    }
+    // Reset progress bar
     progressBar.style.transition = 'none';
+    progressBar.style.width = '0';
+    
+    // Show skeleton loader, hide content
+    storyContentDiv.classList.add('hidden');
+    skeletonStoryContent.classList.remove('hidden');
     storyPopup.classList.remove('hidden');
     setTimeout(() => {
         storyPopup.classList.add('active');
@@ -27,8 +34,10 @@ async function showStoryPopup(story) {
     const storyCount = contents.length || 1;
     const duration = storyCount <= 5 ? 5000 : 8000;
 
-    // Hide skeleton and show content
-    storySkeleton.classList.add('hidden');
+    // Hide skeleton loader, show content
+    skeletonStoryContent.classList.add('hidden');
+    storyContentDiv.classList.remove('hidden');
+
     let contentHtml = '';
     if (contents.length > 0 && contents[0].type === 'image') {
         contentHtml = `<img src="${contents[0].src}" alt="Story image" class="story-image">`;
@@ -41,83 +50,63 @@ async function showStoryPopup(story) {
     }
     storyContentDiv.innerHTML = contentHtml;
 
-    // Start progress bar after content is loaded
-    let startTime = Date.now();
-    let paused = false;
-    let progressTimer;
+    // Start progress bar after skeleton loader
+    progressBar.style.transition = `width ${duration}ms linear`;
+    setTimeout(() => {
+        progressBar.style.width = '100%';
+    }, 10);
 
-    function startProgress() {
-        const elapsed = paused ? (Date.now() - startTime) : 0;
-        const remainingTime = duration - elapsed;
-        if (remainingTime <= 0) {
-            hideStoryPopup();
-            return;
-        }
-        progressBar.style.transition = `width ${remainingTime}ms linear`;
-        progressBar.style.width = `${(elapsed / duration) * 100}%`;
-        setTimeout(() => {
-            progressBar.style.width = '100%';
-        }, 10);
-        progressTimer = setTimeout(hideStoryPopup, remainingTime);
-    }
-
-    startProgress();
-
-    // Handle swipe pause/resume
-    storyPopup.addEventListener('touchstart', handleTouchStart, { once: true });
-    function handleTouchStart(e) {
-        startY = e.touches[0].clientY;
-        storyPopup.style.transition = 'none';
-        paused = true;
-        clearTimeout(progressTimer);
-        const currentWidth = parseFloat(progressBar.style.width) || 0;
-        progressBar.style.transition = 'none';
-        progressBar.style.width = `${currentWidth}%`;
-    }
-
-    storyPopup.addEventListener('touchmove', handleTouchMove, { once: true });
-    function handleTouchMove(e) {
-        const currentY = e.touches[0].clientY;
-        const deltaY = currentY - startY;
-        if (deltaY > 0) {
-            storyPopup.style.transform = `translateY(${deltaY}px)`;
-            e.preventDefault();
-        }
-    }
-
-    storyPopup.addEventListener('touchend', handleTouchEnd, { once: true });
-    function handleTouchEnd(e) {
-        storyPopup.style.transition = 'transform 0.3s ease-in-out';
-        const endY = e.changedTouches[0].clientY;
-        const deltaY = endY - startY;
-        if (deltaY > swipeThreshold) {
-            hideStoryPopup();
-        } else {
-            storyPopup.style.transform = 'translateY(0)';
-            paused = false;
-            startTime = Date.now() - ((parseFloat(progressBar.style.width) || 0) / 100) * duration;
-            startProgress();
-        }
-        // Reattach event listeners
-        storyPopup.addEventListener('touchstart', handleTouchStart, { once: true });
-        storyPopup.addEventListener('touchmove', handleTouchMove, { once: true });
-        storyPopup.addEventListener('touchend', handleTouchEnd, { once: true });
-    }
+    // Close popup after duration
+    progressTimeout = setTimeout(() => {
+        hideStoryPopup();
+    }, duration);
 }
 
 function hideStoryPopup() {
+    // Clear timeout to prevent multiple closures
+    if (progressTimeout) {
+        clearTimeout(progressTimeout);
+        progressTimeout = null;
+    }
+    
     storyPopup.classList.remove('active');
     setTimeout(() => {
         storyPopup.classList.add('hidden');
         storyPopup.style.transform = '';
+        storyContentDiv.classList.add('hidden');
+        skeletonStoryContent.classList.add('hidden');
         progressBar.style.transition = 'none';
         progressBar.style.width = '0';
-        storySkeleton.classList.add('hidden');
     }, 300);
 }
 
 let startY = 0;
 const swipeThreshold = 60;
+
+storyPopup.addEventListener('touchstart', (e) => {
+    startY = e.touches[0].clientY;
+    storyPopup.style.transition = 'none';
+});
+
+storyPopup.addEventListener('touchmove', (e) => {
+    const currentY = e.touches[0].clientY;
+    const deltaY = currentY - startY;
+    if (deltaY > 0) {
+        storyPopup.style.transform = `translateY(${deltaY}px)`;
+        e.preventDefault();
+    }
+});
+
+storyPopup.addEventListener('touchend', (e) => {
+    storyPopup.style.transition = 'transform 0.3s ease-in-out';
+    const endY = e.changedTouches[0].clientY;
+    const deltaY = endY - startY;
+    if (deltaY > swipeThreshold) {
+        hideStoryPopup();
+    } else {
+        storyPopup.style.transform = 'translateY(0)';
+    }
+});
 
 storyPopup.addEventListener('click', (e) => {
     if (e.target === storyPopup) {
