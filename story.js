@@ -5,6 +5,9 @@ const loadingRing = document.querySelector('.story-telegram-ring');
 const storyPopupContent = document.querySelector('.story-popup-content');
 let progressTimeout = null;
 let currentStoryIndex = 0;
+let isDragging = false;
+let progressStartTime = 0;
+let progressDuration = 0;
 
 async function fetchStoryContent(storyId) {
     const story = stories.find(s => s.id === storyId);
@@ -27,25 +30,25 @@ async function showStoryPopup(story, index, direction = 'none') {
 
     // Apply subtle horizontal slide transition
     if (direction === 'next') {
-        storyPopupContent.style.transform = 'translateX(-50%)'; // Reduced slide distance
+        storyPopupContent.style.transform = 'translateX(-50%)';
         setTimeout(() => {
             storyPopupContent.style.transition = 'none';
             storyPopupContent.style.transform = 'translateX(50%)';
             setTimeout(() => {
-                storyPopupContent.style.transition = 'transform 0.15s linear'; // Faster, linear transition
+                storyPopupContent.style.transition = 'transform 0.15s linear';
                 storyPopupContent.style.transform = 'translateX(0)';
             }, 10);
-        }, 150); // Match shorter duration
+        }, 150);
     } else if (direction === 'prev') {
-        storyPopupContent.style.transform = 'translateX(50%)'; // Reduced slide distance
+        storyPopupContent.style.transform = 'translateX(50%)';
         setTimeout(() => {
             storyPopupContent.style.transition = 'none';
             storyPopupContent.style.transform = 'translateX(-50%)';
             setTimeout(() => {
-                storyPopupContent.style.transition = 'transform 0.15s linear'; // Faster, linear transition
+                storyPopupContent.style.transition = 'transform 0.15s linear';
                 storyPopupContent.style.transform = 'translateX(0)';
             }, 10);
-        }, 150); // Match shorter duration
+        }, 150);
     }
 
     // Reset progress bar and show loading ring
@@ -64,7 +67,7 @@ async function showStoryPopup(story, index, direction = 'none') {
 
     // Render content in story-content-inner
     const storyCount = contents.length || 1;
-    const duration = storyCount <= 5 ? 5000 : 8000;
+    progressDuration = storyCount <= 5 ? 5000 : 8000;
     let contentHtml = '';
     if (contents.length > 0 && contents[0].type === 'image') {
         contentHtml = `<img src="${contents[0].src}" alt="Story image" class="story-image">`;
@@ -78,7 +81,8 @@ async function showStoryPopup(story, index, direction = 'none') {
     storyContentDiv.innerHTML = contentHtml;
 
     // Start progress bar after loading completes
-    progressBar.style.transition = `width ${duration}ms linear`;
+    progressBar.style.transition = `width ${progressDuration}ms linear`;
+    progressStartTime = Date.now();
     setTimeout(() => {
         progressBar.style.width = '100%';
     }, 10);
@@ -91,7 +95,7 @@ async function showStoryPopup(story, index, direction = 'none') {
             const nextIndex = currentStoryIndex + 1;
             showStoryPopup(stories[nextIndex], nextIndex, 'next');
         }
-    }, duration);
+    }, progressDuration);
 }
 
 function hideStoryPopup() {
@@ -110,6 +114,7 @@ function hideStoryPopup() {
         loadingRing.classList.add('hidden');
         storyContentDiv.innerHTML = '';
         storyPopupContent.style.transform = 'translateX(0)';
+        isDragging = false;
     }, 300);
 }
 
@@ -120,37 +125,52 @@ storyPopup.addEventListener('click', (e) => {
         const tapX = e.clientX - rect.left;
         const halfWidth = rect.width / 2;
 
-        if (tapX < halfWidth) {
-            // Tap left: go to previous story
-            if (currentStoryIndex > 0) {
-                const prevIndex = currentStoryIndex - 1;
-                showStoryPopup(stories[prevIndex], prevIndex, 'prev');
-            }
-        } else {
-            // Tap right: go to next story or close
-            if (currentStoryIndex < stories.length - 1) {
-                const nextIndex = currentStoryIndex + 1;
-                showStoryPopup(stories[nextIndex], nextIndex, 'next');
+        if (!isDragging) {
+            if (tapX < halfWidth) {
+                // Tap left: go to previous story
+                if (currentStoryIndex > 0) {
+                    const prevIndex = currentStoryIndex - 1;
+                    showStoryPopup(stories[prevIndex], prevIndex, 'prev');
+                }
             } else {
-                hideStoryPopup();
+                // Tap right: go to next story or close
+                if (currentStoryIndex < stories.length - 1) {
+                    const nextIndex = currentStoryIndex + 1;
+                    showStoryPopup(stories[nextIndex], nextIndex, 'next');
+                } else {
+                    hideStoryPopup();
+                }
             }
         }
     }
 });
 
-// Swipe navigation
+// Drag control navigation
 let startX = 0;
 let startY = 0;
-const swipeThreshold = 60;
+const swipeThreshold = 0.3 * window.innerWidth; // 30% of screen width
 const swipeDownThreshold = 60;
 
 storyPopup.addEventListener('touchstart', (e) => {
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
     storyPopup.style.transition = 'none';
+    storyPopupContent.style.transition = 'none';
+    isDragging = true;
+
+    // Pause progress bar
+    if (progressTimeout) {
+        clearTimeout(progressTimeout);
+        const elapsed = Date.now() - progressStartTime;
+        const progress = Math.min(elapsed / progressDuration, 1);
+        progressBar.style.transition = 'none';
+        progressBar.style.width = `${progress * 100}%`;
+    }
 });
 
 storyPopup.addEventListener('touchmove', (e) => {
+    if (!isDragging) return;
+
     const currentX = e.touches[0].clientX;
     const currentY = e.touches[0].clientY;
     const deltaX = currentX - startX;
@@ -159,40 +179,73 @@ storyPopup.addEventListener('touchmove', (e) => {
     // Prioritize vertical swipe for closing
     if (Math.abs(deltaY) > Math.abs(deltaX) && deltaY > 0) {
         storyPopup.style.transform = `translateY(${deltaY}px)`;
+        storyPopupContent.style.transform = 'translateX(0)';
         e.preventDefault();
     } else if (Math.abs(deltaX) > Math.abs(deltaY)) {
-        // Horizontal swipe for navigation (reduced distance)
-        storyPopupContent.style.transform = `translateX(${deltaX / 2}px)`; // Scale down swipe distance
+        // Horizontal drag: content follows finger
+        storyPopupContent.style.transform = `translateX(${deltaX}px)`;
+        storyPopup.style.transform = 'translateY(0)';
         e.preventDefault();
     }
 });
 
 storyPopup.addEventListener('touchend', (e) => {
+    if (!isDragging) return;
+
     const currentX = e.changedTouches[0].clientX;
     const currentY = e.changedTouches[0].clientY;
     const deltaX = currentX - startX;
     const deltaY = currentY - startY;
 
+    isDragging = false;
+    storyPopup.style.transition = 'transform 0.3s ease-in-out';
+    storyPopupContent.style.transition = 'transform 0.15s linear';
+
     if (Math.abs(deltaY) > Math.abs(deltaX) && deltaY > swipeDownThreshold) {
         // Vertical swipe down to close
         hideStoryPopup();
     } else if (Math.abs(deltaX) > swipeThreshold) {
-        storyPopupContent.style.transition = 'transform 0.15s linear';
+        // Horizontal drag: navigate if threshold met
         if (deltaX > 0 && currentStoryIndex > 0) {
-            // Swipe right: previous story (right-to-left)
+            // Drag right: previous story (right-to-left)
             const prevIndex = currentStoryIndex - 1;
             showStoryPopup(stories[prevIndex], prevIndex, 'prev');
         } else if (deltaX < 0 && currentStoryIndex < stories.length - 1) {
-            // Swipe left: next story (left-to-right)
+            // Drag left: next story (left-to-right)
             const nextIndex = currentStoryIndex + 1;
             showStoryPopup(stories[nextIndex], nextIndex, 'next');
         } else {
+            // Snap back
             storyPopupContent.style.transform = 'translateX(0)';
+            resumeProgressBar();
         }
     } else {
-        storyPopup.style.transition = 'transform 0.3s ease-in-out';
-        storyPopupContent.style.transition = 'transform 0.15s linear';
-        storyPopup.style.transform = 'translateY(0)';
+        // Snap back if drag not far enough
         storyPopupContent.style.transform = 'translateX(0)';
+        storyPopup.style.transform = 'translateY(0)';
+        resumeProgressBar();
     }
 });
+
+// Resume progress bar after drag
+function resumeProgressBar() {
+    if (progressTimeout) return; // Already running
+
+    const currentWidth = parseFloat(progressBar.style.width) || 0;
+    const remainingProgress = 1 - currentWidth / 100;
+    const remainingTime = remainingProgress * progressDuration;
+
+    progressBar.style.transition = `width ${remainingTime}ms linear`;
+    setTimeout(() => {
+        progressBar.style.width = '100%';
+    }, 10);
+
+    progressTimeout = setTimeout(() => {
+        if (stories[currentStoryIndex].isYourStory || currentStoryIndex === stories.length - 1) {
+            hideStoryPopup();
+        } else {
+            const nextIndex = currentStoryIndex + 1;
+            showStoryPopup(stories[nextIndex], nextIndex, 'next');
+        }
+    }, remainingTime);
+}
