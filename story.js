@@ -1,7 +1,7 @@
 const storyPopup = document.getElementById('storyPopup');
 const storyContentDiv = document.querySelector('.story-popup-content .story-content');
 const progressBar = document.querySelector('.progress-bar');
-const loadingRing = document.querySelector('.story-popup-content .telegram-ring');
+const loadingRing = document.querySelector('.story-popup-content .story-telegram-ring');
 let progressTimeout = null;
 
 async function fetchStoryContent(storyId) {
