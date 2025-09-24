@@ -1,7 +1,7 @@
 const storyPopup = document.getElementById('storyPopup');
 const storyContentDiv = document.querySelector('.story-popup-content .story-content');
 const progressBar = document.querySelector('.progress-bar');
-const loadingRing = document.querySelector('.story-popup-content .story-telegram-ring');
+const loadingRing = document.querySelector('.story-telegram-ring');
 let progressTimeout = null;
 
 async function fetchStoryContent(storyId) {
@@ -24,7 +24,7 @@ async function showStoryPopup(story) {
     progressBar.style.transition = 'none';
     progressBar.style.width = '0';
     loadingRing.classList.remove('hidden');
-    storyContentDiv.innerHTML = '';
+    storyContentDiv.innerHTML = '<div class="progress-bar-container"><div class="progress-bar"></div></div>';
     storyPopup.classList.remove('hidden');
     setTimeout(() => {
         storyPopup.classList.add('active');
@@ -34,25 +34,28 @@ async function showStoryPopup(story) {
     const contents = await fetchStoryContent(story.id);
     loadingRing.classList.add('hidden');
 
-    // Render content
+    // Render content after progress bar
     const storyCount = contents.length || 1;
     const duration = storyCount <= 5 ? 5000 : 8000;
-    let contentHtml = '';
+    let contentHtml = '<div class="progress-bar-container"><div class="progress-bar"></div></div>';
     if (contents.length > 0 && contents[0].type === 'image') {
-        contentHtml = `<img src="${contents[0].src}" alt="Story image" class="story-image">`;
+        contentHtml += `<img src="${contents[0].src}" alt="Story image" class="story-image">`;
     } else if (contents.length > 0 && contents[0].type === 'video') {
-        contentHtml = `<video src="${contents[0].src}" controls autoplay class="story-video"></video>`;
+        contentHtml += `<video src="${contents[0].src}" controls autoplay class="story-video"></video>`;
     } else if (contents.length > 0 && contents[0].type === 'text') {
-        contentHtml = `<p class="story-text">${contents[0].text}</p>`;
+        contentHtml += `<p class="story-text">${contents[0].text}</p>`;
     } else {
-        contentHtml = `<p class="story-text">No content available</p>`;
+        contentHtml += `<p class="story-text">No content available</p>`;
     }
     storyContentDiv.innerHTML = contentHtml;
 
+    // Update progress bar reference
+    const newProgressBar = storyContentDiv.querySelector('.progress-bar');
+
     // Start progress bar after loading completes
-    progressBar.style.transition = `width ${duration}ms linear`;
+    newProgressBar.style.transition = `width ${duration}ms linear`;
     setTimeout(() => {
-        progressBar.style.width = '100%';
+        newProgressBar.style.width = '100%';
     }, 10);
 
     // Close popup after duration
@@ -75,7 +78,7 @@ function hideStoryPopup() {
         progressBar.style.transition = 'none';
         progressBar.style.width = '0';
         loadingRing.classList.add('hidden');
-        storyContentDiv.innerHTML = '';
+        storyContentDiv.innerHTML = '<div class="progress-bar-container"><div class="progress-bar"></div></div>';
     }, 300);
 }
 
