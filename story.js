@@ -1,35 +1,50 @@
 const storyPopup = document.getElementById('storyPopup');
-const storyContentDiv = document.querySelector('.story-popup-content');
+const storyContentDiv = document.querySelector('.story-popup-content .story-content');
+const progressBar = document.querySelector('.progress-bar');
 
 async function fetchStoryContent(storyId) {
     const story = stories.find(s => s.id === storyId);
     return new Promise(resolve => {
         setTimeout(() => {
-            resolve(story && story.content ? story.content : null);
+            resolve(story && story.content ? story.content : []);
         }, 500);
     });
 }
 
 async function showStoryPopup(story) {
     storyContentDiv.innerHTML = '<div class="story-popup-loader"></div>';
+    progressBar.style.width = '0'; // Reset progress bar
     storyPopup.classList.remove('hidden');
     setTimeout(() => {
         storyPopup.classList.add('active');
     }, 10);
 
-    const content = await fetchStoryContent(story.id);
-    
+    const contents = await fetchStoryContent(story.id);
+    const storyCount = contents.length || 1; // Default to 1 if no content
+    const duration = storyCount <= 5 ? 5000 : 8000; // 5s for 1-5 stories, 8s for >5
+
     let contentHtml = '';
-    if (content && content.type === 'image') {
-        contentHtml = `<div class="story-content"><img src="${content.src}" alt="Story image" class="story-image"></div>`;
-    } else if (content && content.type === 'video') {
-        contentHtml = `<div class="story-content"><video src="${content.src}" controls autoplay class="story-video"></video></div>`;
-    } else if (content && content.type === 'text') {
-        contentHtml = `<div class="story-content"><p class="story-text">${content.text}</p></div>`;
+    if (contents.length > 0 && contents[0].type === 'image') {
+        contentHtml = `<img src="${contents[0].src}" alt="Story image" class="story-image">`;
+    } else if (contents.length > 0 && contents[0].type === 'video') {
+        contentHtml = `<video src="${contents[0].src}" controls autoplay class="story-video"></video>`;
+    } else if (contents.length > 0 && contents[0].type === 'text') {
+        contentHtml = `<p class="story-text">${contents[0].text}</p>`;
     } else {
-        contentHtml = `<div class="story-content"><p class="story-text">No content available</p></div>`;
+        contentHtml = `<p class="story-text">No content available</p>`;
     }
     storyContentDiv.innerHTML = contentHtml;
+
+    // Start progress bar animation
+    progressBar.style.transition = `width ${duration}ms linear`;
+    setTimeout(() => {
+        progressBar.style.width = '100%';
+    }, 10);
+
+    // Close popup after duration
+    setTimeout(() => {
+        hideStoryPopup();
+    }, duration);
 }
 
 function hideStoryPopup() {
@@ -37,6 +52,8 @@ function hideStoryPopup() {
     setTimeout(() => {
         storyPopup.classList.add('hidden');
         storyPopup.style.transform = '';
+        progressBar.style.transition = 'none';
+        progressBar.style.width = '0';
     }, 300);
 }
 
