@@ -69,6 +69,7 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    position: relative; /* Added to position cube-switch relative to story-content-inner */
 }
 
 .story-content img.story-image {
@@ -90,4 +91,24 @@
     text-align: center;
     padding: 20px;
     flex: 1;
+}
+
+/* Cube switch styles */
+.cube-switch {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    cursor: grab;
+    z-index: 10;
+    transition: transform 0.15s linear; /* Matches story-popup-content transition */
+    touch-action: none; /* Prevents default touch actions like scrolling */
+}
+
+.cube-switch:active {
+    cursor: grabbing;
 }
