@@ -27,20 +27,20 @@ async function showStoryPopup(story, index, direction = 'none') {
 
     // Apply horizontal slide transition
     if (direction === 'next') {
-        storyPopupContent.style.transform = 'translateX(100%)';
+        storyPopupContent.style.transform = 'translateX(-100%)';
         setTimeout(() => {
             storyPopupContent.style.transition = 'none';
-            storyPopupContent.style.transform = 'translateX(-100%)';
+            storyPopupContent.style.transform = 'translateX(100%)';
             setTimeout(() => {
                 storyPopupContent.style.transition = 'transform 0.3s ease-in-out';
                 storyPopupContent.style.transform = 'translateX(0)';
             }, 10);
         }, 300);
     } else if (direction === 'prev') {
-        storyPopupContent.style.transform = 'translateX(-100%)';
+        storyPopupContent.style.transform = 'translateX(100%)';
         setTimeout(() => {
             storyPopupContent.style.transition = 'none';
-            storyPopupContent.style.transform = 'translateX(100%)';
+            storyPopupContent.style.transform = 'translateX(-100%)';
             setTimeout(() => {
                 storyPopupContent.style.transition = 'transform 0.3s ease-in-out';
                 storyPopupContent.style.transform = 'translateX(0)';
@@ -127,7 +127,7 @@ storyPopup.addEventListener('click', (e) => {
                 showStoryPopup(stories[prevIndex], prevIndex, 'prev');
             }
         } else {
-            // Tap right: go to next story or advance
+            // Tap right: go to next story or close
             if (currentStoryIndex < stories.length - 1) {
                 const nextIndex = currentStoryIndex + 1;
                 showStoryPopup(stories[nextIndex], nextIndex, 'next');
@@ -179,11 +179,11 @@ storyPopup.addEventListener('touchend', (e) => {
     } else if (Math.abs(deltaX) > swipeThreshold) {
         storyPopupContent.style.transition = 'transform 0.3s ease-in-out';
         if (deltaX > 0 && currentStoryIndex > 0) {
-            // Swipe right: previous story
+            // Swipe right: previous story (right-to-left)
             const prevIndex = currentStoryIndex - 1;
             showStoryPopup(stories[prevIndex], prevIndex, 'prev');
         } else if (deltaX < 0 && currentStoryIndex < stories.length - 1) {
-            // Swipe left: next story
+            // Swipe left: next story (left-to-right)
             const nextIndex = currentStoryIndex + 1;
             showStoryPopup(stories[nextIndex], nextIndex, 'next');
         } else {
