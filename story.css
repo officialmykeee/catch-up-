@@ -32,6 +32,8 @@
     position: relative;
     display: flex;
     flex-direction: column;
+    transform: translateX(0);
+    transition: transform 0.3s ease-in-out;
 }
 
 .progress-bar-container {
