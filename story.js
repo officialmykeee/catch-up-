@@ -1,5 +1,6 @@
 const storyPopup = document.getElementById('storyPopup');
 const storyContentDiv = document.querySelector('.story-popup-content .story-content');
+const storySkeleton = document.querySelector('.story-skeleton');
 const progressBar = document.querySelector('.progress-bar');
 
 async function fetchStoryContent(storyId) {
@@ -12,17 +13,22 @@ async function fetchStoryContent(storyId) {
 }
 
 async function showStoryPopup(story) {
-    storyContentDiv.innerHTML = '<div class="story-popup-loader"></div>';
-    progressBar.style.width = '0'; // Reset progress bar
+    // Show skeleton loader
+    storySkeleton.classList.remove('hidden');
+    storyContentDiv.innerHTML = '';
+    progressBar.style.width = '0';
+    progressBar.style.transition = 'none';
     storyPopup.classList.remove('hidden');
     setTimeout(() => {
         storyPopup.classList.add('active');
     }, 10);
 
     const contents = await fetchStoryContent(story.id);
-    const storyCount = contents.length || 1; // Default to 1 if no content
-    const duration = storyCount <= 5 ? 5000 : 8000; // 5s for 1-5 stories, 8s for >5
+    const storyCount = contents.length || 1;
+    const duration = storyCount <= 5 ? 5000 : 8000;
 
+    // Hide skeleton and show content
+    storySkeleton.classList.add('hidden');
     let contentHtml = '';
     if (contents.length > 0 && contents[0].type === 'image') {
         contentHtml = `<img src="${contents[0].src}" alt="Story image" class="story-image">`;
@@ -35,16 +41,68 @@ async function showStoryPopup(story) {
     }
     storyContentDiv.innerHTML = contentHtml;
 
-    // Start progress bar animation
-    progressBar.style.transition = `width ${duration}ms linear`;
-    setTimeout(() => {
-        progressBar.style.width = '100%';
-    }, 10);
+    // Start progress bar after content is loaded
+    let startTime = Date.now();
+    let paused = false;
+    let progressTimer;
 
-    // Close popup after duration
-    setTimeout(() => {
-        hideStoryPopup();
-    }, duration);
+    function startProgress() {
+        const elapsed = paused ? (Date.now() - startTime) : 0;
+        const remainingTime = duration - elapsed;
+        if (remainingTime <= 0) {
+            hideStoryPopup();
+            return;
+        }
+        progressBar.style.transition = `width ${remainingTime}ms linear`;
+        progressBar.style.width = `${(elapsed / duration) * 100}%`;
+        setTimeout(() => {
+            progressBar.style.width = '100%';
+        }, 10);
+        progressTimer = setTimeout(hideStoryPopup, remainingTime);
+    }
+
+    startProgress();
+
+    // Handle swipe pause/resume
+    storyPopup.addEventListener('touchstart', handleTouchStart, { once: true });
+    function handleTouchStart(e) {
+        startY = e.touches[0].clientY;
+        storyPopup.style.transition = 'none';
+        paused = true;
+        clearTimeout(progressTimer);
+        const currentWidth = parseFloat(progressBar.style.width) || 0;
+        progressBar.style.transition = 'none';
+        progressBar.style.width = `${currentWidth}%`;
+    }
+
+    storyPopup.addEventListener('touchmove', handleTouchMove, { once: true });
+    function handleTouchMove(e) {
+        const currentY = e.touches[0].clientY;
+        const deltaY = currentY - startY;
+        if (deltaY > 0) {
+            storyPopup.style.transform = `translateY(${deltaY}px)`;
+            e.preventDefault();
+        }
+    }
+
+    storyPopup.addEventListener('touchend', handleTouchEnd, { once: true });
+    function handleTouchEnd(e) {
+        storyPopup.style.transition = 'transform 0.3s ease-in-out';
+        const endY = e.changedTouches[0].clientY;
+        const deltaY = endY - startY;
+        if (deltaY > swipeThreshold) {
+            hideStoryPopup();
+        } else {
+            storyPopup.style.transform = 'translateY(0)';
+            paused = false;
+            startTime = Date.now() - ((parseFloat(progressBar.style.width) || 0) / 100) * duration;
+            startProgress();
+        }
+        // Reattach event listeners
+        storyPopup.addEventListener('touchstart', handleTouchStart, { once: true });
+        storyPopup.addEventListener('touchmove', handleTouchMove, { once: true });
+        storyPopup.addEventListener('touchend', handleTouchEnd, { once: true });
+    }
 }
 
 function hideStoryPopup() {
@@ -54,36 +112,12 @@ function hideStoryPopup() {
         storyPopup.style.transform = '';
         progressBar.style.transition = 'none';
         progressBar.style.width = '0';
+        storySkeleton.classList.add('hidden');
     }, 300);
 }
 
 let startY = 0;
 const swipeThreshold = 60;
-
-storyPopup.addEventListener('touchstart', (e) => {
-    startY = e.touches[0].clientY;
-    storyPopup.style.transition = 'none';
-});
-
-storyPopup.addEventListener('touchmove', (e) => {
-    const currentY = e.touches[0].clientY;
-    const deltaY = currentY - startY;
-    if (deltaY > 0) {
-        storyPopup.style.transform = `translateY(${deltaY}px)`;
-        e.preventDefault();
-    }
-});
-
-storyPopup.addEventListener('touchend', (e) => {
-    storyPopup.style.transition = 'transform 0.3s ease-in-out';
-    const endY = e.changedTouches[0].clientY;
-    const deltaY = endY - startY;
-    if (deltaY > swipeThreshold) {
-        hideStoryPopup();
-    } else {
-        storyPopup.style.transform = 'translateY(0)';
-    }
-});
 
 storyPopup.addEventListener('click', (e) => {
     if (e.target === storyPopup) {
