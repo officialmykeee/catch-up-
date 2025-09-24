@@ -1,7 +1,7 @@
 const storyPopup = document.getElementById('storyPopup');
 const storyContentDiv = document.querySelector('.story-popup-content .story-content');
-const skeletonStoryContent = document.querySelector('.skeleton-story-content');
 const progressBar = document.querySelector('.progress-bar');
+const loadingRing = document.querySelector('.story-popup-content .telegram-ring');
 let progressTimeout = null;
 
 async function fetchStoryContent(storyId) {
@@ -17,27 +17,26 @@ async function showStoryPopup(story) {
     // Clear any existing timeout to prevent glitches
     if (progressTimeout) {
         clearTimeout(progressTimeout);
+        progressTimeout = null;
     }
-    // Reset progress bar
+
+    // Reset progress bar and show loading ring
     progressBar.style.transition = 'none';
     progressBar.style.width = '0';
-    
-    // Show skeleton loader, hide content
-    storyContentDiv.classList.add('hidden');
-    skeletonStoryContent.classList.remove('hidden');
+    loadingRing.classList.remove('hidden');
+    storyContentDiv.innerHTML = '';
     storyPopup.classList.remove('hidden');
     setTimeout(() => {
         storyPopup.classList.add('active');
     }, 10);
 
+    // Fetch content and hide loading ring
     const contents = await fetchStoryContent(story.id);
+    loadingRing.classList.add('hidden');
+
+    // Render content
     const storyCount = contents.length || 1;
     const duration = storyCount <= 5 ? 5000 : 8000;
-
-    // Hide skeleton loader, show content
-    skeletonStoryContent.classList.add('hidden');
-    storyContentDiv.classList.remove('hidden');
-
     let contentHtml = '';
     if (contents.length > 0 && contents[0].type === 'image') {
         contentHtml = `<img src="${contents[0].src}" alt="Story image" class="story-image">`;
@@ -50,7 +49,7 @@ async function showStoryPopup(story) {
     }
     storyContentDiv.innerHTML = contentHtml;
 
-    // Start progress bar after skeleton loader
+    // Start progress bar after loading completes
     progressBar.style.transition = `width ${duration}ms linear`;
     setTimeout(() => {
         progressBar.style.width = '100%';
@@ -68,15 +67,15 @@ function hideStoryPopup() {
         clearTimeout(progressTimeout);
         progressTimeout = null;
     }
-    
+
     storyPopup.classList.remove('active');
     setTimeout(() => {
         storyPopup.classList.add('hidden');
         storyPopup.style.transform = '';
-        storyContentDiv.classList.add('hidden');
-        skeletonStoryContent.classList.add('hidden');
         progressBar.style.transition = 'none';
         progressBar.style.width = '0';
+        loadingRing.classList.add('hidden');
+        storyContentDiv.innerHTML = '';
     }, 300);
 }
 
