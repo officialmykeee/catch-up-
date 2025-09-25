@@ -16,39 +16,36 @@ async function fetchStoryContent(storyId) {
 }
 
 async function showStoryPopup(story, index, direction = 'none') {
-    // Clear any existing timeout to prevent glitches
     if (progressTimeout) {
         clearTimeout(progressTimeout);
         progressTimeout = null;
     }
 
-    // Store current story index
     currentStoryIndex = index;
 
-    // Apply subtle horizontal slide transition
+    // Existing translate slide for auto/tap nav
     if (direction === 'next') {
-        storyPopupContent.style.transform = 'translateX(-50%)'; // Reduced slide distance
+        storyPopupContent.style.transform = 'translateX(-50%)';
         setTimeout(() => {
             storyPopupContent.style.transition = 'none';
             storyPopupContent.style.transform = 'translateX(50%)';
             setTimeout(() => {
-                storyPopupContent.style.transition = 'transform 0.15s linear'; // Faster, linear transition
+                storyPopupContent.style.transition = 'transform 0.15s linear';
                 storyPopupContent.style.transform = 'translateX(0)';
             }, 10);
-        }, 150); // Match shorter duration
+        }, 150);
     } else if (direction === 'prev') {
-        storyPopupContent.style.transform = 'translateX(50%)'; // Reduced slide distance
+        storyPopupContent.style.transform = 'translateX(50%)';
         setTimeout(() => {
             storyPopupContent.style.transition = 'none';
             storyPopupContent.style.transform = 'translateX(-50%)';
             setTimeout(() => {
-                storyPopupContent.style.transition = 'transform 0.15s linear'; // Faster, linear transition
+                storyPopupContent.style.transition = 'transform 0.15s linear';
                 storyPopupContent.style.transform = 'translateX(0)';
             }, 10);
-        }, 150); // Match shorter duration
+        }, 150);
     }
 
-    // Reset progress bar and show loading ring
     progressBar.style.transition = 'none';
     progressBar.style.width = '0';
     loadingRing.classList.remove('hidden');
@@ -58,11 +55,9 @@ async function showStoryPopup(story, index, direction = 'none') {
         storyPopup.classList.add('active');
     }, 10);
 
-    // Fetch content and hide loading ring
     const contents = await fetchStoryContent(story.id);
     loadingRing.classList.add('hidden');
 
-    // Render content in story-content-inner
     const storyCount = contents.length || 1;
     const duration = storyCount <= 5 ? 5000 : 8000;
     let contentHtml = '';
@@ -77,13 +72,11 @@ async function showStoryPopup(story, index, direction = 'none') {
     }
     storyContentDiv.innerHTML = contentHtml;
 
-    // Start progress bar after loading completes
     progressBar.style.transition = `width ${duration}ms linear`;
     setTimeout(() => {
         progressBar.style.width = '100%';
     }, 10);
 
-    // Handle navigation after progress bar fills
     progressTimeout = setTimeout(() => {
         if (story.isYourStory || currentStoryIndex === stories.length - 1) {
             hideStoryPopup();
@@ -95,7 +88,6 @@ async function showStoryPopup(story, index, direction = 'none') {
 }
 
 function hideStoryPopup() {
-    // Clear timeout to prevent multiple closures
     if (progressTimeout) {
         clearTimeout(progressTimeout);
         progressTimeout = null;
@@ -113,7 +105,7 @@ function hideStoryPopup() {
     }, 300);
 }
 
-// Twitter Fleets-style navigation
+// Tap navigation
 storyPopup.addEventListener('click', (e) => {
     if (e.target === storyPopup || e.target.classList.contains('story-content')) {
         const rect = storyPopup.getBoundingClientRect();
@@ -121,13 +113,11 @@ storyPopup.addEventListener('click', (e) => {
         const halfWidth = rect.width / 2;
 
         if (tapX < halfWidth) {
-            // Tap left: go to previous story
             if (currentStoryIndex > 0) {
                 const prevIndex = currentStoryIndex - 1;
                 showStoryPopup(stories[prevIndex], prevIndex, 'prev');
             }
         } else {
-            // Tap right: go to next story or close
             if (currentStoryIndex < stories.length - 1) {
                 const nextIndex = currentStoryIndex + 1;
                 showStoryPopup(stories[nextIndex], nextIndex, 'next');
@@ -138,7 +128,7 @@ storyPopup.addEventListener('click', (e) => {
     }
 });
 
-// Swipe navigation
+// Swipe + cube navigation
 let startX = 0;
 let startY = 0;
 const swipeThreshold = 60;
@@ -148,6 +138,7 @@ storyPopup.addEventListener('touchstart', (e) => {
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
     storyPopup.style.transition = 'none';
+    storyPopupContent.style.transition = 'none';
 });
 
 storyPopup.addEventListener('touchmove', (e) => {
@@ -156,13 +147,13 @@ storyPopup.addEventListener('touchmove', (e) => {
     const deltaX = currentX - startX;
     const deltaY = currentY - startY;
 
-    // Prioritize vertical swipe for closing
     if (Math.abs(deltaY) > Math.abs(deltaX) && deltaY > 0) {
         storyPopup.style.transform = `translateY(${deltaY}px)`;
         e.preventDefault();
     } else if (Math.abs(deltaX) > Math.abs(deltaY)) {
-        // Horizontal swipe for navigation (reduced distance)
-        storyPopupContent.style.transform = `translateX(${deltaX / 2}px)`; // Scale down swipe distance
+        // Cube effect preview
+        const rotation = deltaX / 5;
+        storyPopupContent.style.transform = `rotateY(${rotation}deg)`;
         e.preventDefault();
     }
 });
@@ -174,26 +165,32 @@ storyPopup.addEventListener('touchend', (e) => {
     const deltaY = currentY - startY;
 
     if (Math.abs(deltaY) > Math.abs(deltaX) && deltaY > swipeDownThreshold) {
-        // Vertical swipe down to close
         hideStoryPopup();
     } else if (Math.abs(deltaX) > swipeThreshold) {
-        storyPopupContent.style.transition = 'transform 0.15s linear';
+        storyPopupContent.style.transition = 'transform 0.3s ease';
         if (deltaX > 0 && currentStoryIndex > 0) {
-            // Swipe right: previous story (right-to-left)
-            const prevIndex = currentStoryIndex - 1;
-            showStoryPopup(stories[prevIndex], prevIndex, 'prev');
+            // Previous story with cube
+            storyPopupContent.style.transform = 'rotateY(90deg)';
+            setTimeout(() => {
+                const prevIndex = currentStoryIndex - 1;
+                showStoryPopup(stories[prevIndex], prevIndex, 'prev');
+                storyPopupContent.style.transform = 'rotateY(0deg)';
+            }, 300);
         } else if (deltaX < 0 && currentStoryIndex < stories.length - 1) {
-            // Swipe left: next story (left-to-right)
-            const nextIndex = currentStoryIndex + 1;
-            showStoryPopup(stories[nextIndex], nextIndex, 'next');
-        } else {
-            storyPopupContent.style.transform = 'translateX(0)';
+            // Next story with cube
+            storyPopupContent.style.transform = 'rotateY(-90deg)';
+            setTimeout(() => {
+                const nextIndex = currentStoryIndex + 1;
+                showStoryPopup(stories[nextIndex], nextIndex, 'next');
+                storyPopupContent.style.transform = 'rotateY(0deg)';
+            }, 300);
         }
     } else {
+        // Snap back
         storyPopup.style.transition = 'transform 0.3s ease-in-out';
-        storyPopupContent.style.transition = 'transform 0.15s linear';
+        storyPopupContent.style.transition = 'transform 0.2s ease';
         storyPopup.style.transform = 'translateY(0)';
-        storyPopupContent.style.transform = 'translateX(0)';
+        storyPopupContent.style.transform = 'rotateY(0deg)';
     }
 });
     
