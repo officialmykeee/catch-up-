@@ -6,14 +6,6 @@ const storyPopupContent = document.querySelector('.story-popup-content');
 let progressTimeout = null;
 let currentStoryIndex = 0;
 
-// Cube switch-specific variables
-const cubeSwitch = document.querySelector('.cube-switch'); // Assumed to exist in DOM
-let isDraggingCube = false;
-let cubeStartX = 0;
-let longPressTimer = null;
-const longPressDuration = 300; // Milliseconds for long press detection
-const cubeDragThreshold = 60; // Same as swipe threshold for consistency
-
 async function fetchStoryContent(storyId) {
     const story = stories.find(s => s.id === storyId);
     return new Promise(resolve => {
@@ -35,25 +27,25 @@ async function showStoryPopup(story, index, direction = 'none') {
 
     // Apply subtle horizontal slide transition
     if (direction === 'next') {
-        storyPopupContent.style.transform = 'translateX(-50%)';
+        storyPopupContent.style.transform = 'translateX(-50%)'; // Reduced slide distance
         setTimeout(() => {
             storyPopupContent.style.transition = 'none';
             storyPopupContent.style.transform = 'translateX(50%)';
             setTimeout(() => {
-                storyPopupContent.style.transition = 'transform 0.15s linear';
+                storyPopupContent.style.transition = 'transform 0.15s linear'; // Faster, linear transition
                 storyPopupContent.style.transform = 'translateX(0)';
             }, 10);
-        }, 150);
+        }, 150); // Match shorter duration
     } else if (direction === 'prev') {
-        storyPopupContent.style.transform = 'translateX(50%)';
+        storyPopupContent.style.transform = 'translateX(50%)'; // Reduced slide distance
         setTimeout(() => {
             storyPopupContent.style.transition = 'none';
             storyPopupContent.style.transform = 'translateX(-50%)';
             setTimeout(() => {
-                storyPopupContent.style.transition = 'transform 0.15s linear';
+                storyPopupContent.style.transition = 'transform 0.15s linear'; // Faster, linear transition
                 storyPopupContent.style.transform = 'translateX(0)';
             }, 10);
-        }, 150);
+        }, 150); // Match shorter duration
     }
 
     // Reset progress bar and show loading ring
@@ -83,8 +75,6 @@ async function showStoryPopup(story, index, direction = 'none') {
     } else {
         contentHtml = `<p class="story-text">No content available</p>`;
     }
-    // Add cube switch to content (assuming it's part of the story UI)
-    contentHtml += `<div class="cube-switch"></div>`;
     storyContentDiv.innerHTML = contentHtml;
 
     // Start progress bar after loading completes
@@ -123,7 +113,7 @@ function hideStoryPopup() {
     }, 300);
 }
 
-// Twitter Fleets-style navigation (unchanged)
+// Twitter Fleets-style navigation
 storyPopup.addEventListener('click', (e) => {
     if (e.target === storyPopup || e.target.classList.contains('story-content')) {
         const rect = storyPopup.getBoundingClientRect();
@@ -148,7 +138,7 @@ storyPopup.addEventListener('click', (e) => {
     }
 });
 
-// Swipe navigation (modified to avoid conflict with cube drag)
+// Swipe navigation
 let startX = 0;
 let startY = 0;
 const swipeThreshold = 60;
@@ -158,14 +148,6 @@ storyPopup.addEventListener('touchstart', (e) => {
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
     storyPopup.style.transition = 'none';
-
-    // Check if touch is on cube switch for long press
-    if (e.target.classList.contains('cube-switch')) {
-        longPressTimer = setTimeout(() => {
-            isDraggingCube = true;
-            cubeStartX = startX;
-        }, longPressDuration);
-    }
 });
 
 storyPopup.addEventListener('touchmove', (e) => {
@@ -174,20 +156,14 @@ storyPopup.addEventListener('touchmove', (e) => {
     const deltaX = currentX - startX;
     const deltaY = currentY - startY;
 
-    if (isDraggingCube) {
-        // Cube drag: move cube visually (optional, can adjust based on design)
-        cubeSwitch.style.transform = `translateX(${deltaX / 2}px)`; // Scale down drag distance
+    // Prioritize vertical swipe for closing
+    if (Math.abs(deltaY) > Math.abs(deltaX) && deltaY > 0) {
+        storyPopup.style.transform = `translateY(${deltaY}px)`;
         e.preventDefault();
-    } else {
-        // Prioritize vertical swipe for closing
-        if (Math.abs(deltaY) > Math.abs(deltaX) && deltaY > 0) {
-            storyPopup.style.transform = `translateY(${deltaY}px)`;
-            e.preventDefault();
-        } else if (Math.abs(deltaX) > Math.abs(deltaY)) {
-            // Horizontal swipe for navigation
-            storyPopupContent.style.transform = `translateX(${deltaX / 2}px)`;
-            e.preventDefault();
-        }
+    } else if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        // Horizontal swipe for navigation (reduced distance)
+        storyPopupContent.style.transform = `translateX(${deltaX / 2}px)`; // Scale down swipe distance
+        e.preventDefault();
     }
 });
 
@@ -197,40 +173,17 @@ storyPopup.addEventListener('touchend', (e) => {
     const deltaX = currentX - startX;
     const deltaY = currentY - startY;
 
-    // Clear long press timer
-    if (longPressTimer) {
-        clearTimeout(longPressTimer);
-        longPressTimer = null;
-    }
-
-    if (isDraggingCube) {
-        // Handle cube drag navigation
-        cubeSwitch.style.transition = 'transform 0.15s linear';
-        cubeSwitch.style.transform = 'translateX(0)';
-        if (Math.abs(deltaX) > cubeDragThreshold) {
-            if (deltaX > 0 && currentStoryIndex > 0) {
-                // Drag right: previous story
-                const prevIndex = currentStoryIndex - 1;
-                showStoryPopup(stories[prevIndex], prevIndex, 'prev');
-            } else if (deltaX < 0 && currentStoryIndex < stories.length - 1) {
-                // Drag left: next story
-                const nextIndex = currentStoryIndex + 1;
-                showStoryPopup(stories[nextIndex], nextIndex, 'next');
-            }
-        }
-        isDraggingCube = false;
-    } else if (Math.abs(deltaY) > Math.abs(deltaX) && deltaY > swipeDownThreshold) {
+    if (Math.abs(deltaY) > Math.abs(deltaX) && deltaY > swipeDownThreshold) {
         // Vertical swipe down to close
         hideStoryPopup();
     } else if (Math.abs(deltaX) > swipeThreshold) {
-        // Regular swipe navigation
         storyPopupContent.style.transition = 'transform 0.15s linear';
         if (deltaX > 0 && currentStoryIndex > 0) {
-            // Swipe right: previous story
+            // Swipe right: previous story (right-to-left)
             const prevIndex = currentStoryIndex - 1;
             showStoryPopup(stories[prevIndex], prevIndex, 'prev');
         } else if (deltaX < 0 && currentStoryIndex < stories.length - 1) {
-            // Swipe left: next story
+            // Swipe left: next story (left-to-right)
             const nextIndex = currentStoryIndex + 1;
             showStoryPopup(stories[nextIndex], nextIndex, 'next');
         } else {
