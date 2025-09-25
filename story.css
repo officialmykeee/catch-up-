@@ -33,12 +33,7 @@
   display: flex;
   flex-direction: column;
   transform: translateX(0);
-  transition: transform 0.15s linear; /* default slide */
-  
-  /* --- Cube Effect Support --- */
-  transform-style: preserve-3d;
-  perspective: 1000px;
-  backface-visibility: hidden;
+  transition: transform 0.15s linear; /* Changed to 0.15s and linear easing */
 }
 
 .progress-bar-container {
@@ -95,4 +90,20 @@
   text-align: center;
   padding: 20px;
   flex: 1;
+}
+
+/* Invisible arrow navigation zones */
+.story-arrow {
+  position: absolute;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  cursor: pointer;
+  z-index: 10;
+}
+.story-arrow-left {
+  left: 0;
+}
+.story-arrow-right {
+  right: 0;
 }
