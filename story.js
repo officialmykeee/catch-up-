@@ -1,6 +1,6 @@
 const storyPopup = document.getElementById('storyPopup');
 const storyContentDiv = document.querySelector('.story-content-inner');
-const progressBar = document.querySelector('.progress-bar');
+const progressBarContainer = document.querySelector('.progress-bar-container');
 const loadingRing = document.querySelector('.story-telegram-ring');
 const storyPopupContent = document.querySelector('.story-popup-content');
 let progressTimeout = null;
@@ -27,7 +27,7 @@ async function showStoryPopup(story, userIndex, internalIndex, direction = 'none
     currentStoryIndex = userIndex;
     currentInternalStoryIndex = internalIndex;
 
-    // Apply subtle horizontal slide transition
+    // Apply transitions
     if (direction === 'next') {
         storyPopupContent.style.transform = 'translateX(-50%)';
         setTimeout(() => {
@@ -49,7 +49,7 @@ async function showStoryPopup(story, userIndex, internalIndex, direction = 'none
             }, 10);
         }, 150);
     } else if (direction === 'internal') {
-        // Subtle fade for internal story transitions
+        // Fade for internal story transitions
         storyPopupContent.style.opacity = '0';
         setTimeout(() => {
             storyPopupContent.style.transition = 'none';
@@ -57,9 +57,8 @@ async function showStoryPopup(story, userIndex, internalIndex, direction = 'none
         }, 150);
     }
 
-    // Reset progress bar and show loading ring
-    progressBar.style.transition = 'none';
-    progressBar.style.width = '0';
+    // Reset progress bars and show loading ring
+    progressBarContainer.innerHTML = '';
     loadingRing.classList.remove('hidden');
     storyContentDiv.innerHTML = '';
     storyPopup.classList.remove('hidden');
@@ -71,39 +70,55 @@ async function showStoryPopup(story, userIndex, internalIndex, direction = 'none
     const contents = await fetchStoryContent(story.id);
     loadingRing.classList.add('hidden');
 
-    // Render content in story-content-inner
+    // Create multiple progress bars
     const storyCount = contents.length || 1;
     const duration = storyCount <= 5 ? 5000 : 8000;
+    for (let i = 0; i < storyCount; i++) {
+        const progressBar = document.createElement('div');
+        progressBar.className = 'progress-bar';
+        if (i < internalIndex) {
+            progressBar.classList.add('completed');
+        } else if (i === internalIndex) {
+            progressBar.classList.add('active');
+        }
+        progressBar.innerHTML = '<div class="progress-bar-inner"></div>';
+        progressBarContainer.appendChild(progressBar);
+    }
+
+    // Render content
     let contentHtml = '';
-    if (contents.length > 0 && contents[currentInternalStoryIndex]) {
-        if (contents[currentInternalStoryIndex].type === 'image') {
-            contentHtml = `<img src="${contents[currentInternalStoryIndex].src}" alt="Story image" class="story-image">`;
-        } else if (contents[currentInternalStoryIndex].type === 'video') {
-            contentHtml = `<video src="${contents[currentInternalStoryIndex].src}" controls autoplay class="story-video"></video>`;
-        } else if (contents[currentInternalStoryIndex].type === 'text') {
-            contentHtml = `<p class="story-text">${contents[currentInternalStoryIndex].text}</p>`;
+    if (contents.length > 0 && contents[internalIndex]) {
+        if (contents[internalIndex].type === 'image') {
+            contentHtml = `<img src="${contents[internalIndex].src}" alt="Story image" class="story-image">`;
+        } else if (contents[internalIndex].type === 'video') {
+            contentHtml = `<video src="${contents[internalIndex].src}" controls autoplay class="story-video"></video>`;
+        } else if (contents[internalIndex].type === 'text') {
+            contentHtml = `<p class="story-text">${contents[internalIndex].text}</p>`;
         }
     } else {
         contentHtml = `<p class="story-text">No content available</p>`;
     }
     storyContentDiv.innerHTML = contentHtml;
 
-    // Start progress bar after loading completes
-    progressBar.style.transition = `width ${duration}ms linear`;
-    setTimeout(() => {
-        progressBar.style.width = '100%';
-    }, 10);
+    // Start active progress bar
+    const activeProgressBar = progressBarContainer.querySelector('.progress-bar.active .progress-bar-inner');
+    if (activeProgressBar) {
+        activeProgressBar.style.transition = `width ${duration}ms linear`;
+        setTimeout(() => {
+            activeProgressBar.style.width = '100%';
+        }, 10);
+    }
 
-    // Handle auto-navigation after progress bar fills
+    // Handle auto-navigation
     progressTimeout = setTimeout(() => {
         if (currentInternalStoryIndex < contents.length - 1) {
-            // Move to next internal story
+            // Next internal story
             showStoryPopup(story, currentStoryIndex, currentInternalStoryIndex + 1, 'internal');
         } else if (story.isYourStory || currentStoryIndex === stories.length - 1) {
             // Close if "Your story" or last user's last story
             hideStoryPopup();
         } else {
-            // Move to next user's first story
+            // Next user's first story
             const nextIndex = currentStoryIndex + 1;
             showStoryPopup(stories[nextIndex], nextIndex, 0, 'next');
         }
@@ -121,8 +136,7 @@ function hideStoryPopup() {
     setTimeout(() => {
         storyPopup.classList.add('hidden');
         storyPopup.style.transform = '';
-        progressBar.style.transition = 'none';
-        progressBar.style.width = '0';
+        progressBarContainer.innerHTML = '';
         loadingRing.classList.add('hidden');
         storyContentDiv.innerHTML = '';
         storyPopupContent.style.transform = 'translateX(0)';
@@ -130,7 +144,7 @@ function hideStoryPopup() {
     }, 300);
 }
 
-// Tap navigation for internal stories and user transitions
+// Tap navigation for internal stories
 storyPopup.addEventListener('click', (e) => {
     if (e.target === storyPopup || e.target.classList.contains('story-content')) {
         const rect = storyPopup.getBoundingClientRect();
@@ -143,24 +157,19 @@ storyPopup.addEventListener('click', (e) => {
         if (tapX < halfWidth) {
             // Tap left: previous internal story or previous user
             if (currentInternalStoryIndex > 0) {
-                // Previous internal story
                 showStoryPopup(currentStory, currentStoryIndex, currentInternalStoryIndex - 1, 'internal');
             } else if (currentStoryIndex > 0) {
-                // Previous user's first story
                 const prevIndex = currentStoryIndex - 1;
                 showStoryPopup(stories[prevIndex], prevIndex, 0, 'prev');
             }
         } else {
             // Tap right: next internal story, next user, or close
             if (currentInternalStoryIndex < contents.length - 1) {
-                // Next internal story
                 showStoryPopup(currentStory, currentStoryIndex, currentInternalStoryIndex + 1, 'internal');
             } else if (currentStoryIndex < stories.length - 1) {
-                // Next user's first story
                 const nextIndex = currentStoryIndex + 1;
                 showStoryPopup(stories[nextIndex], nextIndex, 0, 'next');
             } else {
-                // Close if last user's last story
                 hideStoryPopup();
             }
         }
@@ -190,7 +199,6 @@ storyPopup.addEventListener('touchmove', (e) => {
         storyPopup.style.transform = `translateY(${deltaY}px)`;
         e.preventDefault();
     } else if (Math.abs(deltaX) > Math.abs(deltaY)) {
-        // Horizontal swipe for user navigation
         storyPopupContent.style.transform = `translateX(${deltaX / 2}px)`;
         e.preventDefault();
     }
