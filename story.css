@@ -33,25 +33,55 @@
     display: flex;
     flex-direction: column;
     transform: translateX(0);
-    transition: transform 0.15s linear; /* Changed to 0.15s and linear easing */
+    transition: transform 0.15s linear; /* Subtle slide transition for user-to-user nav */
 }
 
+/* Updated Progress Bar Container for Multiple Segments */
 .progress-bar-container {
     width: calc(100% - 20px);
-    height: 2px;
-    background-color: rgba(255, 255, 255, 0.3);
     margin: 4px 10px 8px 10px;
-    border-radius: 1px;
-    overflow: hidden;
+    display: flex; /* Added for multiple segments */
+    gap: 4px; /* Space between segments */
 }
 
-.progress-bar {
+.progress-bar-segment { /* New class for each bar segment */
+    height: 2px;
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 1px;
+    overflow: hidden;
+    flex-grow: 1; /* Ensures bars share space equally */
+}
+
+.progress-bar-inner { /* Inner bar that fills */
     height: 100%;
     width: 0;
     background-color: #ffffff;
-    transition: width linear;
+    transition: width linear; /* Transition handled by JS duration */
 }
 
+/* Invisible Internal Navigation Buttons */
+.story-nav-button {
+    position: absolute;
+    top: 0;
+    width: 30%; /* Large click area */
+    height: 100%;
+    background: transparent; /* Invisible */
+    border: none;
+    z-index: 2005; /* Above story content */
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.story-nav-button.left {
+    left: 0;
+}
+
+.story-nav-button.right {
+    right: 0;
+}
+
+
+/* Story Content */
 .story-content {
     width: calc(100% - 20px);
     height: calc(100% - 20px);
@@ -65,6 +95,7 @@
 
 .story-content-inner {
     flex: 1;
+    position: relative; /* For the loading ring */
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -91,3 +122,25 @@
     padding: 20px;
     flex: 1;
 }
+
+/* Story Loading Ring */
+.story-telegram-ring {
+    width: 40px;
+    height: 40px;
+    animation: rotate 2s linear infinite;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.story-telegram-ring circle {
+    fill: none;
+    stroke: #d1d4db;
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-dasharray: 1, 200;
+    stroke-dashoffset: 0;
+    animation: dash 1.5s ease-in-out infinite;
+}
+
