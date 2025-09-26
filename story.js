@@ -3,6 +3,8 @@ const storyContentDiv = document.querySelector('.story-content-inner');
 const progressBarContainer = document.querySelector('.progress-bar-container');
 const loadingRing = document.querySelector('.story-telegram-ring');
 const storyPopupContent = document.querySelector('.story-popup-content');
+const leftArrow = document.querySelector('.arrow.left');
+const rightArrow = document.querySelector('.arrow.right');
 let progressTimeout = null;
 let currentStoryIndex = 0;
 let currentInternalStoryIndex = 0;
@@ -27,14 +29,14 @@ async function showStoryPopup(story, userIndex, internalIndex, direction = 'none
     currentStoryIndex = userIndex;
     currentInternalStoryIndex = internalIndex;
 
-    // Apply transitions
+    // Apply transitions for user-to-user navigation
     if (direction === 'next') {
         storyPopupContent.style.transform = 'translateX(-50%)';
         setTimeout(() => {
             storyPopupContent.style.transition = 'none';
             storyPopupContent.style.transform = 'translateX(50%)';
             setTimeout(() => {
-                storyPopupContent.style.transition = 'transform 0.15s linear, opacity 0.15s ease-in-out';
+                storyPopupContent.style.transition = 'transform 0.15s linear';
                 storyPopupContent.style.transform = 'translateX(0)';
             }, 10);
         }, 150);
@@ -44,17 +46,13 @@ async function showStoryPopup(story, userIndex, internalIndex, direction = 'none
             storyPopupContent.style.transition = 'none';
             storyPopupContent.style.transform = 'translateX(-50%)';
             setTimeout(() => {
-                storyPopupContent.style.transition = 'transform 0.15s linear, opacity 0.15s ease-in-out';
+                storyPopupContent.style.transition = 'transform 0.15s linear';
                 storyPopupContent.style.transform = 'translateX(0)';
             }, 10);
         }, 150);
     } else if (direction === 'internal') {
-        // Fade for internal story transitions
-        storyPopupContent.style.opacity = '0';
-        setTimeout(() => {
-            storyPopupContent.style.transition = 'none';
-            storyPopupContent.style.opacity = '1';
-        }, 150);
+        // No transition for internal stories
+        storyPopupContent.style.transition = 'none';
     }
 
     // Reset progress bars and show loading ring
@@ -104,6 +102,7 @@ async function showStoryPopup(story, userIndex, internalIndex, direction = 'none
     const activeProgressBar = progressBarContainer.querySelector('.progress-bar.active .progress-bar-inner');
     if (activeProgressBar) {
         activeProgressBar.style.transition = `width ${duration}ms linear`;
+        activeProgressBar.style.opacity = '1';
         setTimeout(() => {
             activeProgressBar.style.width = '100%';
         }, 10);
@@ -115,7 +114,7 @@ async function showStoryPopup(story, userIndex, internalIndex, direction = 'none
             // Next internal story
             showStoryPopup(story, currentStoryIndex, currentInternalStoryIndex + 1, 'internal');
         } else if (story.isYourStory || currentStoryIndex === stories.length - 1) {
-            // Close if "Your story" or last user's last story
+            // Auto-close for "Your story" or last user's last story
             hideStoryPopup();
         } else {
             // Next user's first story
@@ -140,65 +139,45 @@ function hideStoryPopup() {
         loadingRing.classList.add('hidden');
         storyContentDiv.innerHTML = '';
         storyPopupContent.style.transform = 'translateX(0)';
-        storyPopupContent.style.opacity = '1';
+        storyPopupContent.style.transition = 'transform 0.15s linear';
     }, 300);
 }
 
-// Tap navigation for internal stories and user transitions
-storyPopup.addEventListener('click', (e) => {
-    // Only handle clicks on the story popup or content area
-    if (e.target === storyPopup || e.target.classList.contains('story-content')) {
-        const rect = storyPopup.getBoundingClientRect();
-        const tapX = e.clientX - rect.left;
-        const halfWidth = rect.width / 2;
+// Arrow navigation for internal stories and user transitions
+leftArrow.addEventListener('click', () => {
+    if (progressTimeout) {
+        clearTimeout(progressTimeout);
+        progressTimeout = null;
+    }
+    const currentStory = stories[currentStoryIndex];
+    const contents = currentStory.content;
+    if (currentInternalStoryIndex > 0) {
+        // Previous internal story
+        showStoryPopup(currentStory, currentStoryIndex, currentInternalStoryIndex - 1, 'internal');
+    } else if (currentStoryIndex > 0) {
+        // Previous user's first story
+        const prevIndex = currentStoryIndex - 1;
+        showStoryPopup(stories[prevIndex], prevIndex, 0, 'prev');
+    }
+});
 
-        const currentStory = stories[currentStoryIndex];
-        const contents = currentStory.content;
-
-        if (tapX < halfWidth) {
-            // Tap left: previous internal story or previous user
-            if (currentInternalStoryIndex > 0) {
-                // Clear timeout to prevent auto-navigation during manual tap
-                if (progressTimeout) {
-                    clearTimeout(progressTimeout);
-                    progressTimeout = null;
-                }
-                showStoryPopup(currentStory, currentStoryIndex, currentInternalStoryIndex - 1, 'internal');
-            } else if (currentStoryIndex > 0) {
-                // Clear timeout
-                if (progressTimeout) {
-                    clearTimeout(progressTimeout);
-                    progressTimeout = null;
-                }
-                const prevIndex = currentStoryIndex - 1;
-                showStoryPopup(stories[prevIndex], prevIndex, 0, 'prev');
-            }
-        } else {
-            // Tap right: next internal story, next user, or close
-            if (currentInternalStoryIndex < contents.length - 1) {
-                // Clear timeout
-                if (progressTimeout) {
-                    clearTimeout(progressTimeout);
-                    progressTimeout = null;
-                }
-                showStoryPopup(currentStory, currentStoryIndex, currentInternalStoryIndex + 1, 'internal');
-            } else if (currentStoryIndex < stories.length - 1) {
-                // Clear timeout
-                if (progressTimeout) {
-                    clearTimeout(progressTimeout);
-                    progressTimeout = null;
-                }
-                const nextIndex = currentStoryIndex + 1;
-                showStoryPopup(stories[nextIndex], nextIndex, 0, 'next');
-            } else {
-                // Clear timeout
-                if (progressTimeout) {
-                    clearTimeout(progressTimeout);
-                    progressTimeout = null;
-                }
-                hideStoryPopup();
-            }
-        }
+rightArrow.addEventListener('click', () => {
+    if (progressTimeout) {
+        clearTimeout(progressTimeout);
+        progressTimeout = null;
+    }
+    const currentStory = stories[currentStoryIndex];
+    const contents = currentStory.content;
+    if (currentInternalStoryIndex < contents.length - 1) {
+        // Next internal story
+        showStoryPopup(currentStory, currentStoryIndex, currentInternalStoryIndex + 1, 'internal');
+    } else if (currentStoryIndex < stories.length - 1) {
+        // Next user's first story
+        const nextIndex = currentStoryIndex + 1;
+        showStoryPopup(stories[nextIndex], nextIndex, 0, 'next');
+    } else {
+        // Close for last user's last story
+        hideStoryPopup();
     }
 });
 
@@ -258,41 +237,43 @@ storyPopup.addEventListener('touchend', (e) => {
         } else {
             storyPopupContent.style.transform = 'translateX(0)';
             // Resume auto-navigation
-            const currentStory = stories[currentStoryIndex];
-            const contents = currentStory.content;
-            const storyCount = contents.length || 1;
-            const duration = storyCount <= 5 ? 5000 : 8000;
-            progressTimeout = setTimeout(() => {
-                if (currentInternalStoryIndex < contents.length - 1) {
-                    showStoryPopup(currentStory, currentStoryIndex, currentInternalStoryIndex + 1, 'internal');
-                } else if (currentStory.isYourStory || currentStoryIndex === stories.length - 1) {
-                    hideStoryPopup();
-                } else {
-                    const nextIndex = currentStoryIndex + 1;
-                    showStoryPopup(stories[nextIndex], nextIndex, 0, 'next');
-                }
-            }, duration);
+            resumeAutoNavigation();
         }
     } else {
         storyPopup.style.transition = 'transform 0.3s ease-in-out';
-        storyPopupContent.style.transition = 'transform 0.15s linear, opacity 0.15s ease-in-out';
+        storyPopupContent.style.transition = 'transform 0.15s linear';
         storyPopup.style.transform = 'translateY(0)';
         storyPopupContent.style.transform = 'translateX(0)';
         // Resume auto-navigation
-        const currentStory = stories[currentStoryIndex];
-        const contents = currentStory.content;
-        const storyCount = contents.length || 1;
-        const duration = storyCount <= 5 ? 5000 : 8000;
-        progressTimeout = setTimeout(() => {
-            if (currentInternalStoryIndex < contents.length - 1) {
-                showStoryPopup(currentStory, currentStoryIndex, currentInternalStoryIndex + 1, 'internal');
-            } else if (currentStory.isYourStory || currentStoryIndex === stories.length - 1) {
-                hideStoryPopup();
-            } else {
-                const nextIndex = currentStoryIndex + 1;
-                showStoryPopup(stories[nextIndex], nextIndex, 0, 'next');
-            }
-        }, duration);
+        resumeAutoNavigation();
     }
 });
-    
+
+// Function to resume auto-navigation
+function resumeAutoNavigation() {
+    const currentStory = stories[currentStoryIndex];
+    const contents = currentStory.content;
+    const storyCount = contents.length || 1;
+    const duration = storyCount <= 5 ? 5000 : 8000;
+    progressTimeout = setTimeout(() => {
+        if (currentInternalStoryIndex < contents.length - 1) {
+            showStoryPopup(currentStory, currentStoryIndex, currentInternalStoryIndex + 1, 'internal');
+        } else if (currentStory.isYourStory || currentStoryIndex === stories.length - 1) {
+            hideStoryPopup();
+        } else {
+            const nextIndex = currentStoryIndex + 1;
+            showStoryPopup(stories[nextIndex], nextIndex, 0, 'next');
+        }
+    }, duration);
+
+    // Restart active progress bar
+    const activeProgressBar = progressBarContainer.querySelector('.progress-bar.active .progress-bar-inner');
+    if (activeProgressBar) {
+        activeProgressBar.style.transition = `width ${duration}ms linear`;
+        activeProgressBar.style.opacity = '1';
+        activeProgressBar.style.width = '0';
+        setTimeout(() => {
+            activeProgressBar.style.width = '100%';
+        }, 10);
+    }
+}
