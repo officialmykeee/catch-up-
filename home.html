@@ -503,7 +503,7 @@
             height: var(--fab-size);
             border-radius: 50%;
             background: var(--fab-color);
-            box-shadow: var(--fab-shadow);
+            box-shadow: var--fab-shadow;
             display: inline-grid;
             place-items: center;
             user-select: none;
@@ -570,14 +570,14 @@
             display: flex;
             flex-direction: column;
             transform: translateX(0);
-            transition: transform 0.15s linear, opacity 0.15s ease-in-out; /* Added opacity for fade */
+            transition: transform 0.15s linear, opacity 0.15s ease-in-out;
         }
 
         .progress-bar-container {
             width: calc(100% - 20px);
             margin: 4px 10px 8px 10px;
             display: flex;
-            gap: 4px; /* Space between progress bars */
+            gap: 4px;
             flex-wrap: nowrap;
         }
 
