@@ -40,19 +40,21 @@
 .progress-bar-container {
     width: calc(100% - 20px);
     margin: 4px 10px 8px 10px;
-    display: flex; /* Added for multiple segments */
-    gap: 4px; /* Space between segments */
+    display: flex; 
+    gap: 4px; 
+    position: relative; 
+    z-index: 2006; /* Above all content and navigation buttons */
 }
 
-.progress-bar-segment { /* New class for each bar segment */
+.progress-bar-segment { 
     height: 2px;
     background-color: rgba(255, 255, 255, 0.3);
     border-radius: 1px;
     overflow: hidden;
-    flex-grow: 1; /* Ensures bars share space equally */
+    flex-grow: 1; 
 }
 
-.progress-bar-inner { /* Inner bar that fills */
+.progress-bar-inner { 
     height: 100%;
     width: 0;
     background-color: #ffffff;
@@ -65,7 +67,7 @@
     top: 0;
     width: 30%; /* Large click area */
     height: 100%;
-    background: transparent; /* Invisible */
+    background: transparent;
     border: none;
     z-index: 2005; /* Above story content */
     cursor: pointer;
@@ -81,46 +83,86 @@
 }
 
 
-/* Story Content */
+/* Story Content Container (The main view window) */
 .story-content {
     width: calc(100% - 20px);
     height: calc(100% - 20px);
     margin: 10px;
-    background: linear-gradient(180deg, rgb(37 36 36 / 77%), rgb(1 1 1 / 63%));
+    background: transparent;
     border-radius: 8px;
     display: flex;
     flex-direction: column;
     box-shadow: 0 0 3px 0 rgb(0,0,0,0.3);
+    overflow: hidden;
+    position: relative;
 }
 
+/* New: Background layer for blur/color fallback */
+.story-background-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #333; /* Default dark background fallback */
+    z-index: 1;
+    transition: background-color 0.3s ease; /* Smooth transition for color changes */
+}
+
+/* Blurred background image (YOUR REQUEST) */
+.story-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;   /* Fill container */
+    filter: blur(20px) brightness(0.7); /* Blur + dim for contrast */
+    transform: scale(1.2); /* Prevent edges showing after blur */
+    opacity: 0; /* Starts hidden, JS handles fade in */
+    transition: opacity 0.3s ease;
+}
+
+/* Inner content area (for centering foreground) */
 .story-content-inner {
     flex: 1;
-    position: relative; /* For the loading ring */
+    position: relative; 
+    z-index: 5; /* Ensure content is above background layers */
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    padding: 10px; 
+    max-height: 100%;
 }
 
-.story-content img.story-image {
-    max-height: 65vh;
-    width: 45vh;
-    object-fit: cover;
+/* Main foreground content (YOUR REQUEST) */
+.story img.main,
+.story video.main {
+    position: relative;
     display: block;
+    max-width: 100%;
+    max-height: 80vh; /* Set a max height relative to viewport */
+    width: auto; 
+    object-fit: contain; /* Ensures the whole content is visible */
+    margin: auto;
+    z-index: 2;
+    border-radius: 4px;
 }
 
-.story-content video.story-video {
-    max-height: 65vh;
-    width: 45vh;
-    object-fit: cover;
-}
-
+/* Text Story Styling */
 .story-content p.story-text {
     font-size: 16px;
     color: white;
     text-align: center;
     padding: 20px;
     flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5); /* Improve readability on colors */
 }
 
 /* Story Loading Ring */
@@ -132,6 +174,7 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    z-index: 10;
 }
 
 .story-telegram-ring circle {
