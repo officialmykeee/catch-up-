@@ -34,7 +34,7 @@ async function showStoryPopup(story, userIndex, internalIndex, direction = 'none
             storyPopupContent.style.transition = 'none';
             storyPopupContent.style.transform = 'translateX(50%)';
             setTimeout(() => {
-                storyPopupContent.style.transition = 'transform 0.15s linear';
+                storyPopupContent.style.transition = 'transform 0.15s linear, opacity 0.15s ease-in-out';
                 storyPopupContent.style.transform = 'translateX(0)';
             }, 10);
         }, 150);
@@ -44,7 +44,7 @@ async function showStoryPopup(story, userIndex, internalIndex, direction = 'none
             storyPopupContent.style.transition = 'none';
             storyPopupContent.style.transform = 'translateX(-50%)';
             setTimeout(() => {
-                storyPopupContent.style.transition = 'transform 0.15s linear';
+                storyPopupContent.style.transition = 'transform 0.15s linear, opacity 0.15s ease-in-out';
                 storyPopupContent.style.transform = 'translateX(0)';
             }, 10);
         }, 150);
@@ -144,8 +144,9 @@ function hideStoryPopup() {
     }, 300);
 }
 
-// Tap navigation for internal stories
+// Tap navigation for internal stories and user transitions
 storyPopup.addEventListener('click', (e) => {
+    // Only handle clicks on the story popup or content area
     if (e.target === storyPopup || e.target.classList.contains('story-content')) {
         const rect = storyPopup.getBoundingClientRect();
         const tapX = e.clientX - rect.left;
@@ -157,19 +158,44 @@ storyPopup.addEventListener('click', (e) => {
         if (tapX < halfWidth) {
             // Tap left: previous internal story or previous user
             if (currentInternalStoryIndex > 0) {
+                // Clear timeout to prevent auto-navigation during manual tap
+                if (progressTimeout) {
+                    clearTimeout(progressTimeout);
+                    progressTimeout = null;
+                }
                 showStoryPopup(currentStory, currentStoryIndex, currentInternalStoryIndex - 1, 'internal');
             } else if (currentStoryIndex > 0) {
+                // Clear timeout
+                if (progressTimeout) {
+                    clearTimeout(progressTimeout);
+                    progressTimeout = null;
+                }
                 const prevIndex = currentStoryIndex - 1;
                 showStoryPopup(stories[prevIndex], prevIndex, 0, 'prev');
             }
         } else {
             // Tap right: next internal story, next user, or close
             if (currentInternalStoryIndex < contents.length - 1) {
+                // Clear timeout
+                if (progressTimeout) {
+                    clearTimeout(progressTimeout);
+                    progressTimeout = null;
+                }
                 showStoryPopup(currentStory, currentStoryIndex, currentInternalStoryIndex + 1, 'internal');
             } else if (currentStoryIndex < stories.length - 1) {
+                // Clear timeout
+                if (progressTimeout) {
+                    clearTimeout(progressTimeout);
+                    progressTimeout = null;
+                }
                 const nextIndex = currentStoryIndex + 1;
                 showStoryPopup(stories[nextIndex], nextIndex, 0, 'next');
             } else {
+                // Clear timeout
+                if (progressTimeout) {
+                    clearTimeout(progressTimeout);
+                    progressTimeout = null;
+                }
                 hideStoryPopup();
             }
         }
@@ -186,6 +212,11 @@ storyPopup.addEventListener('touchstart', (e) => {
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
     storyPopup.style.transition = 'none';
+    // Pause auto-navigation during touch
+    if (progressTimeout) {
+        clearTimeout(progressTimeout);
+        progressTimeout = null;
+    }
 });
 
 storyPopup.addEventListener('touchmove', (e) => {
@@ -199,6 +230,7 @@ storyPopup.addEventListener('touchmove', (e) => {
         storyPopup.style.transform = `translateY(${deltaY}px)`;
         e.preventDefault();
     } else if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        // Horizontal swipe for user navigation
         storyPopupContent.style.transform = `translateX(${deltaX / 2}px)`;
         e.preventDefault();
     }
@@ -225,12 +257,42 @@ storyPopup.addEventListener('touchend', (e) => {
             showStoryPopup(stories[nextIndex], nextIndex, 0, 'next');
         } else {
             storyPopupContent.style.transform = 'translateX(0)';
+            // Resume auto-navigation
+            const currentStory = stories[currentStoryIndex];
+            const contents = currentStory.content;
+            const storyCount = contents.length || 1;
+            const duration = storyCount <= 5 ? 5000 : 8000;
+            progressTimeout = setTimeout(() => {
+                if (currentInternalStoryIndex < contents.length - 1) {
+                    showStoryPopup(currentStory, currentStoryIndex, currentInternalStoryIndex + 1, 'internal');
+                } else if (currentStory.isYourStory || currentStoryIndex === stories.length - 1) {
+                    hideStoryPopup();
+                } else {
+                    const nextIndex = currentStoryIndex + 1;
+                    showStoryPopup(stories[nextIndex], nextIndex, 0, 'next');
+                }
+            }, duration);
         }
     } else {
         storyPopup.style.transition = 'transform 0.3s ease-in-out';
-        storyPopupContent.style.transition = 'transform 0.15s linear';
+        storyPopupContent.style.transition = 'transform 0.15s linear, opacity 0.15s ease-in-out';
         storyPopup.style.transform = 'translateY(0)';
         storyPopupContent.style.transform = 'translateX(0)';
+        // Resume auto-navigation
+        const currentStory = stories[currentStoryIndex];
+        const contents = currentStory.content;
+        const storyCount = contents.length || 1;
+        const duration = storyCount <= 5 ? 5000 : 8000;
+        progressTimeout = setTimeout(() => {
+            if (currentInternalStoryIndex < contents.length - 1) {
+                showStoryPopup(currentStory, currentStoryIndex, currentInternalStoryIndex + 1, 'internal');
+            } else if (currentStory.isYourStory || currentStoryIndex === stories.length - 1) {
+                hideStoryPopup();
+            } else {
+                const nextIndex = currentStoryIndex + 1;
+                showStoryPopup(stories[nextIndex], nextIndex, 0, 'next');
+            }
+        }, duration);
     }
 });
     
