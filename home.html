@@ -14,7 +14,7 @@
             --fab-shadow: 0 3px 8px rgba(116, 156, 191, 0.35);
             --icon-size: 28px;
             
-            /* Story Reply Bar Variables */
+            /* New Story Reply Bar Variables */
             --bg-color: rgba(0, 0, 0, 0); /* Transparent background for bottom bar */
             --input-bg: rgba(255, 255, 255, 0.2); /* Semi-transparent white input */
             --text-color: white; 
@@ -525,7 +525,7 @@
             fill: none;
         }
         
-        /* Story Reply Bar Styles (Copied from update) */
+        /* Story Reply Bar Styles */
         .bottom-bar {
             position: absolute;
             bottom: 0; 
@@ -604,6 +604,12 @@
             border-radius: 50%;
             border: 1px solid var(--input-bg);
             padding: 5px;
+        }
+
+        @media (min-width: 600px) {
+            .bottom-bar {
+                bottom: 0;
+            }
         }
     </style>
 </head>
@@ -751,7 +757,7 @@
             { id: "2", name: "Family", lastMessage: "Mom: Don't forget about Sunday brunch!", timestamp: "1:15 PM", avatar: "F", unreadCount: 5 },
         ];
         
-        // Function to toggle the 'liked' state on the button
+        // Function to toggle the 'liked' state on the button (Used by onclick in HTML)
         function toggleLike(button) {
             button.classList.toggle('liked');
         }
@@ -940,5 +946,6 @@
     <script src="story.js"></script>
 </body>
 </html>
+
 
  
