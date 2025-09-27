@@ -61,7 +61,7 @@
     transition: width linear; /* Transition handled by JS duration */
 }
 
-/* Invisible Internal Navigation Buttons (CRITICAL: Height stops above reply bar) */
+/* Invisible Internal Navigation Buttons (UPDATED HEIGHT) */
 .story-nav-button {
     position: absolute;
     top: 0;
@@ -83,13 +83,10 @@
     right: 0;
 }
 
-
 /* Story Content Container (The main view window) */
 .story-content {
     width: calc(100% - 20px);
-    /* TIGHT FIT: Height is 100% minus 10px top margin and 70px bottom bar height. */
     height: calc(100% - 10px - 70px); 
-    /* TIGHT FIT: 10px top margin, 0 bottom margin to eliminate gap. */
     margin: 10px auto 0 auto; 
     background: transparent;
     border-radius: 8px;
@@ -98,8 +95,6 @@
     box-shadow: 0 0 3px 0 rgb(0,0,0,0.3);
     overflow: hidden;
     position: relative;
-    /* Added z-index to clearly define its layer relative to siblings */
-    z-index: 5; 
 }
 
 /* Background layer for blur/color fallback */
@@ -203,10 +198,9 @@
     align-items: center;
     padding: 0 10px; 
     box-sizing: border-box;
-    /* CRITICAL FIX: Extremely high z-index to ensure it is visible over all story elements */
-    z-index: 9999; 
-    /* Ensure the background is opaque (assuming var(--bg-color) is defined) */
-    background-color: var(--bg-color); 
+    z-index: 3000; /* ensure always above story content */
+    background-color: rgba(0, 0, 0, 0.4); /* semi-transparent dark background */
+    backdrop-filter: blur(10px); /* frosted glass effect */
     pointer-events: auto; 
 }
 
@@ -220,8 +214,8 @@
     padding: 10px 15px;
     border-radius: 25px;
     border: none;
-    background-color: var(--input-bg);
-    color: var(--text-color);
+    background-color: rgba(255, 255, 255, 0.9); /* white bubble */
+    color: #000; /* black text */
     font-size: 1em;
     box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
@@ -229,13 +223,12 @@
 }
 
 .reply-input::placeholder {
-    color: rgba(255, 255, 255, 0.7);
+    color: rgba(0, 0, 0, 0.5); /* gray placeholder */
 }
 
 .action-icon-btn {
     background: none;
     border: none;
-    color: var(--text-color);
     cursor: pointer;
     padding: 5px;
     display: flex;
@@ -249,13 +242,13 @@
     width: 24px;
     height: 24px;
     fill: none;
-    stroke: var(--text-color);
+    stroke: #fff; /* always white for visibility */
     stroke-width: 2;
 }
 
 .action-icon-btn.like-btn svg {
     fill: none;
-    stroke: var(--text-color);
+    stroke: #fff;
     transition: fill 0.2s ease-in-out, stroke 0.2s ease-in-out;
 }
 
@@ -271,7 +264,7 @@
     width: 34px;
     height: 34px;
     border-radius: 50%;
-    border: 1px solid var(--input-bg);
+    border: 1px solid rgba(255, 255, 255, 0.3);
     padding: 5px;
 }
 
@@ -279,5 +272,4 @@
     .bottom-bar {
         bottom: 0;
     }
-}
-
+}        
