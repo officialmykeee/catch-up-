@@ -47,6 +47,7 @@ const navNextInternal = document.getElementById('navNextInternal');
 let progressTimeout = null;
 let currentStoryIndex = 0; 
 let currentInternalStoryIndex = 0; 
+let currentDirection = 'none'; // Tracks the last navigation direction
 
 const STORY_DURATION = 5000; // 5 seconds per story card
 
@@ -77,9 +78,8 @@ function renderProgressBars(internalStories) {
 }
 
 /**
- * Starts the filling animation for the current internal story segment.
- * * **FIXED:** Uses a forced reflow (reading offsetHeight) instead of an unreliable 
- * setTimeout to ensure the progress bar resets to 0% before starting the animation.
+ * Starts the filling animation for the current internal story segment,
+ * or instantly sets the state if navigating backward.
  */
 function startProgressBar() {
     clearProgressTimeout();
@@ -88,8 +88,9 @@ function startProgressBar() {
     if (!currentSegment) return; 
 
     const innerBar = currentSegment.querySelector('.progress-bar-inner');
+    const isMovingBackward = currentDirection === 'prev-internal';
 
-    // 1. Reset/Set state for all segments
+    // 1. Reset/Set state for all segments (Instant change, transition: none)
     document.querySelectorAll('.progress-bar-segment').forEach((segment, index) => {
         const bar = segment.querySelector('.progress-bar-inner');
         
@@ -101,31 +102,36 @@ function startProgressBar() {
         } else if (index > currentInternalStoryIndex) {
             bar.style.width = '0%'; // Future stories are empty
         } else {
-             // Current story: ensure it is reset to 0
-             bar.style.width = '0%'; 
+             // Current story: 
+             // If moving backward, this story was complete, so set it to 100% instantly.
+             // If moving forward, this story is the one starting, so set it to 0% instantly.
+             bar.style.width = isMovingBackward ? '100%' : '0%';
         }
     });
 
     // 2. FORCED REFLOW/REDRAW (The reliable fix for the glitch)
-    // This forces the browser to immediately apply the 'width: 0%' and 'transition: none'
+    // This forces the browser to immediately apply the width and transition:none
     innerBar.offsetHeight; 
 
-    // 3. Start current segment animation
-    // The innerBar is now guaranteed to be at 0% with no transition.
-    
-    // Set the transition property back to the animation duration
-    innerBar.style.transition = `width ${STORY_DURATION}ms linear`;
-    
-    // Start the fill animation
-    innerBar.style.width = '100%';
+    // 3. Start Animation ONLY if moving forward or opening a new story
+    if (!isMovingBackward) {
+        // The innerBar is guaranteed to be at 0% with no transition.
+        
+        // Set the transition property back to the animation duration
+        innerBar.style.transition = `width ${STORY_DURATION}ms linear`;
+        
+        // Start the fill animation
+        innerBar.style.width = '100%';
 
-    // Set timeout for auto-navigation
-    progressTimeout = setTimeout(() => {
-        nextStory();
-    }, STORY_DURATION);
+        // Set timeout for auto-navigation
+        progressTimeout = setTimeout(() => {
+            nextStory();
+        }, STORY_DURATION);
+    }
+    // If moving backward, we don't start the animation or the timer.
 }
 
-// --- Content Fetching & Rendering (UPDATED) ---
+// --- Content Fetching & Rendering ---
 
 async function fetchStoryContent(storyCard) {
     // Simulating a fetch delay
@@ -185,7 +191,7 @@ function renderContent(storyCard) {
                 bgImg.style.opacity = 1;
             }, 50); 
             
-            startProgressBar();
+            startProgressBar(); // Call with currentDirection set by showStoryPopup
         };
 
         img.onerror = () => {
@@ -255,6 +261,7 @@ function showStoryPopup(userStory, userIndex, internalIndex = 0, direction = 'no
 
     currentStoryIndex = userIndex;
     currentInternalStoryIndex = internalIndex;
+    currentDirection = direction; // Set global direction for use in startProgressBar
 
     // Apply slide transitions for USER navigation
     if (direction === 'next-user') {
@@ -445,10 +452,13 @@ if (storyPopup) {
         storyPopup.style.transform = 'translateY(0)';
         storyPopupContent.style.transform = 'translateX(0)';
         
-        // Resume auto-navigation for the current internal story
-        startProgressBar();
+        // Resume auto-navigation for the current internal story (only if not a user change)
+        if (!currentDirection.includes('user')) {
+             startProgressBar();
+        }
     });
 }
+
 
 
 
