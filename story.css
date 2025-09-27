@@ -61,12 +61,13 @@
     transition: width linear; /* Transition handled by JS duration */
 }
 
-/* Invisible Internal Navigation Buttons */
+/* Invisible Internal Navigation Buttons (UPDATED HEIGHT) */
 .story-nav-button {
     position: absolute;
     top: 0;
     width: 30%; /* Large click area */
-    height: calc(100% - 70px); /* Stop above the bottom bar */
+    /* FIX: Height now stops 70px above the bottom, allowing the reply bar to be clickable */
+    height: calc(100% - 70px); 
     background: transparent;
     border: none;
     z-index: 2005; 
@@ -86,7 +87,7 @@
 /* Story Content Container (The main view window) */
 .story-content {
     width: calc(100% - 20px);
-    /* ADJUSTED HEIGHT: Subtract the 70px height of the new bottom-bar */
+    /* FIX: Height adjusted to subtract the 70px height of the new bottom-bar */
     height: calc(100% - 20px - 70px); 
     margin: 10px 10px 0 10px; /* Adjusted bottom margin */
     background: transparent;
@@ -187,5 +188,4 @@
     stroke-dashoffset: 0;
     animation: dash 1.5s ease-in-out infinite;
 }
-
 
