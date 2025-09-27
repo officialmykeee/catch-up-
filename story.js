@@ -39,7 +39,7 @@ const storyPopupContent = document.querySelector('.story-popup-content');
 const multiProgressBar = document.getElementById('multiProgressBar');
 const navPrevInternal = document.getElementById('navPrevInternal');
 const navNextInternal = document.getElementById('navNextInternal');
-const likeButton = document.querySelector('.action-icon-btn.like-btn'); // New reference
+// The like button is now retrieved inside renderContent for dynamic state management
 
 // --- Global State ---
 let progressTimeout = null;
@@ -136,7 +136,8 @@ function renderContent(storyCard) {
     bgLayer.className = 'story-background-layer';
     storyContentContainer.prepend(bgLayer);
 
-    // Reset like button state for every new card
+    // [FIX/UPDATE] Reset like button state for every new card
+    const likeButton = document.querySelector('.action-icon-btn.like-btn');
     if (likeButton) likeButton.classList.remove('liked');
 
     if (storyCard.type === 'image') {
@@ -347,6 +348,7 @@ function hideStoryPopup() {
         loadingRing.classList.add('hidden');
         multiProgressBar.innerHTML = ''; 
         // Reset like button state when closing
+        const likeButton = document.querySelector('.action-icon-btn.like-btn');
         if (likeButton) likeButton.classList.remove('liked');
     }, 300);
 }
@@ -363,7 +365,7 @@ const swipeDownThreshold = 60;
 
 if (storyPopup) {
     storyPopup.addEventListener('touchstart', (e) => {
-        // Prevent action if tap is on the interactive bottom bar
+        // [FIX] Prevent action if touch starts on the interactive bottom bar
         if (e.target.closest('.bottom-bar')) return;
         
         startX = e.touches[0].clientX;
@@ -373,7 +375,7 @@ if (storyPopup) {
     });
 
     storyPopup.addEventListener('touchmove', (e) => {
-        // Prevent action if touch starts on the interactive bottom bar
+        // [FIX] Prevent action if touch starts on the interactive bottom bar
         if (e.target.closest('.bottom-bar')) return;
         
         const currentX = e.touches[0].clientX;
@@ -392,9 +394,9 @@ if (storyPopup) {
     });
 
     storyPopup.addEventListener('touchend', (e) => {
-        // Prevent action if touch ends on the interactive bottom bar
+        // [FIX] If touch ends inside the bottom bar area, only restart the timer
         if (e.target.closest('.bottom-bar')) {
-            startProgressBar(); // Restart timer if a non-navigation interaction happened
+            startProgressBar(); 
             return;
         }
 
@@ -436,4 +438,5 @@ if (storyPopup) {
         startProgressBar();
     });
 }
+
 
