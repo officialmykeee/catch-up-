@@ -39,8 +39,6 @@ const storyPopupContent = document.querySelector('.story-popup-content');
 const multiProgressBar = document.getElementById('multiProgressBar');
 const navPrevInternal = document.getElementById('navPrevInternal');
 const navNextInternal = document.getElementById('navNextInternal');
-const replyInput = document.querySelector('.reply-input');
-const likeButton = document.querySelector('.like-btn');
 
 // --- Global State ---
 let progressTimeout = null;
@@ -279,22 +277,7 @@ function showStoryPopup(userStory, userIndex, internalIndex = 0, direction = 'no
     
     fetchStoryContent(currentStoryCard).then(content => {
         renderContent(content);
-        
-        // Update like button state based on localStorage
-        if (likeButton) {
-            const isLiked = localStorage.getItem(`like_${currentStoryCard.id}`) === 'true';
-            likeButton.classList.toggle('liked', isLiked);
-        }
-        
-        // Clear reply input
-        if (replyInput) {
-            replyInput.value = '';
-        }
     });
-
-    // Conditionally hide bottom-bar for "Your story"
-    const bottomBar = document.querySelector('.bottom-bar');
-    bottomBar.style.display = userStory.isYourStory ? 'none' : 'flex';
 }
 
 // --- Navigation Helpers ---
@@ -356,8 +339,6 @@ function hideStoryPopup() {
         storyPopupContent.style.transform = 'translateX(0)';
         loadingRing.classList.add('hidden');
         multiProgressBar.innerHTML = ''; 
-        if (replyInput) replyInput.value = ''; // Clear input on popup close
-        if (likeButton) likeButton.classList.remove('liked'); // Reset like button
     }, 300);
 }
 
@@ -365,32 +346,6 @@ function hideStoryPopup() {
 
 if (navNextInternal) navNextInternal.addEventListener('click', nextStory);
 if (navPrevInternal) navPrevInternal.addEventListener('click', prevStory);
-
-// --- Reply and Like Functionality ---
-
-/**
- * Toggles the 'liked' class on the like button and persists the state per story card.
- * @param {HTMLElement} button - The like button element.
- */
-function toggleLike(button) {
-    const storyCard = window.stories[currentStoryIndex].internalStories[currentInternalStoryIndex];
-    const isLiked = button.classList.toggle('liked');
-    localStorage.setItem(`like_${storyCard.id}`, isLiked);
-}
-
-// Expose toggleLike globally for onclick event
-window.toggleLike = toggleLike;
-
-// Handle reply submission
-if (replyInput) {
-    replyInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && e.target.value.trim()) {
-            const storyCard = window.stories[currentStoryIndex].internalStories[currentInternalStoryIndex];
-            console.log(`Reply to story ${storyCard.id} by ${window.stories[currentStoryIndex].username}:`, e.target.value);
-            e.target.value = ''; // Clear input after submission
-        }
-    });
-}
 
 let startX = 0;
 let startY = 0;
@@ -410,9 +365,6 @@ if (storyPopup) {
         const currentY = e.touches[0].clientY;
         const deltaX = currentX - startX;
         const deltaY = currentY - startY;
-
-        // Allow input focus to prevent swipe interference
-        if (document.activeElement === replyInput) return;
 
         if (Math.abs(deltaY) > Math.abs(deltaX) && deltaY > 0) {
             storyPopup.style.transform = `translateY(${deltaY}px)`;
