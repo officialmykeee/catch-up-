@@ -1,7 +1,6 @@
 // --- CRITICAL FIX: Expose the main function at the top for use by HTML-side listeners ---
 window.showStoryPopup = showStoryPopup;
 
-
 /**
  * Utility function to approximate a dominant color from a small area of an image.
  * Note: Requires the image to be served with CORS headers if from a different domain.
@@ -32,7 +31,6 @@ function getDominantColor(imgElement) {
     }
 }
 
-
 // --- Global Element References ---
 const storyPopup = document.getElementById('storyPopup');
 const storyContentDiv = document.querySelector('.story-content-inner');
@@ -43,10 +41,10 @@ const navPrevInternal = document.getElementById('navPrevInternal');
 const navNextInternal = document.getElementById('navNextInternal');
 
 // --- Global State ---
-// Assuming 'window.stories' is defined in the main HTML scope and accessible here.
 let progressTimeout = null;
 let currentStoryIndex = 0; 
 let currentInternalStoryIndex = 0; 
+let isNavigating = false; // Debounce flag for navigation
 
 const STORY_DURATION = 5000; // 5 seconds per story card
 
@@ -66,7 +64,6 @@ function clearProgressTimeout() {
 function renderProgressBars(internalStories) {
     multiProgressBar.innerHTML = '';
     
-    // The length of internalStories automatically determines the number of bars
     internalStories.forEach((_, index) => {
         const segment = document.createElement('div');
         segment.className = 'progress-bar-segment';
@@ -78,8 +75,7 @@ function renderProgressBars(internalStories) {
 
 /**
  * Starts the filling animation for the current internal story segment.
- * FIXED: Uses a forced reflow (reading offsetHeight) to ensure the progress bar resets 
- * to 0% before starting the animation (Progress Bar Glitch Fix).
+ * Ensures the progress bar is reset and animates only once.
  */
 function startProgressBar() {
     clearProgressTimeout();
@@ -89,35 +85,27 @@ function startProgressBar() {
 
     const innerBar = currentSegment.querySelector('.progress-bar-inner');
 
-    // 1. Reset/Set state for all segments
+    // 1. Reset all segments to ensure no stale transitions
     document.querySelectorAll('.progress-bar-segment').forEach((segment, index) => {
         const bar = segment.querySelector('.progress-bar-inner');
         
-        // Temporarily remove transition for instant state change
         bar.style.transition = 'none';
         
         if (index < currentInternalStoryIndex) {
             bar.style.width = '100%'; // Past stories are full
-        } else if (index > currentInternalStoryIndex) {
-            bar.style.width = '0%'; // Future stories are empty
         } else {
-             // Current story: ensure it is reset to 0
-             bar.style.width = '0%'; 
+            bar.style.width = '0%'; // Current and future stories are empty
         }
     });
 
-    // 2. FORCED REFLOW/REDRAW 
+    // 2. FORCED REFLOW/REDRAW
     innerBar.offsetHeight; 
 
     // 3. Start current segment animation
-    
-    // Set the transition property back to the animation duration
     innerBar.style.transition = `width ${STORY_DURATION}ms linear`;
-    
-    // Start the fill animation
     innerBar.style.width = '100%';
 
-    // Set timeout for auto-navigation
+    // 4. Set timeout for auto-navigation
     progressTimeout = setTimeout(() => {
         nextStory();
     }, STORY_DURATION);
@@ -126,7 +114,6 @@ function startProgressBar() {
 // --- Content Fetching & Rendering ---
 
 async function fetchStoryContent(storyCard) {
-    // Simulating a fetch delay
     return new Promise(resolve => {
         setTimeout(() => {
             resolve(storyCard);
@@ -136,11 +123,9 @@ async function fetchStoryContent(storyCard) {
 
 /**
  * Renders the story content (Image, Video, or Text) with blurred background/color fallback.
- * **FIXED:** Consolidated all startProgressBar() calls here to prevent double animation.
  * @param {Object} storyCard - The object defining the current internal story.
  */
 function renderContent(storyCard) {
-    // 1. Setup Background Container
     storyContentDiv.innerHTML = '';
     const storyContentContainer = document.querySelector('.story-content');
     let bgLayer = storyContentContainer.querySelector('.story-background-layer');
@@ -148,9 +133,8 @@ function renderContent(storyCard) {
 
     bgLayer = document.createElement('div');
     bgLayer.className = 'story-background-layer';
-    storyContentContainer.prepend(bgLayer); // Place behind storyContentDiv
+    storyContentContainer.prepend(bgLayer);
 
-    // 2. Render Content based on type
     if (storyCard.type === 'image') {
         loadingRing.classList.remove('hidden');
         
@@ -167,24 +151,16 @@ function renderContent(storyCard) {
         bgLayer.appendChild(bgImg);
         storyContentDiv.appendChild(img);
 
-        // Handle image loading for visual effects
         img.onload = () => {
             loadingRing.classList.add('hidden');
             
-            // Get Dominant Color for Fallback/Base BG
             const dominantColor = getDominantColor(img);
-            if (dominantColor) {
-                bgLayer.style.backgroundColor = dominantColor;
-            } else {
-                bgLayer.style.backgroundColor = '#222'; 
-            }
+            bgLayer.style.backgroundColor = dominantColor || '#222';
             
-            // Fade in the Blurred Image
             setTimeout(() => {
                 bgImg.style.opacity = 1;
             }, 50); 
             
-            // **START BAR:** Only start after the main content is fully loaded
             startProgressBar();
         };
 
@@ -205,27 +181,24 @@ function renderContent(storyCard) {
         video.muted = true;
         video.className = 'story main story-video';
         
-        // For video, use a static dark background
-        bgLayer.style.backgroundColor = '#111'; 
+        bgLayer.style.backgroundColor = '#111';
 
-        // Video tag for blurred background (use a poster or the video itself)
         const bgVideo = video.cloneNode(true);
         bgVideo.removeAttribute('controls');
         bgVideo.className = 'story-bg';
-        bgVideo.style.opacity = 1; // Always show blurred background for video
+        bgVideo.style.opacity = 1;
 
         bgLayer.appendChild(bgVideo);
         storyContentDiv.appendChild(video);
 
         video.onloadeddata = () => {
-             loadingRing.classList.add('hidden');
-             // **START BAR:** Only start after the video metadata is loaded
-             startProgressBar();
+            loadingRing.classList.add('hidden');
+            startProgressBar();
         };
         video.onerror = () => {
-             loadingRing.classList.add('hidden');
-             storyContentDiv.innerHTML = `<p class="story-text">Error loading video.</p>`;
-             startProgressBar();
+            loadingRing.classList.add('hidden');
+            storyContentDiv.innerHTML = `<p class="story-text">Error loading video.</p>`;
+            startProgressBar();
         };
         
     } else if (storyCard.type === 'text') {
@@ -234,12 +207,10 @@ function renderContent(storyCard) {
         p.className = 'story-text';
         p.textContent = storyCard.text;
         
-        // Use a colorful gradient for text stories
         bgLayer.style.background = 'linear-gradient(135deg, #749cbf, #a855f7)';
         storyContentDiv.appendChild(p);
         
-        // **START BAR:** Start immediately for text, as there is no media to wait for
-        startProgressBar(); 
+        startProgressBar();
     }
 }
 
@@ -247,7 +218,6 @@ function renderContent(storyCard) {
 
 /**
  * Opens the story pop-up and handles the transition and content loading.
- * **FIXED:** Removed redundant call to startProgressBar to prevent double-animation.
  * @param {Object} userStory - The object for the current user's story container.
  * @param {number} userIndex - The index of the user in the global stories array.
  * @param {number} internalIndex - The index of the story card within the user's stories.
@@ -281,7 +251,6 @@ function showStoryPopup(userStory, userIndex, internalIndex = 0, direction = 'no
             }, 10);
         }, 150);
     } else {
-        // Internal/initial transitions are instant
         storyPopupContent.style.transition = 'none';
         storyPopupContent.style.transform = 'translateX(0)';
     }
@@ -295,63 +264,66 @@ function showStoryPopup(userStory, userIndex, internalIndex = 0, direction = 'no
         }, 10);
     }
 
-    // Always re-render progress bars on user change or initial open
-    if (direction === 'none' || direction.includes('user')) {
-        renderProgressBars(userStory.internalStories);
-    }
+    // Always re-render progress bars to ensure clean state
+    renderProgressBars(userStory.internalStories);
     
     // Fetch and Render Content
     const currentStoryCard = userStory.internalStories[currentInternalStoryIndex];
     if (!currentStoryCard) return hideStoryPopup(); 
     
-    // Show loading ring immediately for non-image/non-video content
     if (currentStoryCard.type === 'text') {
         loadingRing.classList.add('hidden');
     }
     
-    // The renderContent function is solely responsible for calling startProgressBar()
     fetchStoryContent(currentStoryCard).then(content => {
         renderContent(content);
     });
 }
 
-
 // --- Navigation Helpers ---
 
 function nextStory() {
+    if (isNavigating) return;
+    isNavigating = true;
+
     clearProgressTimeout();
     const currentUserStory = window.stories[currentStoryIndex]; 
 
     if (currentInternalStoryIndex < currentUserStory.internalStories.length - 1) {
-        // Next internal story (no user transition)
         const nextInternalIndex = currentInternalStoryIndex + 1;
         showStoryPopup(currentUserStory, currentStoryIndex, nextInternalIndex, 'next-internal');
     } else if (currentStoryIndex < window.stories.length - 1) {
-        // Next user's first story (with user transition)
         const nextUserIndex = currentStoryIndex + 1;
         showStoryPopup(window.stories[nextUserIndex], nextUserIndex, 0, 'next-user');
     } else {
-        // Last story of the last user
         hideStoryPopup();
     }
+
+    setTimeout(() => {
+        isNavigating = false;
+    }, 200);
 }
 
 function prevStory() {
+    if (isNavigating) return;
+    isNavigating = true;
+
     clearProgressTimeout();
     const currentUserStory = window.stories[currentStoryIndex]; 
 
     if (currentInternalStoryIndex > 0) {
-        // Previous internal story (no user transition)
         const prevInternalIndex = currentInternalStoryIndex - 1;
         showStoryPopup(currentUserStory, currentStoryIndex, prevInternalIndex, 'prev-internal');
     } else if (currentStoryIndex > 0) {
-        // Previous user's last story (with user transition)
         const prevUserIndex = currentStoryIndex - 1;
         const prevUserStory = window.stories[prevUserIndex];
         const lastInternalIndex = prevUserStory.internalStories.length - 1;
         showStoryPopup(prevUserStory, prevUserIndex, lastInternalIndex, 'prev-user');
     }
-    // Else: First story of the first user, do nothing.
+
+    setTimeout(() => {
+        isNavigating = false;
+    }, 200);
 }
 
 function hideStoryPopup() {
@@ -363,22 +335,18 @@ function hideStoryPopup() {
         storyContentDiv.innerHTML = '';
         const storyContentContainer = document.querySelector('.story-content');
         let bgLayer = storyContentContainer.querySelector('.story-background-layer');
-        if (bgLayer) bgLayer.remove(); // Clean up background layer
+        if (bgLayer) bgLayer.remove();
         storyPopupContent.style.transform = 'translateX(0)';
         loadingRing.classList.add('hidden');
         multiProgressBar.innerHTML = ''; 
     }, 300);
 }
 
-
 // --- Event Listeners (Internal & Swipe Navigation) ---
 
-// 1. Internal Navigation Buttons (Click/Tap on the invisible left/right areas)
 if (navNextInternal) navNextInternal.addEventListener('click', nextStory);
 if (navPrevInternal) navPrevInternal.addEventListener('click', prevStory);
 
-
-// 2. Swipe Navigation (User-to-User or Close)
 let startX = 0;
 let startY = 0;
 const swipeThreshold = 60;
@@ -389,7 +357,7 @@ if (storyPopup) {
         startX = e.touches[0].clientX;
         startY = e.touches[0].clientY;
         storyPopup.style.transition = 'none';
-        clearProgressTimeout(); // Pause auto-navigation during touch
+        clearProgressTimeout();
     });
 
     storyPopup.addEventListener('touchmove', (e) => {
@@ -398,13 +366,10 @@ if (storyPopup) {
         const deltaX = currentX - startX;
         const deltaY = currentY - startY;
 
-        // Vertical swipe for closing
         if (Math.abs(deltaY) > Math.abs(deltaX) && deltaY > 0) {
             storyPopup.style.transform = `translateY(${deltaY}px)`;
             e.preventDefault();
-        } 
-        // Horizontal swipe only for USER transitions
-        else if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        } else if (Math.abs(deltaX) > Math.abs(deltaY)) {
             storyPopupContent.style.transition = 'none';
             storyPopupContent.style.transform = `translateX(${deltaX / 2}px)`;
             e.preventDefault();
@@ -420,35 +385,28 @@ if (storyPopup) {
         storyPopup.style.transition = 'transform 0.3s ease-in-out';
         storyPopupContent.style.transition = 'transform 0.15s linear';
         
-        // A. Vertical swipe down to close
         if (Math.abs(deltaY) > Math.abs(deltaX) && deltaY > swipeDownThreshold) {
             hideStoryPopup();
             return;
         } 
 
-        // B. Horizontal swipe for USER navigation
         if (Math.abs(deltaX) > swipeThreshold) {
             if (deltaX > 0 && currentStoryIndex > 0) {
-                // Swipe right: previous user
                 const prevUserIndex = currentStoryIndex - 1;
                 const prevUserStory = window.stories[prevUserIndex];
                 const lastInternalIndex = prevUserStory.internalStories.length - 1;
                 showStoryPopup(prevUserStory, prevUserIndex, lastInternalIndex, 'prev-user');
                 return;
-
             } else if (deltaX < 0 && currentStoryIndex < window.stories.length - 1) {
-                // Swipe left: next user
                 const nextUserIndex = currentStoryIndex + 1;
                 showStoryPopup(window.stories[nextUserIndex], nextUserIndex, 0, 'next-user');
                 return;
             }
         } 
 
-        // C. Reset or Resume Auto-Navigation
         storyPopup.style.transform = 'translateY(0)';
         storyPopupContent.style.transform = 'translateX(0)';
         
-        // Resume auto-navigation for the current internal story
         startProgressBar();
     });
 }
