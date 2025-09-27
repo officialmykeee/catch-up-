@@ -61,7 +61,7 @@
     transition: width linear; /* Transition handled by JS duration */
 }
 
-/* Invisible Internal Navigation Buttons (UPDATED HEIGHT) */
+/* Invisible Internal Navigation Buttons (CRITICAL: Height stops above reply bar) */
 .story-nav-button {
     position: absolute;
     top: 0;
@@ -87,9 +87,9 @@
 /* Story Content Container (The main view window) */
 .story-content {
     width: calc(100% - 20px);
-    /* **UPDATED**: Height is 100% minus 10px top margin and 70px bottom bar height. */
+    /* TIGHT FIT: Height is 100% minus 10px top margin and 70px bottom bar height. */
     height: calc(100% - 10px - 70px); 
-    /* **UPDATED**: 10px top margin, auto left/right, and 0 bottom margin to eliminate gap. */
+    /* TIGHT FIT: 10px top margin, 0 bottom margin to eliminate gap. */
     margin: 10px auto 0 auto; 
     background: transparent;
     border-radius: 8px;
@@ -98,6 +98,8 @@
     box-shadow: 0 0 3px 0 rgb(0,0,0,0.3);
     overflow: hidden;
     position: relative;
+    /* Added z-index to clearly define its layer relative to siblings */
+    z-index: 5; 
 }
 
 /* Background layer for blur/color fallback */
@@ -199,11 +201,12 @@
     height: 70px;
     display: flex;
     align-items: center;
-    /* **UPDATED**: Tighter horizontal padding */
     padding: 0 10px; 
     box-sizing: border-box;
-    z-index: 2007; 
-    background-color: var(--bg-color);
+    /* CRITICAL FIX: Extremely high z-index to ensure it is visible over all story elements */
+    z-index: 9999; 
+    /* Ensure the background is opaque (assuming var(--bg-color) is defined) */
+    background-color: var(--bg-color); 
     pointer-events: auto; 
 }
 
