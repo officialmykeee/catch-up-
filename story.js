@@ -74,6 +74,8 @@ function renderProgressBars(internalStories) {
 
 /**
  * Starts the filling animation for the current internal story segment.
+ * * FIX: Implemented a mandatory browser reflow to prevent the progress bar 
+ * animation from gliching or skipping the 'width: 0' reset.
  */
 function startProgressBar() {
     clearProgressTimeout();
@@ -83,24 +85,37 @@ function startProgressBar() {
 
     const innerBar = currentSegment.querySelector('.progress-bar-inner');
 
-    // Reset/Set state for all segments
+    // 1. Set the state for ALL segments
     document.querySelectorAll('.progress-bar-segment').forEach((segment, index) => {
         const bar = segment.querySelector('.progress-bar-inner');
+        
+        // Temporarily remove transition to allow instant state change
         bar.style.transition = 'none';
+        
         if (index < currentInternalStoryIndex) {
             bar.style.width = '100%'; // Past stories are full
         } else if (index > currentInternalStoryIndex) {
-            bar.style.width = '0'; // Future stories are empty
+            bar.style.width = '0%'; // Future stories are empty
         } else {
-             bar.style.width = '0'; // Current story resets to 0
+             // Current story: ensure it is reset to 0
+             bar.style.width = '0%'; 
         }
     });
 
-    // Start current segment animation
-    setTimeout(() => {
-        innerBar.style.transition = `width ${STORY_DURATION}ms linear`;
-        innerBar.style.width = '100%';
-    }, 10);
+    // 2. FORCED REFLOW/REDRAW (CRITICAL FIX)
+    // Reading offsetHeight forces the browser to apply the 'width: 0%' and 'transition: none'
+    // immediately, before the next CSS change is applied.
+    innerBar.offsetHeight; 
+
+    // 3. Start current segment animation
+    // The innerBar is now guaranteed to be at 0% with no transition.
+    
+    // Set the transition property back to the animation duration
+    innerBar.style.transition = `width ${STORY_DURATION}ms linear`;
+    
+    // Start the fill animation
+    innerBar.style.width = '100%';
+
 
     // Set timeout for auto-navigation
     progressTimeout = setTimeout(() => {
@@ -316,7 +331,7 @@ function nextStory() {
     }
 }
 
-function prevStory() {
+function function() {
     clearProgressTimeout();
     const currentUserStory = window.stories[currentStoryIndex]; 
 
@@ -435,4 +450,5 @@ if (storyPopup) {
 
 // Expose the main function so the HTML click handlers can call it
 window.showStoryPopup = showStoryPopup;
+
 
