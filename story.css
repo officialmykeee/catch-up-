@@ -1,3 +1,7 @@
+ keep this story.css
+And keep this story.js I will send my HTML 
+:
+
 /* Stories pop-up styles */
 .story-popup {
     position: fixed;
@@ -82,10 +86,11 @@
     right: 0;
 }
 
+
 /* Story Content Container (The main view window) */
 .story-content {
     width: calc(100% - 20px);
-    height: calc(100% - 90px); /* Adjusted to account for bottom-bar height */
+    height: calc(100% - 20px);
     margin: 10px;
     background: transparent;
     border-radius: 8px;
@@ -108,7 +113,7 @@
     transition: background-color 0.3s ease; /* Smooth transition for color changes */
 }
 
-/* Blurred background image */
+/* Blurred background image (YOUR REQUEST) */
 .story-bg {
     position: absolute;
     top: 0;
@@ -135,7 +140,7 @@
     max-height: 100%;
 }
 
-/* Main foreground content */
+/* Main foreground content (YOUR REQUEST) */
 .story img.main,
 .story video.main {
     position: relative;
@@ -186,95 +191,3 @@
     animation: dash 1.5s ease-in-out infinite;
 }
 
-/* Reply Bar Styles */
-:root {
-    --bg-color: rgba(0, 0, 0, 0.9);
-    --input-bg: rgba(255, 255, 255, 0.2);
-    --text-color: #ffffff;
-    --instagram-pink: #e1306c;
-}
-
-.bottom-bar {
-    position: absolute;
-    bottom: 66px; /* Mobile-responsive position */
-    left: 0;
-    width: 100%;
-    height: 70px;
-    display: flex;
-    align-items: center;
-    padding: 0 15px;
-    box-sizing: border-box;
-    z-index: 20;
-    background-color: var(--bg-color);
-}
-
-.reply-input-container {
-    flex-grow: 1;
-    margin-right: 15px;
-}
-
-.reply-input {
-    width: 100%;
-    padding: 10px 15px;
-    border-radius: 25px;
-    border: none;
-    background-color: var(--input-bg);
-    color: var(--text-color);
-    font-size: 1em;
-    box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent;
-    outline: none;
-}
-
-.reply-input::placeholder {
-    color: rgba(255, 255, 255, 0.7);
-}
-
-.action-icon-btn {
-    background: none;
-    border: none;
-    color: var(--text-color);
-    cursor: pointer;
-    padding: 5px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    -webkit-tap-highlight-color: transparent;
-    outline: none;
-}
-
-.action-icon-btn svg {
-    width: 24px;
-    height: 24px;
-    fill: none;
-    stroke: var(--text-color);
-    stroke-width: 2;
-}
-
-.action-icon-btn.like-btn svg {
-    fill: none;
-    stroke: var(--text-color);
-    transition: fill 0.2s ease-in-out, stroke 0.2s ease-in-out;
-}
-
-.action-icon-btn.like-btn.liked svg {
-    fill: var(--instagram-pink);
-    stroke: var(--instagram-pink);
-}
-
-.heart-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    border: 1px solid var(--input-bg);
-    padding: 5px;
-}
-
-@media (min-width: 600px) {
-    .bottom-bar {
-        bottom: 0; /* Reset to default for larger screens */
-    }
-}
