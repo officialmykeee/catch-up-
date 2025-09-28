@@ -5,8 +5,20 @@ function openChatPanel(chat) {
     const chatMessages = document.getElementById('chatMessages');
     const fab = document.querySelector('.fab');
 
+    // Check if all required elements exist
+    if (!chatPanel || !chatList || !chatMessages || !fab) {
+        console.error('Missing DOM elements:', {
+            chatPanel: !!chatPanel,
+            chatList: !!chatList,
+            chatMessages: !!chatMessages,
+            fab: !!fab
+        });
+        return;
+    }
+
     // Set chat panel content
     chatMessages.innerHTML = `<p>${chat.lastMessage}</p>`; // Placeholder for messages
+    chatPanel.classList.remove('hidden'); // Ensure panel is visible
 
     // Create overlay if it doesn't exist
     let overlay = document.querySelector('.chat-panel-overlay');
@@ -17,13 +29,17 @@ function openChatPanel(chat) {
     }
 
     // Trigger transitions
-    chatList.classList.add('hidden');
-    chatPanel.classList.add('active');
-    overlay.classList.add('active');
-    fab.classList.add('hidden');
+    setTimeout(() => {
+        chatList.classList.add('hidden');
+        chatPanel.classList.add('active');
+        overlay.classList.add('active');
+        fab.classList.add('hidden');
+    }, 0); // Ensure DOM updates are applied before transition
 
     // Handle overlay click to close
     overlay.addEventListener('click', closeChatPanel, { once: true });
+
+    console.log('Chat panel opened for:', chat.name);
 }
 
 // Function to close chat panel
@@ -32,6 +48,17 @@ function closeChatPanel() {
     const chatList = document.getElementById('chatList');
     const overlay = document.querySelector('.chat-panel-overlay');
     const fab = document.querySelector('.fab');
+
+    // Check if all required elements exist
+    if (!chatPanel || !chatList || !overlay || !fab) {
+        console.error('Missing DOM elements during close:', {
+            chatPanel: !!chatPanel,
+            chatList: !!chatList,
+            overlay: !!overlay,
+            fab: !!fab
+        });
+        return;
+    }
 
     // Trigger transitions
     chatPanel.classList.remove('active');
@@ -43,8 +70,11 @@ function closeChatPanel() {
     setTimeout(() => {
         if (overlay && !chatPanel.classList.contains('active')) {
             overlay.remove();
+            console.log('Overlay removed');
         }
     }, 300);
+
+    console.log('Chat panel closed');
 }
 
 // Expose openChatPanel to the global scope for index.html to use
