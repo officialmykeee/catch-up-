@@ -1,5 +1,3 @@
-Keep this story.js:
-
 // --- CRITICAL FIX: Expose the main function at the top for use by HTML-side listeners ---
 window.showStoryPopup = showStoryPopup;
 
