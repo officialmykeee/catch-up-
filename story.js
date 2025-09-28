@@ -239,8 +239,8 @@ function showStoryPopup(userStory, userIndex, internalIndex = 0, direction = 'no
           </div>
           <div class="heart-container">
             <button class="action-icon-btn like-btn">
-              <svg viewBox="0 0 24 24"><path d="M12 21s-6-4.35-9-7.88C1.61 11.12 1 9.45 1 7.64 1 5.02 3.02 3 5.64 3c1.55 0 3.04.79 3.91 2.02C10.36 3.79 11.85 3 13.4 3 16.02 3 18 5.02 18 7.64c0 1.81-.61 3.48-2 5.48C18 16.65 12 21 12 21z"/></svg>
-            </button>
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path fill-rule="evenodd" clip-rule="evenodd" d="M12 6.00019C10.2006 3.90317 7.19377 3.2551 4.93923 5.17534C2.68468 7.09558 2.36727 10.3061 4.13778 12.5772C5.60984 14.4654 10.0648 18.4479 11.5249 19.7369C11.6882 19.8811 11.7699 19.9532 11.8652 19.9815C11.9483 20.0062 12.0393 20.0062 12.1225 19.9815C12.2178 19.9532 12.2994 19.8811 12.4628 19.7369C13.9229 18.4479 18.3778 14.4654 19.8499 12.5772C21.6204 10.3061 21.3417 7.07538 19.0484 5.17534C16.7551 3.2753 13.7994 3.90317 12 6.00019Z" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>
+          </button>
           </div>
         `;
         storyPopupContent.appendChild(bottomBar);
