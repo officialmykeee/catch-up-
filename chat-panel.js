@@ -4,7 +4,7 @@ function openChatPanel(chat) {
     const chatList = document.getElementById('chatList'); // The main content area
     const chatMessages = document.getElementById('chatMessages');
     const fab = document.querySelector('.fab');
-    // Select the main content container for the "push" effect
+    // Select the main container to trigger the slide (push)
     const appContainer = document.querySelector('.app-container'); 
 
     if (!chatPanel || !chatList || !chatMessages || !fab || !appContainer) {
@@ -18,10 +18,10 @@ function openChatPanel(chat) {
         return;
     }
 
-    // Clear the messages container to ensure no placeholder content is visible
+    // Clear the messages container to ensure no placeholder content
     chatMessages.innerHTML = ''; 
     
-    // --- STEP 1: Prepare the panel for the slide
+    // 1. Make the panel visible (so it's included in the flex layout)
     chatPanel.classList.remove('hidden');
 
     let overlay = document.querySelector('.chat-panel-overlay');
@@ -32,10 +32,10 @@ function openChatPanel(chat) {
         chatList.prepend(overlay); 
     }
 
-    // --- STEP 2: Start the slide and dim the background
+    // 2. Start the animation
     overlay.classList.add('active');
     fab.classList.add('hidden');
-    // This is the single line that triggers the combined slide/push animation
+    // This triggers the CSS transform on .app-container, causing the slide
     appContainer.classList.add('chat-open'); 
 
     overlay.addEventListener('click', closeChatPanel, { once: true });
@@ -59,17 +59,15 @@ function closeChatPanel() {
         return;
     }
 
-    // --- STEP 1: Start the slide back and fade the dimming
+    // 1. Start the reverse animation (slide back/pull)
     overlay.classList.remove('active');
-    // This is the single line that triggers the reverse slide/pull animation
+    // This triggers the CSS reverse transform
     appContainer.classList.remove('chat-open'); 
 
     fab.classList.remove('hidden');
 
-    // --- STEP 2: Hide the panel after the transition completes (300ms)
-    // This is crucial to prevent the panel from briefly appearing on the right
+    // 2. Hide the panel only after the transition completes (300ms)
     setTimeout(() => {
-        // Only hide if the appContainer has fully transitioned back
         if (!appContainer.classList.contains('chat-open')) {
             chatPanel.classList.add('hidden');
             if (overlay) overlay.remove();
