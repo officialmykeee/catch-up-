@@ -1,10 +1,10 @@
 // Function to open chat panel
 function openChatPanel(chat) {
     const chatPanel = document.getElementById('chatPanel');
-    const chatList = document.getElementById('chatList');
+    const chatList = document.getElementById('chatList'); // The main content area
     const chatMessages = document.getElementById('chatMessages');
     const fab = document.querySelector('.fab');
-    // --- NEW: Select the main content container for the "push" effect
+    // Select the main content container for the "push" effect
     const appContainer = document.querySelector('.app-container'); 
 
     if (!chatPanel || !chatList || !chatMessages || !fab || !appContainer) {
@@ -18,23 +18,24 @@ function openChatPanel(chat) {
         return;
     }
 
-    chatMessages.innerHTML = `<p>${chat.lastMessage}</p>`;
+    // Clear the messages container to ensure no placeholder content is visible
+    chatMessages.innerHTML = ''; 
+    
+    // --- STEP 1: Prepare the panel for the slide
     chatPanel.classList.remove('hidden');
 
     let overlay = document.querySelector('.chat-panel-overlay');
     if (!overlay) {
         overlay = document.createElement('div');
         overlay.className = 'chat-panel-overlay';
-        // Append overlay to the app container
-        appContainer.appendChild(overlay);
+        // Append overlay to the main content wrapper (#chatList) so it slides with the body
+        chatList.prepend(overlay); 
     }
 
-    // chatList.classList.add('hidden'); // REMOVED: list should slide with the body
-    chatPanel.classList.add('active');
+    // --- STEP 2: Start the slide and dim the background
     overlay.classList.add('active');
     fab.classList.add('hidden');
-    
-    // --- NEW: Trigger the body "push" transition
+    // This is the single line that triggers the combined slide/push animation
     appContainer.classList.add('chat-open'); 
 
     overlay.addEventListener('click', closeChatPanel, { once: true });
@@ -44,16 +45,13 @@ function openChatPanel(chat) {
 // Function to close chat panel
 function closeChatPanel() {
     const chatPanel = document.getElementById('chatPanel');
-    const chatList = document.getElementById('chatList');
     const overlay = document.querySelector('.chat-panel-overlay');
     const fab = document.querySelector('.fab');
-    // --- NEW: Select the main content container for the "pull" effect
     const appContainer = document.querySelector('.app-container');
 
-    if (!chatPanel || !chatList || !overlay || !fab || !appContainer) {
+    if (!chatPanel || !overlay || !fab || !appContainer) {
         console.error('Cannot close chat panel: Missing DOM elements', {
             chatPanel: !!chatPanel,
-            chatList: !!chatList,
             overlay: !!overlay,
             fab: !!fab,
             appContainer: !!appContainer
@@ -61,18 +59,18 @@ function closeChatPanel() {
         return;
     }
 
-    chatPanel.classList.remove('active');
+    // --- STEP 1: Start the slide back and fade the dimming
     overlay.classList.remove('active');
-    
-    // --- NEW: Trigger the body "pull" transition
+    // This is the single line that triggers the reverse slide/pull animation
     appContainer.classList.remove('chat-open'); 
 
-    // chatList.classList.remove('hidden'); // REMOVED: list should slide with the body
     fab.classList.remove('hidden');
 
-    // Use the CSS transition duration (0.3s = 300ms) for the timeout
+    // --- STEP 2: Hide the panel after the transition completes (300ms)
+    // This is crucial to prevent the panel from briefly appearing on the right
     setTimeout(() => {
-        if (!chatPanel.classList.contains('active')) {
+        // Only hide if the appContainer has fully transitioned back
+        if (!appContainer.classList.contains('chat-open')) {
             chatPanel.classList.add('hidden');
             if (overlay) overlay.remove();
             console.log('Overlay removed');
