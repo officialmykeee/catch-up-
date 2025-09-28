@@ -1,44 +1,49 @@
-/* --- Global Slide Wrapper (Apply this to <body> or the parent of .app-container) --- */
-.global-slide-wrapper {
-    /* Set up a full-viewport container to manage the horizontal slide */
-    display: flex; /* IMPORTANT: This makes the app container and chat panel slide together */
-    width: 100vw; 
+/* --- App Container Styles (MAJOR CHANGE: The Sliding Wrapper) --- */
+.app-container {
+    /* Define the visible viewport size for the mobile frame */
+    max-width: 384px;
+    margin: 0 auto; 
+    background-color: white; /* Base background for the entire app view */
+    min-height: 100vh;
     height: 100vh;
-    overflow: hidden; /* Hide the content that slides off-screen */
     
-    /* Apply transition to the entire wrapper to handle the unified push/slide effect */
+    /* Set up a horizontal flex container to hold the main content and the panel */
+    display: flex;
+    /* Use a very large width to contain both the main content (384px) and the chat panel (384px) */
+    width: 768px; /* 384px (Main Screen) + 384px (Chat Panel) */
+    
+    /* Hide the chat panel initially (it starts off-screen right) */
+    overflow: hidden; 
+    
+    /* Set initial position: showing the main content */
+    transform: translateX(0); 
+    
+    /* Apply transition to the entire container to handle the unified push/slide effect */
     transition: transform 0.3s ease-in-out;
     will-change: transform;
 }
 
 /* This class triggers the unified slide effect by shifting the entire view */
-.global-slide-wrapper.chat-open {
+.app-container.chat-open {
     /* Shift left by the width of the open chat panel (384px) */
     transform: translateX(-384px);
 }
 
-/* --- App Container Styles (Your Preferred Mobile Wrapper Styles) --- */
-.app-container {
-    /* This element now acts as the 'main screen' */
-    max-width: 384px;
-    margin: 0 auto; 
-    background-color: white;
-    min-height: 100vh;
-    
-    /* We need these properties to make it a flex item next to the chat panel */
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    flex-shrink: 0; /* Prevents shrinking */
-    
-    /* Ensure it takes up 100% of the visible width (384px) */
-    width: 100vw; 
+/* --- Main Content / Chat List Styles --- */
+#chatList { 
+    /* This element MUST take up the full visible screen width */
+    flex-shrink: 0; 
+    width: 384px; /* Fixed width of the mobile frame */
+    height: 100%;
+    position: relative; /* Needed for the overlay */
+    background-color: white; /* Ensure it matches the panel background */
+    /* Add any other styling for your main chat list view here */
 }
 
 
-/* --- Chat Panel Styles --- */
+/* --- Chat Panel Styles (Now a flexible element, no longer fixed) --- */
 .chat-panel {
-    /* It is now a standard flex item *next* to the main content (.app-container) */
+    /* It is now the second item in the .app-container flex flow */
     position: relative;
     top: 0;
     right: auto;
@@ -57,6 +62,7 @@
 }
 
 .chat-panel.hidden {
+    /* Hidden is still used to manage DOM visibility before/after transition */
     display: none !important;
 }
 
@@ -70,7 +76,7 @@
 
 /* --- Overlay for closing chat panel --- */
 .chat-panel-overlay {
-    /* Positioned absolutely inside the .app-container to cover the main screen */
+    /* Positioned absolutely inside #chatList to cover the main screen */
     position: absolute; 
     top: 0;
     left: 0;
