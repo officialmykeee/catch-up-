@@ -1,68 +1,25 @@
-/* --- App Container Styles (MAJOR CHANGE: The Sliding Wrapper) --- */
-.app-container {
-    /* Define the visible viewport size for the mobile frame */
-    max-width: 384px;
-    margin: 0 auto; 
-    background-color: white; /* Base background for the entire app view */
-    min-height: 100vh;
-    height: 100vh;
-    
-    /* Set up a horizontal flex container to hold the main content and the panel */
-    display: flex;
-    /* Use a very large width to contain both the main content (384px) and the chat panel (384px) */
-    width: 768px; /* 384px (Main Screen) + 384px (Chat Panel) */
-    
-    /* Hide the chat panel initially (it starts off-screen right) */
-    overflow: hidden; 
-    
-    /* Set initial position: showing the main content */
-    transform: translateX(0); 
-    
-    /* Apply transition to the entire container to handle the unified push/slide effect */
-    transition: transform 0.3s ease-in-out;
-    will-change: transform;
-}
-
-/* This class triggers the unified slide effect by shifting the entire view */
-.app-container.chat-open {
-    /* Shift left by the width of the open chat panel (384px) */
-    transform: translateX(-384px);
-}
-
-/* --- Main Content / Chat List Styles --- */
-#chatList { 
-    /* This element MUST take up the full visible screen width */
-    flex-shrink: 0; 
-    width: 384px; /* Fixed width of the mobile frame */
-    height: 100%;
-    position: relative; /* Needed for the overlay */
-    background-color: white; /* Ensure it matches the panel background */
-    /* Add any other styling for your main chat list view here */
-}
-
-
-/* --- Chat Panel Styles (Now a flexible element, no longer fixed) --- */
+/* Chat Panel Styles */
 .chat-panel {
-    /* It is now the second item in the .app-container flex flow */
-    position: relative;
+    position: fixed;
     top: 0;
-    right: auto;
-    
-    /* Define the width of the panel. */
-    width: 384px; 
-    max-width: 384px; 
+    right: 0;
+    width: 100%;
+    max-width: 384px;
     height: 100%;
-    
     background-color: white;
     z-index: 30;
     display: flex;
     flex-direction: column;
-    
-    flex-shrink: 0; /* Ensures the panel itself doesn't shrink */
+    transform: translateX(100%);
+    transition: transform 0.3s ease-in-out;
+    will-change: transform;
+}
+
+.chat-panel.active {
+    transform: translateX(0);
 }
 
 .chat-panel.hidden {
-    /* Hidden is still used to manage DOM visibility before/after transition */
     display: none !important;
 }
 
@@ -74,16 +31,15 @@
     background-color: white;
 }
 
-/* --- Overlay for closing chat panel --- */
+/* Overlay for closing chat panel */
 .chat-panel-overlay {
-    /* Positioned absolutely inside #chatList to cover the main screen */
-    position: absolute; 
+    position: fixed;
     top: 0;
     left: 0;
-    width: 100%; 
+    width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.3);
-    z-index: 29; 
+    z-index: 29;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s ease-in-out;
