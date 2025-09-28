@@ -27,23 +27,29 @@ function getDominantColor(imgElement) {
 /**
  * Detects whether to blur or stretch content based on aspect ratio.
  * @param {HTMLImageElement|HTMLVideoElement} element - The image or video element.
- * @param {HTMLElement} container - The container element for size comparison.
  * @returns {string} 'stretch' or 'blur' based on content dimensions.
  */
-function detectContentFit(element, container) {
+function detectContentFit(element) {
     const contentWidth = element.naturalWidth || element.videoWidth || 0;
     const contentHeight = element.naturalHeight || element.videoHeight || 0;
-    if (!contentWidth || !contentHeight) return 'blur'; // Fallback for invalid dimensions
+    if (!contentWidth || !contentHeight) {
+        console.warn('Invalid content dimensions:', { width: contentWidth, height: contentHeight });
+        return 'blur'; // Fallback for invalid dimensions
+    }
 
-    const containerRect = container.getBoundingClientRect();
-    const containerAspect = containerRect.width / containerRect.height;
+    // Use viewport dimensions for comparison
+    const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+    const containerAspect = viewportWidth / viewportHeight;
     const contentAspect = contentWidth / contentHeight;
 
-    // Tall/narrow content (aspect ratio < container's) should stretch to fill height
+    console.log('Aspect ratios:', { contentAspect, containerAspect });
+
+    // Tall/narrow content (contentAspect < containerAspect) should stretch to fill
     if (contentAspect < containerAspect) {
         return 'stretch';
     }
-    // Wide/short content should use blurred background and center
+    // Wide/short content should center with blurred background
     return 'blur';
 }
 
@@ -139,11 +145,11 @@ function renderContent(storyCard) {
 
         img.onload = () => {
             loadingRing.classList.add('hidden');
-            const fitType = detectContentFit(img, storyContentContainer);
+            const fitType = detectContentFit(img);
             if (fitType === 'stretch') {
                 img.classList.add('stretch');
-                bgLayer.style.backgroundColor = '#222'; // No blur, use solid color
-                bgImg.style.display = 'none'; // Hide blurred background
+                bgLayer.style.backgroundColor = '#222';
+                bgImg.style.display = 'none';
             } else {
                 const dominantColor = getDominantColor(img);
                 bgLayer.style.backgroundColor = dominantColor || '#222';
@@ -181,11 +187,11 @@ function renderContent(storyCard) {
 
         video.onloadedmetadata = () => {
             loadingRing.classList.add('hidden');
-            const fitType = detectContentFit(video, storyContentContainer);
+            const fitType = detectContentFit(video);
             if (fitType === 'stretch') {
                 video.classList.add('stretch');
-                bgLayer.style.backgroundColor = '#111'; // No blur, use solid color
-                bgVideo.style.display = 'none'; // Hide blurred background
+                bgLayer.style.backgroundColor = '#111';
+                bgVideo.style.display = 'none';
             } else {
                 bgLayer.style.backgroundColor = '#111';
             }
