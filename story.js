@@ -374,3 +374,27 @@ if (storyPopup) {
     });
 }
 
+// --- NEW FIX: Event Listener for Story Card Clicks ---
+// This assumes:
+// 1. Your story elements have the class 'story-card-trigger'
+// 2. Your story data is loaded into a global array named 'window.stories'
+
+document.addEventListener('DOMContentLoaded', () => {
+    const storyTriggers = document.querySelectorAll('.story-card-trigger');
+
+    storyTriggers.forEach((card, index) => {
+        card.addEventListener('click', () => {
+            const stories = window.stories;
+            
+            // Check if story data is available and the index is valid
+            if (stories && stories[index]) {
+                // Call the main function to show the popup
+                showStoryPopup(stories[index], index);
+            } else {
+                console.error(`Story data not found for index ${index}. Check if window.stories is loaded.`);
+            }
+        });
+    });
+});
+// --- END OF NEW FIX ---
+
