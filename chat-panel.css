@@ -1,44 +1,54 @@
-/* --- Global App Container Styles (The Sliding Wrapper) --- */
-/* This container holds both the main screen and the chat panel side-by-side */
-.app-container {
-    display: flex;
-    width: 100vw; /* Total width of the visible viewport */
+/* --- Global Slide Wrapper (Apply this to <body> or the parent of .app-container) --- */
+.global-slide-wrapper {
+    /* Set up a full-viewport container to manage the horizontal slide */
+    display: flex; /* IMPORTANT: This makes the app container and chat panel slide together */
+    width: 100vw; 
     height: 100vh;
-    overflow: hidden; /* Crucial: Hides the content that slides off-screen */
+    overflow: hidden; /* Hide the content that slides off-screen */
     
-    /* Apply transition to the entire container to handle the unified push/slide effect */
+    /* Apply transition to the entire wrapper to handle the unified push/slide effect */
     transition: transform 0.3s ease-in-out;
     will-change: transform;
 }
 
 /* This class triggers the unified slide effect by shifting the entire view */
-.app-container.chat-open {
+.global-slide-wrapper.chat-open {
     /* Shift left by the width of the open chat panel (384px) */
     transform: translateX(-384px);
 }
 
-/* The container holding your main chat list/body content */
-#chatList { 
-    flex-shrink: 0; /* Prevents the list from shrinking */
-    width: 100vw; /* Occupies exactly one full screen width */
-    height: 100%;
-    position: relative; /* Needed so the overlay can be positioned correctly inside */
-    /* Add background-color: white; or whatever your main chat list background is */
+/* --- App Container Styles (Your Preferred Mobile Wrapper Styles) --- */
+.app-container {
+    /* This element now acts as the 'main screen' */
+    max-width: 384px;
+    margin: 0 auto; 
+    background-color: white;
+    min-height: 100vh;
+    
+    /* We need these properties to make it a flex item next to the chat panel */
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    flex-shrink: 0; /* Prevents shrinking */
+    
+    /* Ensure it takes up 100% of the visible width (384px) */
+    width: 100vw; 
 }
 
-/* --- Chat Panel Styles (The Sliding Chat Window) --- */
+
+/* --- Chat Panel Styles --- */
 .chat-panel {
-    /* It is now a standard flex item *next* to the main content (#chatList) */
-    position: relative; 
+    /* It is now a standard flex item *next* to the main content (.app-container) */
+    position: relative;
     top: 0;
     right: auto;
     
-    /* Define the width of the panel. This is what it will occupy on screen. */
-    width: 384px; /* Critical width for the push calculation */
+    /* Define the width of the panel. */
+    width: 384px; 
     max-width: 384px; 
     height: 100%;
     
-    background-color: white; /* The "ash white" screen that slides in */
+    background-color: white;
     z-index: 30;
     display: flex;
     flex-direction: column;
@@ -58,16 +68,16 @@
     background-color: white;
 }
 
-/* --- Overlay for closing chat panel (The Dimming Effect) --- */
+/* --- Overlay for closing chat panel --- */
 .chat-panel-overlay {
-    position: absolute; /* Relative to #chatList */
+    /* Positioned absolutely inside the .app-container to cover the main screen */
+    position: absolute; 
     top: 0;
     left: 0;
-    /* Overlay covers the full area of the main content */
     width: 100%; 
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.3); /* The semi-transparent dimming color */
-    z-index: 29; /* Below the chat panel (z-index: 30) */
+    background-color: rgba(0, 0, 0, 0.3);
+    z-index: 29; 
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s ease-in-out;
