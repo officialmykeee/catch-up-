@@ -1,35 +1,4 @@
-// --- CRITICAL FIX: Expose the main function at the top for use by HTML-side listeners ---
 window.showStoryPopup = showStoryPopup;
-
-/**
- * Utility function to approximate a dominant color from a small area of an image.
- * Note: Requires the image to be served with CORS headers if from a different domain.
- * @param {HTMLImageElement} imgElement - The loaded image element.
- * @returns {string|null} The dominant color as a CSS rgb() string or null if failed.
- */
-function getDominantColor(imgElement) {
-    try {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        const width = canvas.width = 50;
-        const height = canvas.height = 50;
-        ctx.drawImage(imgElement, 0, 0, width, height);
-        const imageData = ctx.getImageData(0, 0, width, height);
-        let r = 0, g = 0, b = 0, count = 0;
-        for (let i = 0; i < imageData.data.length; i += 4) {
-            r += imageData.data[i];
-            g += imageData.data[i + 1];
-            b += imageData.data[i + 2];
-            count++;
-        }
-        r = Math.floor(r / count);
-        g = Math.floor(g / count);
-        b = Math.floor(b / count);
-        return `rgb(${r}, ${g}, ${b})`;
-    } catch (e) {
-        return null;
-    }
-}
 
 // --- Global Variables ---
 let storyPopup, storyContentDiv, loadingRing;
@@ -38,7 +7,6 @@ let currentStoryIndex = 0;
 let stories = [];
 let progressTimer, progressDuration = 5000;
 
-// --- Initialize Story Popup ---
 document.addEventListener('DOMContentLoaded', () => {
     storyPopup = document.getElementById('storyPopup');
     storyContentDiv = document.getElementById('storyContent');
@@ -51,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('storyNext')?.addEventListener('click', showNextStory);
 });
 
-// --- Show Popup with Stories ---
+// --- Show Popup ---
 function showStoryPopup(storyList, startIndex = 0) {
     stories = storyList;
     currentStoryIndex = startIndex;
@@ -61,14 +29,12 @@ function showStoryPopup(storyList, startIndex = 0) {
     }
 }
 
-// --- Close Popup ---
 function closeStoryPopup() {
-    storyPopup.classList.remove('active');
+    storyPopup?.classList.remove('active');
     stopProgressBar();
-    storyContentDiv.innerHTML = '';
+    if (storyContentDiv) storyContentDiv.innerHTML = '';
 }
 
-// --- Navigation ---
 function showPrevStory() {
     if (currentStoryIndex > 0) {
         currentStoryIndex--;
@@ -85,10 +51,13 @@ function showNextStory() {
     }
 }
 
-// --- Render Story Content ---
 function renderContent(storyCard) {
+    if (!storyContentDiv) return;
     storyContentDiv.innerHTML = '';
+
     const storyContentContainer = document.querySelector('.story-content');
+    if (!storyContentContainer) return;
+
     let bgLayer = storyContentContainer.querySelector('.story-background-layer');
     if (bgLayer) bgLayer.remove();
 
@@ -97,44 +66,36 @@ function renderContent(storyCard) {
     storyContentContainer.prepend(bgLayer);
 
     if (storyCard.type === 'image') {
-        loadingRing.classList.remove('hidden');
+        loadingRing?.classList.remove('hidden');
         const img = document.createElement('img');
         img.src = storyCard.src;
         img.alt = 'Story image';
-        img.className = 'story main';
+        img.className = 'main'; // matches your CSS
+        storyContentDiv.appendChild(img);
 
         const bgImg = document.createElement('img');
         bgImg.src = storyCard.src;
         bgImg.alt = 'Blurred background';
         bgImg.className = 'story-bg';
-
         bgLayer.appendChild(bgImg);
-        storyContentDiv.appendChild(img);
 
         img.onload = () => {
-            loadingRing.classList.add('hidden');
+            loadingRing?.classList.add('hidden');
 
-            // --- Aspect ratio detection ---
             const imgRatio = img.naturalWidth / img.naturalHeight;
             const viewportRatio = window.innerWidth / window.innerHeight;
             const ratioDiff = Math.abs(imgRatio - viewportRatio);
 
             if (ratioDiff > 0.2) {
-                // Image does not fit → blurred background with contain
                 img.style.objectFit = 'contain';
                 bgImg.style.display = 'block';
                 bgLayer.style.filter = 'blur(20px) brightness(0.7)';
             } else {
-                // Image fits viewport → cover, no blur
                 img.style.objectFit = 'cover';
                 bgImg.style.display = 'none';
                 bgLayer.style.filter = 'none';
                 bgLayer.style.backgroundColor = '#000';
             }
-
-            // Optional: fallback dominant color
-            const dominantColor = getDominantColor(img);
-            if (dominantColor) bgLayer.style.backgroundColor = dominantColor;
 
             setTimeout(() => {
                 bgImg.style.opacity = 1;
@@ -144,20 +105,22 @@ function renderContent(storyCard) {
         };
 
         img.onerror = () => {
-            loadingRing.classList.add('hidden');
+            loadingRing?.classList.add('hidden');
             storyContentDiv.innerHTML = `<p class="story-text">Error loading image</p>`;
             bgLayer.style.backgroundColor = '#444';
             startProgressBar();
         };
+    }
 
-    } else if (storyCard.type === 'video') {
-        loadingRing.classList.remove('hidden');
+    else if (storyCard.type === 'video') {
+        loadingRing?.classList.remove('hidden');
         const video = document.createElement('video');
         video.src = storyCard.src;
         video.autoplay = true;
         video.controls = true;
         video.playsInline = true;
-        video.className = 'story main';
+        video.className = 'main';
+        storyContentDiv.appendChild(video);
 
         const bgVideo = document.createElement('video');
         bgVideo.src = storyCard.src;
@@ -166,33 +129,34 @@ function renderContent(storyCard) {
         bgVideo.muted = true;
         bgVideo.playsInline = true;
         bgVideo.className = 'story-bg';
-
         bgLayer.appendChild(bgVideo);
-        storyContentDiv.appendChild(video);
 
         video.onloadeddata = () => {
-            loadingRing.classList.add('hidden');
+            loadingRing?.classList.add('hidden');
             video.play().catch(() => {});
             startProgressBar(video.duration * 1000 || progressDuration);
         };
 
         video.onerror = () => {
-            loadingRing.classList.add('hidden');
+            loadingRing?.classList.add('hidden');
             storyContentDiv.innerHTML = `<p class="story-text">Error loading video</p>`;
             bgLayer.style.backgroundColor = '#222';
             startProgressBar();
         };
+    }
 
-    } else if (storyCard.type === 'text') {
+    else if (storyCard.type === 'text') {
         storyContentDiv.innerHTML = `<p class="story-text">${storyCard.text}</p>`;
         bgLayer.style.backgroundColor = storyCard.bg || '#333';
         startProgressBar();
     }
 }
 
-// --- Progress Bar Control ---
+// --- Progress Bar ---
 function startProgressBar(duration = progressDuration) {
     stopProgressBar();
+    if (!progressBar) return;
+
     progressBar.style.transition = 'none';
     progressBar.style.width = '0%';
     void progressBar.offsetWidth;
@@ -204,6 +168,8 @@ function startProgressBar(duration = progressDuration) {
 
 function stopProgressBar() {
     clearTimeout(progressTimer);
-    progressBar.style.transition = 'none';
-    progressBar.style.width = '0%';
+    if (progressBar) {
+        progressBar.style.transition = 'none';
+        progressBar.style.width = '0%';
+    }
 }
