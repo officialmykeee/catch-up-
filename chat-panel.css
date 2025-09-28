@@ -1,41 +1,57 @@
-/* --- Global App Container Styles (NEW/MODIFIED) --- */
+/* --- Global App Container Styles (MAJOR CHANGE: The Sliding Wrapper) --- */
 /* Assuming .app-container is the top-level wrapper around the main content (chat list) */
 .app-container {
-    /* Enable smooth transition for the "push" effect */
+    /* Set up a horizontal flex container to hold both screens side-by-side */
+    display: flex;
+    width: 100vw; /* Total width of the visible viewport */
+    height: 100vh;
+    overflow: hidden; /* Hide the portion of the content that slides off-screen */
+    
+    /* Apply transition to the entire container to handle the unified push/slide effect */
     transition: transform 0.3s ease-in-out;
     will-change: transform;
-    /* Ensure the app doesn't show the horizontal shift before the animation */
-    overflow-x: hidden; 
 }
 
-/* This class triggers the "push" effect by shifting the entire app container */
+/* This class triggers the unified slide effect by shifting the entire view */
 .app-container.chat-open {
-    /* Shift left by the panel's max-width (384px) */
+    /* Shift left by the width of the open chat panel (384px) */
     transform: translateX(-384px);
 }
 
-/* --- Chat Panel Styles (Mostly Original, still fixed for slide-over) --- */
-.chat-panel {
-    position: fixed;
-    top: 0;
-    right: 0;
-    width: 100%;
-    max-width: 384px; /* Critical width for the push calculation */
+/* The container holding your main chat list/body content */
+#chatList { 
+    /* You may need to wrap your actual #chatList in a parent div if it has internal flex properties. 
+       For this example, we apply the crucial layout properties directly to #chatList */
+    flex-shrink: 0; /* Prevents the list from shrinking */
+    width: 100vw; /* Occupies exactly one full screen width */
     height: 100%;
+    position: relative; /* Needed so the overlay can be positioned relative to it */
+}
+
+/* --- Chat Panel Styles (MODIFIED: Now a flexible element) --- */
+.chat-panel {
+    /* It is now a standard flex item *next* to the main content (#chatList) */
+    position: relative; /* Changed from fixed/absolute */
+    top: 0;
+    right: auto;
+    
+    /* Define the width of the panel. This is what it will occupy on screen. */
+    width: 384px; /* Critical width for the push calculation */
+    max-width: 384px; 
+    height: 100%;
+    
     background-color: white;
     z-index: 30;
     display: flex;
     flex-direction: column;
-    transform: translateX(100%); /* Initial state: Off screen right */
-    transition: transform 0.3s ease-in-out;
-    will-change: transform;
-}
-
-.chat-panel.active {
-    transform: translateX(0); /* Final state: On screen */
+    
+    flex-shrink: 0; /* Ensures the panel itself doesn't shrink */
+    
+    /* 'active' class is no longer needed for sliding. */
 }
 
 .chat-panel.hidden {
+    /* We use JS to apply/remove 'hidden' before/after transition */
     display: none !important;
 }
 
@@ -47,16 +63,16 @@
     background-color: white;
 }
 
-/* --- Overlay for closing chat panel (MODIFIED) --- */
+/* --- Overlay for closing chat panel (MODIFIED: Positioning) --- */
 .chat-panel-overlay {
-    position: fixed;
+    position: absolute; /* Relative to #chatList (main screen) */
     top: 0;
     left: 0;
-    /* Overlay only covers the space NOT taken by the 384px panel */
-    width: calc(100% - 384px); 
+    /* Overlay covers the full area of the main content that is being pushed */
+    width: 100%; 
     height: 100%;
     background-color: rgba(0, 0, 0, 0.3);
-    z-index: 29;
+    z-index: 29; /* Below the chat panel (z-index: 30) */
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s ease-in-out;
@@ -70,7 +86,9 @@
 
 /* FAB hiding when chat panel is open (Keep as-is) */
 .fab.hidden {
+    /* Assuming FAB is outside of .app-container or uses z-index logic */
     opacity: 0;
     pointer-events: none;
 }
+
 
