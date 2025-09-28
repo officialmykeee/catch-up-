@@ -25,7 +25,8 @@ function getDominantColor(imgElement) {
 }
 
 /**
- * Detects whether to blur or stretch content based on aspect ratio.
+ * Detects whether to blur or stretch content based on aspect ratio,
+ * matching the Instagram-like pattern.
  * @param {HTMLImageElement|HTMLVideoElement} element - The image or video element.
  * @returns {string} 'stretch' or 'blur' based on content dimensions.
  */
@@ -37,19 +38,39 @@ function detectContentFit(element) {
         return 'blur'; // Fallback for invalid dimensions
     }
 
-    // Use viewport dimensions for comparison
-    const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
-    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
-    const containerAspect = viewportWidth / viewportHeight;
+    // --- FIX: Get the dimensions of the story display container ---
+    const storyContentInner = document.querySelector('.story-content-inner');
+    if (!storyContentInner) {
+        console.error('Story content inner container not found for aspect ratio calculation.');
+        return 'blur';
+    }
+    
+    // Use getBoundingClientRect to get the actual computed size of the visible story area
+    const containerRect = storyContentInner.getBoundingClientRect();
+    
+    const containerWidth = containerRect.width;
+    const containerHeight = containerRect.height;
+
+    if (!containerWidth || !containerHeight) {
+        console.warn('Container dimensions are zero.', { containerWidth, containerHeight });
+        return 'blur';
+    }
+    // -----------------------------------------------------------------
+
+    // Calculate aspect ratios
+    const containerAspect = containerWidth / containerHeight;
     const contentAspect = contentWidth / contentHeight;
 
     console.log('Aspect ratios:', { contentAspect, containerAspect });
+    console.log('Container dimensions:', { containerWidth, containerHeight });
 
-    // Tall/narrow content (contentAspect < containerAspect) should stretch to fill
+    // Instagram-like behavior:
+    // Tall/narrow content (contentAspect < containerAspect) should stretch to fill (object-fit: cover)
     if (contentAspect < containerAspect) {
         return 'stretch';
     }
-    // Wide/short content should center with blurred background
+    
+    // Wide/short content should center with blurred background (object-fit: contain)
     return 'blur';
 }
 
@@ -151,6 +172,7 @@ function renderContent(storyCard) {
                 bgLayer.style.backgroundColor = '#222';
                 bgImg.style.display = 'none';
             } else {
+                img.classList.remove('stretch'); // Ensure it's removed if previous story stretched
                 const dominantColor = getDominantColor(img);
                 bgLayer.style.backgroundColor = dominantColor || '#222';
                 setTimeout(() => {
@@ -193,6 +215,7 @@ function renderContent(storyCard) {
                 bgLayer.style.backgroundColor = '#111';
                 bgVideo.style.display = 'none';
             } else {
+                video.classList.remove('stretch'); // Ensure it's removed if previous story stretched
                 bgLayer.style.backgroundColor = '#111';
             }
             startProgressBar();
@@ -226,6 +249,7 @@ function showStoryPopup(userStory, userIndex, internalIndex = 0, direction = 'no
     currentStoryIndex = userIndex;
     currentInternalStoryIndex = internalIndex;
 
+    // Transition effects for user-to-user navigation
     if (direction === 'next-user') {
         storyPopupContent.style.transform = 'translateX(-50%)';
         setTimeout(() => {
@@ -334,12 +358,16 @@ function initStoryListeners() {
     if (navNextInternal) navNextInternal.addEventListener('click', nextStory);
     if (navPrevInternal) navPrevInternal.addEventListener('click', prevStory);
 
+    let startX = 0;
+    let startY = 0;
+
     if (storyPopup) {
         storyPopup.addEventListener('touchstart', (e) => {
             if (!storyPopup.classList.contains('active')) return;
             startX = e.touches[0].clientX;
             startY = e.touches[0].clientY;
             storyPopup.style.transition = 'none';
+            storyPopupContent.style.transition = 'none';
             clearProgressTimeout();
         });
 
@@ -350,11 +378,12 @@ function initStoryListeners() {
             const deltaX = currentX - startX;
             const deltaY = currentY - startY;
 
+            // Vertical drag for dismiss
             if (Math.abs(deltaY) > Math.abs(deltaX) && deltaY > 0) {
                 storyPopup.style.transform = `translateY(${deltaY}px)`;
                 e.preventDefault();
+            // Horizontal drag for user navigation
             } else if (Math.abs(deltaX) > Math.abs(deltaY)) {
-                storyPopupContent.style.transition = 'none';
                 storyPopupContent.style.transform = `translateX(${deltaX / 2}px)`;
                 e.preventDefault();
             }
@@ -370,11 +399,13 @@ function initStoryListeners() {
             storyPopup.style.transition = 'transform 0.3s ease-in-out';
             storyPopupContent.style.transition = 'transform 0.15s linear';
 
+            // Dismiss story if dragged down significantly
             if (Math.abs(deltaY) > Math.abs(deltaX) && deltaY > 60) {
                 hideStoryPopup();
                 return;
             }
 
+            // Navigate users if dragged horizontally significantly
             if (Math.abs(deltaX) > 60) {
                 if (deltaX > 0 && currentStoryIndex > 0) {
                     const prevUserStory = window.stories[currentStoryIndex - 1];
@@ -387,6 +418,7 @@ function initStoryListeners() {
                 }
             }
 
+            // Snap back and restart progress if drag was insufficient for navigation/dismiss
             storyPopup.style.transform = 'translateY(0)';
             storyPopupContent.style.transform = 'translateX(0)';
             startProgressBar();
@@ -408,3 +440,4 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     initStoryListeners();
 });
+
