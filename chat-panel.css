@@ -1,0 +1,51 @@
+/* Chat Panel Styles */
+.chat-panel {
+    position: fixed;
+    top: 0;
+    right: -100%; /* Start off-screen to the right */
+    width: 100%;
+    max-width: 384px;
+    height: 100%;
+    background-color: white; /* White background */
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    transition: right 0.3s ease-in-out;
+}
+
+.chat-panel.active {
+    right: 0; /* Slide in to visible position */
+}
+
+/* Chat Messages */
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    background-color: white; /* White background */
+}
+
+/* Overlay for closing chat panel */
+.chat-panel-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.3);
+    z-index: 29;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.chat-panel-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* FAB hiding when chat panel is open */
+.fab.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
