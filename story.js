@@ -1,161 +1,403 @@
-// --- CRITICAL FIX: Expose the main function at the top for use by HTML-side listeners ---
+// Expose the main function at the top
 window.showStoryPopup = showStoryPopup;
 
-document.addEventListener("DOMContentLoaded", () => {
-    console.log("Story system initialized.");
-});
+/**
+ * Utility function to approximate a dominant color from a small area of an image.
+ * @param {HTMLImageElement} imgElement - The loaded image element.
+ * @returns {string|null} The dominant color as an RGB string, or null on error.
+ */
+function getDominantColor(imgElement) {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
 
-// --- Utility: detect best content fit (Instagram logic) ---
-function detectContentFit(element) {
+    if (!imgElement.complete || imgElement.naturalWidth === 0) return null;
+
+    try {
+        canvas.width = 1;
+        canvas.height = 1;
+        context.drawImage(imgElement, 0, 0, 1, 1);
+        const data = context.getImageData(0, 0, 1, 1).data;
+        return `rgb(${data[0]}, ${data[1]}, ${data[2]})`;
+    } catch (e) {
+        console.warn('Could not read image data for color extraction. Likely CORS issue.', e);
+        return null;
+    }
+}
+
+/**
+ * Detects image/video size category relative to .story-content.
+ * @param {HTMLImageElement|HTMLVideoElement} element - The image or video element.
+ * @param {HTMLElement} container - The .story-content element.
+ * @returns {string} 'large' or 'medium' based on content dimensions.
+ */
+function detectContentFit(element, container) {
     const contentWidth = element.naturalWidth || element.videoWidth || 0;
     const contentHeight = element.naturalHeight || element.videoHeight || 0;
     if (!contentWidth || !contentHeight) {
-        console.warn("Invalid content dimensions:", { width: contentWidth, height: contentHeight });
-        return "blur"; // fallback
+        console.warn('Invalid content dimensions:', { width: contentWidth, height: contentHeight });
+        return 'medium'; // Fallback to medium for invalid dimensions
     }
 
-    const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
-    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
-    const containerAspect = viewportWidth / viewportHeight;
-    const contentAspect = contentWidth / contentHeight;
+    const containerRect = container.getBoundingClientRect();
+    const containerWidth = containerRect.width;
+    const containerHeight = containerRect.height;
 
-    console.log("Aspect ratios:", { contentAspect, containerAspect });
+    console.log('Content dimensions:', { contentWidth, contentHeight });
+    console.log('Container dimensions:', { containerWidth, containerHeight });
 
-    // Instagram-like behavior
-    if (contentAspect < containerAspect) {
-        return "blur";   // portrait → blurred background
+    // Large: Width and height are at least as large as the container
+    if (contentWidth >= containerWidth && contentHeight >= containerHeight) {
+        return 'large';
     }
-    return "stretch";    // landscape → cover screen
+    // Medium: Width is close to container width (80–120%) or height is less than container
+    // Small: Width or height significantly smaller, treated as medium
+    return 'medium';
 }
 
-// --- Main popup function ---
-function showStoryPopup(storySrc, type = "image") {
-    let popup = document.querySelector(".story-popup");
-    if (!popup) {
-        popup = document.createElement("div");
-        popup.className = "story-popup";
-        popup.innerHTML = `
-            <div class="story-background"></div>
-            <div class="story-content-wrapper">
-                <div class="story-content"></div>
-            </div>
-            <div class="story-progress"></div>
-            <button class="story-close">&times;</button>
-            <div class="story-nav left"></div>
-            <div class="story-nav right"></div>
-        `;
-        document.body.appendChild(popup);
-        console.log("Popup created.");
-    } else {
-        console.log("Reusing popup.");
+// Global Element References
+const storyPopup = document.getElementById('storyPopup');
+const storyContentDiv = document.querySelector('.story-content-inner');
+const loadingRing = document.querySelector('.story-telegram-ring');
+const storyPopupContent = document.querySelector('.story-popup-content');
+const multiProgressBar = document.getElementById('multiProgressBar');
+const navPrevInternal = document.getElementById('navPrevInternal');
+const navNextInternal = document.getElementById('navNextInternal');
+
+// Global State
+let progressTimeout = null;
+let currentStoryIndex = 0;
+let currentInternalStoryIndex = 0;
+let isNavigating = false;
+const STORY_DURATION = 5000;
+
+// Progress Management
+function clearProgressTimeout() {
+    if (progressTimeout) {
+        clearTimeout(progressTimeout);
+        progressTimeout = null;
     }
-
-    const contentContainer = popup.querySelector(".story-content");
-    const background = popup.querySelector(".story-background");
-    contentContainer.innerHTML = "";
-
-    let media;
-    if (type === "video") {
-        media = document.createElement("video");
-        media.src = storySrc;
-        media.autoplay = true;
-        media.loop = true;
-        media.playsInline = true;
-        media.muted = true; // autoplay requirement
-        media.addEventListener("loadedmetadata", () => {
-            const fitMode = detectContentFit(media);
-            applyContentFit(fitMode, media, background);
-        });
-    } else {
-        media = document.createElement("img");
-        media.src = storySrc;
-        media.addEventListener("load", () => {
-            const fitMode = detectContentFit(media);
-            applyContentFit(fitMode, media, background);
-        });
-    }
-
-    contentContainer.appendChild(media);
-    popup.style.visibility = "visible";
-    popup.style.opacity = "1";
-    popup.style.transform = "translateY(0)";
-    popup.classList.add("active");
-
-    setupStoryEvents(popup, media);
-    startProgressBar(popup);
 }
 
-// --- Apply fit mode to media + background ---
-function applyContentFit(mode, media, background) {
-    if (mode === "blur") {
-        media.style.objectFit = "contain";
-        background.style.backgroundImage = `url(${media.src})`;
-        background.classList.add("blurred");
-    } else {
-        media.style.objectFit = "cover";
-        background.style.backgroundImage = "none";
-        background.classList.remove("blurred");
-    }
-    console.log("Applied content fit:", mode);
+function renderProgressBars(internalStories) {
+    multiProgressBar.innerHTML = '';
+    internalStories.forEach((_, index) => {
+        const segment = document.createElement('div');
+        segment.className = 'progress-bar-segment';
+        segment.innerHTML = '<div class="progress-bar-inner"></div>';
+        segment.id = `story-segment-${index}`;
+        multiProgressBar.appendChild(segment);
+    });
 }
 
-// --- Progress bar ---
-function startProgressBar(popup) {
-    const progressBar = popup.querySelector(".story-progress");
-    progressBar.style.transition = "none";
-    progressBar.style.width = "0%";
+function startProgressBar() {
+    clearProgressTimeout();
+    const currentSegment = document.getElementById(`story-segment-${currentInternalStoryIndex}`);
+    if (!currentSegment) return;
+
+    const innerBar = currentSegment.querySelector('.progress-bar-inner');
+    document.querySelectorAll('.progress-bar-segment').forEach((segment, index) => {
+        const bar = segment.querySelector('.progress-bar-inner');
+        bar.style.transition = 'none';
+        bar.style.width = index < currentInternalStoryIndex ? '100%' : '0%';
+    });
+
+    innerBar.offsetHeight; // Force reflow
+    innerBar.style.transition = `width ${STORY_DURATION}ms linear`;
+    innerBar.style.width = '100%';
+
+    progressTimeout = setTimeout(() => {
+        nextStory();
+    }, STORY_DURATION);
+}
+
+// Content Fetching & Rendering
+async function fetchStoryContent(storyCard) {
+    return new Promise(resolve => {
+        setTimeout(() => {
+            resolve(storyCard);
+        }, 300);
+    });
+}
+
+function renderContent(storyCard) {
+    storyContentDiv.innerHTML = '';
+    const storyContentContainer = document.querySelector('.story-content');
+    let bgLayer = storyContentContainer.querySelector('.story-background-layer');
+    if (bgLayer) bgLayer.remove();
+
+    bgLayer = document.createElement('div');
+    bgLayer.className = 'story-background-layer';
+    storyContentContainer.prepend(bgLayer);
+
+    if (storyCard.type === 'image') {
+        loadingRing.classList.remove('hidden');
+        const img = document.createElement('img');
+        img.src = storyCard.src;
+        img.alt = 'Story image';
+        img.className = 'story main';
+
+        const bgImg = document.createElement('img');
+        bgImg.src = storyCard.src;
+        bgImg.alt = 'Blurred background';
+        bgImg.className = 'story-bg';
+
+        bgLayer.appendChild(bgImg);
+        storyContentDiv.appendChild(img);
+
+        img.onload = () => {
+            loadingRing.classList.add('hidden');
+            const fitType = detectContentFit(img, storyContentContainer);
+            console.log('Image fit type:', fitType);
+            img.classList.add(fitType);
+            const dominantColor = getDominantColor(img);
+            bgLayer.style.backgroundColor = dominantColor || '#222';
+            setTimeout(() => {
+                bgImg.style.opacity = 1;
+            }, 50);
+            startProgressBar();
+        };
+
+        img.onerror = () => {
+            loadingRing.classList.add('hidden');
+            storyContentDiv.innerHTML = `<p class="story-text">Error loading image</p>`;
+            bgLayer.style.backgroundColor = '#444';
+            startProgressBar();
+        };
+
+    } else if (storyCard.type === 'video') {
+        loadingRing.classList.remove('hidden');
+        const video = document.createElement('video');
+        video.src = storyCard.src;
+        video.controls = true;
+        video.autoplay = true;
+        video.loop = true;
+        video.muted = true;
+        video.className = 'story main story-video';
+
+        const bgVideo = video.cloneNode(true);
+        bgVideo.removeAttribute('controls');
+        bgVideo.className = 'story-bg';
+        bgVideo.style.opacity = 1;
+
+        bgLayer.appendChild(bgVideo);
+        storyContentDiv.appendChild(video);
+
+        video.onloadedmetadata = () => {
+            loadingRing.classList.add('hidden');
+            const fitType = detectContentFit(video, storyContentContainer);
+            console.log('Video fit type:', fitType);
+            video.classList.add(fitType);
+            bgLayer.style.backgroundColor = '#111';
+            startProgressBar();
+        };
+
+        video.onerror = () => {
+            loadingRing.classList.add('hidden');
+            storyContentDiv.innerHTML = `<p class="story-text">Error loading video</p>`;
+            startProgressBar();
+        };
+
+    } else if (storyCard.type === 'text') {
+        loadingRing.classList.add('hidden');
+        const p = document.createElement('p');
+        p.className = 'story-text';
+        p.textContent = storyCard.text;
+        bgLayer.style.background = 'linear-gradient(135deg, #749cbf, #a855f7)';
+        storyContentDiv.appendChild(p);
+        startProgressBar();
+    }
+}
+
+// Main Popup/Navigation Function
+function showStoryPopup(userStory, userIndex, internalIndex = 0, direction = 'none') {
+    if (!storyPopup) {
+        console.error('Story popup element not found');
+        return;
+    }
+
+    clearProgressTimeout();
+    currentStoryIndex = userIndex;
+    currentInternalStoryIndex = internalIndex;
+
+    if (direction === 'next-user') {
+        storyPopupContent.style.transform = 'translateX(-50%)';
+        setTimeout(() => {
+            storyPopupContent.style.transition = 'none';
+            storyPopupContent.style.transform = 'translateX(50%)';
+            setTimeout(() => {
+                storyPopupContent.style.transition = 'transform 0.15s linear';
+                storyPopupContent.style.transform = 'translateX(0)';
+            }, 10);
+        }, 150);
+    } else if (direction === 'prev-user') {
+        storyPopupContent.style.transform = 'translateX(50%)';
+        setTimeout(() => {
+            storyPopupContent.style.transition = 'none';
+            storyPopupContent.style.transform = 'translateX(-50%)';
+            setTimeout(() => {
+                storyPopupContent.style.transition = 'transform 0.15s linear';
+                storyPopupContent.style.transform = 'translateX(0)';
+            }, 10);
+        }, 150);
+    } else {
+        storyPopupContent.style.transition = 'none';
+        storyPopupContent.style.transform = 'translateX(0)';
+    }
+
+    if (direction === 'none') {
+        loadingRing.classList.remove('hidden');
+        storyPopup.classList.remove('hidden');
+        setTimeout(() => {
+            storyPopup.classList.add('active');
+        }, 10);
+    }
+
+    renderProgressBars(userStory.internalStories);
+    const currentStoryCard = userStory.internalStories[currentInternalStoryIndex];
+    if (!currentStoryCard) return hideStoryPopup();
+
+    if (currentStoryCard.type === 'text') {
+        loadingRing.classList.add('hidden');
+    }
+
+    fetchStoryContent(currentStoryCard).then(content => {
+        renderContent(content);
+    });
+}
+
+// Navigation Helpers
+function nextStory() {
+    if (isNavigating) return;
+    isNavigating = true;
+
+    clearProgressTimeout();
+    const currentUserStory = window.stories[currentStoryIndex];
+
+    if (currentInternalStoryIndex < currentUserStory.internalStories.length - 1) {
+        showStoryPopup(currentUserStory, currentStoryIndex, currentInternalStoryIndex + 1, 'next-internal');
+    } else if (currentStoryIndex < window.stories.length - 1) {
+        showStoryPopup(window.stories[currentStoryIndex + 1], currentStoryIndex + 1, 0, 'next-user');
+    } else {
+        hideStoryPopup();
+    }
 
     setTimeout(() => {
-        progressBar.style.transition = "width 5s linear";
-        progressBar.style.width = "100%";
-    }, 50);
-
-    setTimeout(() => {
-        closeStoryPopup();
-    }, 5000);
+        isNavigating = false;
+    }, 200);
 }
 
-// --- Setup events (close, nav, keyboard) ---
-function setupStoryEvents(popup, media) {
-    const closeBtn = popup.querySelector(".story-close");
-    closeBtn.onclick = () => closeStoryPopup();
+function prevStory() {
+    if (isNavigating) return;
+    isNavigating = true;
 
-    const navLeft = popup.querySelector(".story-nav.left");
-    const navRight = popup.querySelector(".story-nav.right");
+    clearProgressTimeout();
+    const currentUserStory = window.stories[currentStoryIndex];
 
-    navLeft.onclick = () => {
-        console.log("Prev story (placeholder)");
-    };
-    navRight.onclick = () => {
-        console.log("Next story (placeholder)");
-    };
-
-    document.onkeydown = (e) => {
-        if (e.key === "Escape") closeStoryPopup();
-        if (e.key === "ArrowLeft") console.log("Prev story (keyboard placeholder)");
-        if (e.key === "ArrowRight") console.log("Next story (keyboard placeholder)");
-    };
-
-    popup.onclick = (e) => {
-        if (e.target === popup) {
-            closeStoryPopup();
-        }
-    };
-}
-
-// --- Close popup ---
-function closeStoryPopup() {
-    const popup = document.querySelector(".story-popup");
-    if (!popup) return;
-
-    popup.style.opacity = "0";
-    popup.style.transform = "translateY(100%)";
-    popup.style.visibility = "hidden";
+    if (currentInternalStoryIndex > 0) {
+        showStoryPopup(currentUserStory, currentStoryIndex, currentInternalStoryIndex - 1, 'prev-internal');
+    } else if (currentStoryIndex > 0) {
+        const prevUserStory = window.stories[currentStoryIndex - 1];
+        const lastInternalIndex = prevUserStory.internalStories.length - 1;
+        showStoryPopup(prevUserStory, currentStoryIndex - 1, lastInternalIndex, 'prev-user');
+    }
 
     setTimeout(() => {
-        if (popup.parentNode) {
-            popup.parentNode.removeChild(popup);
-            console.log("Popup closed and removed.");
-        }
+        isNavigating = false;
+    }, 200);
+}
+
+function hideStoryPopup() {
+    clearProgressTimeout();
+    storyPopup.classList.remove('active');
+    setTimeout(() => {
+        storyPopup.classList.add('hidden');
+        storyPopup.style.transform = '';
+        storyContentDiv.innerHTML = '';
+        const storyContentContainer = document.querySelector('.story-content');
+        let bgLayer = storyContentContainer.querySelector('.story-background-layer');
+        if (bgLayer) bgLayer.remove();
+        storyPopupContent.style.transform = 'translateX(0)';
+        loadingRing.classList.add('hidden');
+        multiProgressBar.innerHTML = '';
     }, 300);
 }
+
+// Event Listeners
+function initStoryListeners() {
+    if (navNextInternal) navNextInternal.addEventListener('click', nextStory);
+    if (navPrevInternal) navPrevInternal.addEventListener('click', prevStory);
+
+    if (storyPopup) {
+        storyPopup.addEventListener('touchstart', (e) => {
+            if (!storyPopup.classList.contains('active')) return;
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+            storyPopup.style.transition = 'none';
+            clearProgressTimeout();
+        });
+
+        storyPopup.addEventListener('touchmove', (e) => {
+            if (!storyPopup.classList.contains('active')) return;
+            const currentX = e.touches[0].clientX;
+            const currentY = e.touches[0].clientY;
+            const deltaX = currentX - startX;
+            const deltaY = currentY - startY;
+
+            if (Math.abs(deltaY) > Math.abs(deltaX) && deltaY > 0) {
+                storyPopup.style.transform = `translateY(${deltaY}px)`;
+                e.preventDefault();
+            } else if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                storyPopupContent.style.transition = 'none';
+                storyPopupContent.style.transform = `translateX(${deltaX / 2}px)`;
+                e.preventDefault();
+            }
+        });
+
+        storyPopup.addEventListener('touchend', (e) => {
+            if (!storyPopup.classList.contains('active')) return;
+            const currentX = e.changedTouches[0].clientX;
+            const currentY = e.changedTouches[0].clientY;
+            const deltaX = currentX - startX;
+            const deltaY = currentY - startY;
+
+            storyPopup.style.transition = 'transform 0.3s ease-in-out';
+            storyPopupContent.style.transition = 'transform 0.15s linear';
+
+            if (Math.abs(deltaY) > Math.abs(deltaX) && deltaY > 60) {
+                hideStoryPopup();
+                return;
+            }
+
+            if (Math.abs(deltaX) > 60) {
+                if (deltaX > 0 && currentStoryIndex > 0) {
+                    const prevUserStory = window.stories[currentStoryIndex - 1];
+                    const lastInternalIndex = prevUserStory.internalStories.length - 1;
+                    showStoryPopup(prevUserStory, currentStoryIndex - 1, lastInternalIndex, 'prev-user');
+                    return;
+                } else if (deltaX < 0 && currentStoryIndex < window.stories.length - 1) {
+                    showStoryPopup(window.stories[currentStoryIndex + 1], currentStoryIndex + 1, 0, 'next-user');
+                    return;
+                }
+            }
+
+            storyPopup.style.transform = 'translateY(0)';
+            storyPopupContent.style.transform = 'translateX(0)';
+            startProgressBar();
+        });
+    }
+}
+
+// Initialize on DOM load
+document.addEventListener('DOMContentLoaded', () => {
+    if (!storyPopup || !storyContentDiv || !loadingRing || !storyPopupContent || !multiProgressBar) {
+        console.error('Missing story elements:', {
+            storyPopup: !!storyPopup,
+            storyContentDiv: !!storyContentDiv,
+            loadingRing: !!loadingRing,
+            storyPopupContent: !!storyPopupContent,
+            multiProgressBar: !!multiProgressBar
+        });
+        return;
+    }
+    initStoryListeners();
+});
