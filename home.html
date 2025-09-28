@@ -491,7 +491,7 @@
             height: var(--fab-size);
             border-radius: 50%;
             background: var(--fab-color);
-            box-shadow: var(--fab-shadow);
+            box-shadow: var--fab-shadow;
             display: inline-grid;
             place-items: center;
             user-select: none;
@@ -664,7 +664,7 @@
                 return;
             }
             storiesList.innerHTML = '';
-            window.stories = stories; // Expose stories globally for story.js
+            window.stories = stories;
             stories.forEach((story, index) => {
                 const storyElement = document.createElement('div');
                 storyElement.className = 'story-item';
@@ -684,7 +684,7 @@
                     if (window.showStoryPopup) {
                         window.showStoryPopup(story, index, 0);
                     } else {
-                        console.error('showStoryPopup is not defined. Ensure story.js is loaded correctly.');
+                        console.error('showStoryPopup is not defined');
                     }
                 });
                 storiesList.appendChild(storyElement);
@@ -699,9 +699,11 @@
                 return;
             }
             chatList.innerHTML = '';
+            window.chats = chats;
             chats.forEach(chat => {
                 const chatElement = document.createElement('div');
                 chatElement.className = 'chat-item';
+                chatElement.dataset.chatId = chat.id;
                 const onlineIndicator = chat.isOnline ? '<div class="online-indicator"></div>' : '';
                 const unreadBadge = chat.unreadCount ? `<div class="unread-badge">${chat.unreadCount}</div>` : '';
                 const sentIndicator = chat.isSent && !chat.unreadCount ? `
@@ -733,20 +735,11 @@
                 `;
                 chatElement.addEventListener('click', () => {
                     if (window.openChatPanel) {
-                        console.log('Attempting to open chat panel for:', chat.name);
+                        console.log('Opening chat for:', chat.name);
                         window.openChatPanel(chat);
                     } else {
-                        console.error('openChatPanel is not defined. Ensure chat-panel.js is loaded correctly.');
+                        console.error('openChatPanel is not defined');
                     }
-                });
-                chatElement.addEventListener('mousedown', () => {
-                    chatElement.classList.add('pressed');
-                });
-                chatElement.addEventListener('mouseup', () => {
-                    chatElement.classList.remove('pressed');
-                });
-                chatElement.addEventListener('mouseleave', () => {
-                    chatElement.classList.remove('pressed');
                 });
                 chatList.appendChild(chatElement);
             });
@@ -846,20 +839,6 @@
             }
         }
 
-        // Add FAB click handler
-        const fab = document.querySelector('.fab');
-        if (fab) {
-            fab.addEventListener('click', () => {
-                if (navigator.onLine) {
-                    console.log('FAB clicked! Add your action here (e.g., open new chat modal).');
-                } else {
-                    console.log('Cannot perform action: Device is offline.');
-                }
-            });
-        } else {
-            console.error('FAB element not found');
-        }
-
         // Initialize the app
         function init() {
             renderStoriesSkeleton();
@@ -867,7 +846,6 @@
             updateNetworkStatus();
             window.addEventListener('online', updateNetworkStatus);
             window.addEventListener('offline', updateNetworkStatus);
-            // Initialize chat panel
             const chatPanel = document.getElementById('chatPanel');
             if (chatPanel) {
                 chatPanel.classList.add('hidden');
