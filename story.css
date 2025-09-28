@@ -7,16 +7,22 @@
     height: 100%;
     background-color: black;
     z-index: 2000;
-    display: none !important; /* Align with index.html */
-    transition: transform 0.3s ease-in-out;
-}
-
-.story-popup.active {
-    display: flex !important;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(100%);
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out, visibility 0s 0.3s;
+    display: flex;
     flex-direction: column;
     justify-content: flex-end;
     align-items: center;
     color: white;
+}
+
+.story-popup.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
 }
 
 .story-popup-content {
@@ -27,41 +33,43 @@
     display: flex;
     flex-direction: column;
     transform: translateX(0);
-    transition: transform 0.15s linear;
+    transition: transform 0.15s linear; /* Subtle slide transition for user-to-user nav */
 }
 
+/* Updated Progress Bar Container for Multiple Segments */
 .progress-bar-container {
     width: calc(100% - 20px);
     margin: 4px 10px 8px 10px;
-    display: flex;
-    gap: 4px;
-    position: relative;
-    z-index: 2006;
+    display: flex; 
+    gap: 4px; 
+    position: relative; 
+    z-index: 2006; /* Above all content and navigation buttons */
 }
 
-.progress-bar-segment {
+.progress-bar-segment { 
     height: 2px;
     background-color: rgba(255, 255, 255, 0.3);
     border-radius: 1px;
     overflow: hidden;
-    flex-grow: 1;
+    flex-grow: 1; 
 }
 
-.progress-bar-inner {
+.progress-bar-inner { 
     height: 100%;
     width: 0;
     background-color: #ffffff;
-    transition: width linear;
+    transition: width linear; /* Transition handled by JS duration */
 }
 
+/* Invisible Internal Navigation Buttons */
 .story-nav-button {
     position: absolute;
     top: 0;
-    width: 30%;
+    width: 30%; /* Large click area */
     height: 100%;
     background: transparent;
     border: none;
-    z-index: 2005;
+    z-index: 2005; /* Above story content */
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
 }
@@ -74,6 +82,8 @@
     right: 0;
 }
 
+
+/* Story Content Container (The main view window) */
 .story-content {
     width: calc(100% - 20px);
     height: calc(100% - 20px);
@@ -87,55 +97,60 @@
     position: relative;
 }
 
+/* New: Background layer for blur/color fallback */
 .story-background-layer {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: #333;
+    background-color: #333; /* Default dark background fallback */
     z-index: 1;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.3s ease; /* Smooth transition for color changes */
 }
 
+/* Blurred background image (YOUR REQUEST) */
 .story-bg {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    filter: blur(20px) brightness(0.7);
-    transform: scale(1.2);
-    opacity: 0;
+    object-fit: cover;   /* Fill container */
+    filter: blur(20px) brightness(0.7); /* Blur + dim for contrast */
+    transform: scale(1.2); /* Prevent edges showing after blur */
+    opacity: 0; /* Starts hidden, JS handles fade in */
     transition: opacity 0.3s ease;
 }
 
+/* Inner content area (for centering foreground) */
 .story-content-inner {
     flex: 1;
-    position: relative;
-    z-index: 5;
+    position: relative; 
+    z-index: 5; /* Ensure content is above background layers */
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding: 10px;
+    padding: 10px; 
     max-height: 100%;
 }
 
+/* Main foreground content (YOUR REQUEST) */
 .story img.main,
 .story video.main {
     position: relative;
     display: block;
     max-width: 100%;
-    max-height: 80vh;
-    width: auto;
-    object-fit: contain;
+    max-height: 80vh; /* Set a max height relative to viewport */
+    width: auto; 
+    object-fit: contain; /* Ensures the whole content is visible */
     margin: auto;
     z-index: 2;
     border-radius: 4px;
 }
 
+/* Text Story Styling */
 .story-content p.story-text {
     font-size: 16px;
     color: white;
@@ -147,9 +162,10 @@
     justify-content: center;
     width: 100%;
     height: 100%;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5); /* Improve readability on colors */
 }
 
+/* Story Loading Ring */
 .story-telegram-ring {
     width: 40px;
     height: 40px;
@@ -169,25 +185,4 @@
     stroke-dasharray: 1, 200;
     stroke-dashoffset: 0;
     animation: dash 1.5s ease-in-out infinite;
-}
-
-@keyframes rotate {
-    100% {
-        transform: translate(-50%, -50%) rotate(360deg);
-    }
-}
-
-@keyframes dash {
-    0% {
-        stroke-dasharray: 1, 200;
-        stroke-dashoffset: 0;
-    }
-    50% {
-        stroke-dasharray: 90, 150;
-        stroke-dashoffset: -35;
-    }
-    100% {
-        stroke-dasharray: 90, 150;
-        stroke-dashoffset: -124;
-    }
 }
