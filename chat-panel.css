@@ -1,29 +1,45 @@
-/* Chat Panel Styles */
+/* --- Global App Container Styles (NEW/MODIFIED) --- */
+/* Assuming .app-container is the top-level wrapper around the main content (chat list) */
+.app-container {
+    /* Enable smooth transition for the "push" effect */
+    transition: transform 0.3s ease-in-out;
+    will-change: transform;
+    /* Ensure the app doesn't show the horizontal shift before the animation */
+    overflow-x: hidden; 
+}
+
+/* This class triggers the "push" effect by shifting the entire app container */
+.app-container.chat-open {
+    /* Shift left by the panel's max-width (384px) */
+    transform: translateX(-384px);
+}
+
+/* --- Chat Panel Styles (Mostly Original, still fixed for slide-over) --- */
 .chat-panel {
     position: fixed;
     top: 0;
     right: 0;
     width: 100%;
-    max-width: 384px;
+    max-width: 384px; /* Critical width for the push calculation */
     height: 100%;
     background-color: white;
     z-index: 30;
     display: flex;
     flex-direction: column;
-    transform: translateX(100%);
+    transform: translateX(100%); /* Initial state: Off screen right */
     transition: transform 0.3s ease-in-out;
     will-change: transform;
 }
 
 .chat-panel.active {
-    transform: translateX(0);
+    transform: translateX(0); /* Final state: On screen */
 }
 
 .chat-panel.hidden {
     display: none !important;
 }
 
-/* Chat Messages */
+/* Chat Messages (Keep as-is) */
 .chat-messages {
     flex: 1;
     overflow-y: auto;
@@ -31,12 +47,13 @@
     background-color: white;
 }
 
-/* Overlay for closing chat panel */
+/* --- Overlay for closing chat panel (MODIFIED) --- */
 .chat-panel-overlay {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
+    /* Overlay only covers the space NOT taken by the 384px panel */
+    width: calc(100% - 384px); 
     height: 100%;
     background-color: rgba(0, 0, 0, 0.3);
     z-index: 29;
@@ -51,8 +68,9 @@
     pointer-events: auto;
 }
 
-/* FAB hiding when chat panel is open */
+/* FAB hiding when chat panel is open (Keep as-is) */
 .fab.hidden {
     opacity: 0;
     pointer-events: none;
 }
+
