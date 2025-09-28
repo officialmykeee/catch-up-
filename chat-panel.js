@@ -1,3 +1,31 @@
+// Initialize chat panel listeners
+function initChatPanel() {
+    const chatPanel = document.getElementById('chatPanel');
+    const chatList = document.getElementById('chatList');
+    if (!chatPanel || !chatList) {
+        console.error('Chat panel initialization failed: Missing elements', {
+            chatPanel: !!chatPanel,
+            chatList: !!chatList
+        });
+        return;
+    }
+
+    // Use event delegation for chat items
+    chatList.addEventListener('click', (event) => {
+        const chatItem = event.target.closest('.chat-item');
+        if (chatItem) {
+            const chatId = chatItem.dataset.chatId;
+            const chat = window.chats.find(c => c.id === chatId);
+            if (chat) {
+                console.log('Opening chat panel for:', chat.name);
+                openChatPanel(chat);
+            } else {
+                console.error('Chat data not found for ID:', chatId);
+            }
+        }
+    });
+}
+
 // Function to open chat panel
 function openChatPanel(chat) {
     const chatPanel = document.getElementById('chatPanel');
@@ -5,20 +33,20 @@ function openChatPanel(chat) {
     const chatMessages = document.getElementById('chatMessages');
     const fab = document.querySelector('.fab');
 
-    // Check if all required elements exist
     if (!chatPanel || !chatList || !chatMessages || !fab) {
-        console.error('Missing DOM elements:', {
+        console.error('Cannot open chat panel: Missing DOM elements', {
             chatPanel: !!chatPanel,
             chatList: !!chatList,
             chatMessages: !!chatMessages,
             fab: !!fab
         });
+        alert('Error: Unable to open chat. Please check the console for details.');
         return;
     }
 
     // Set chat panel content
-    chatMessages.innerHTML = `<p>${chat.lastMessage}</p>`; // Placeholder for messages
-    chatPanel.classList.remove('hidden'); // Ensure panel is visible
+    chatMessages.innerHTML = `<p>${chat.lastMessage}</p>`;
+    chatPanel.classList.remove('hidden');
 
     // Create overlay if it doesn't exist
     let overlay = document.querySelector('.chat-panel-overlay');
@@ -29,17 +57,13 @@ function openChatPanel(chat) {
     }
 
     // Trigger transitions
-    setTimeout(() => {
-        chatList.classList.add('hidden');
-        chatPanel.classList.add('active');
-        overlay.classList.add('active');
-        fab.classList.add('hidden');
-    }, 0); // Ensure DOM updates are applied before transition
+    chatList.classList.add('hidden');
+    chatPanel.classList.add('active');
+    overlay.classList.add('active');
+    fab.classList.add('hidden');
 
     // Handle overlay click to close
     overlay.addEventListener('click', closeChatPanel, { once: true });
-
-    console.log('Chat panel opened for:', chat.name);
 }
 
 // Function to close chat panel
@@ -49,9 +73,8 @@ function closeChatPanel() {
     const overlay = document.querySelector('.chat-panel-overlay');
     const fab = document.querySelector('.fab');
 
-    // Check if all required elements exist
     if (!chatPanel || !chatList || !overlay || !fab) {
-        console.error('Missing DOM elements during close:', {
+        console.error('Cannot close chat panel: Missing DOM elements', {
             chatPanel: !!chatPanel,
             chatList: !!chatList,
             overlay: !!overlay,
@@ -66,16 +89,27 @@ function closeChatPanel() {
     chatList.classList.remove('hidden');
     fab.classList.remove('hidden');
 
-    // Remove overlay after transition
+    // Hide panel and remove overlay after transition
     setTimeout(() => {
-        if (overlay && !chatPanel.classList.contains('active')) {
-            overlay.remove();
-            console.log('Overlay removed');
+        if (!chatPanel.classList.contains('active')) {
+            chatPanel.classList.add('hidden');
+            if (overlay) {
+                overlay.remove();
+                console.log('Overlay removed');
+            }
         }
     }, 300);
-
-    console.log('Chat panel closed');
 }
 
-// Expose openChatPanel to the global scope for index.html to use
+// Expose openChatPanel and initChatPanel to the global scope
 window.openChatPanel = openChatPanel;
+window.initChatPanel = initChatPanel;
+
+// Initialize on DOM load
+document.addEventListener('DOMContentLoaded', () => {
+    if (window.initChatPanel) {
+        window.initChatPanel();
+    } else {
+        console.error('initChatPanel is not defined. Ensure chat-panel.js is loaded correctly.');
+    }
+});
