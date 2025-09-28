@@ -121,7 +121,7 @@
         }
 
         .hidden {
-            display: none;
+            display: none !important;
         }
 
         /* Stories section */
@@ -659,6 +659,10 @@
         // Function to render stories
         function renderStories() {
             const storiesList = document.getElementById('storiesList');
+            if (!storiesList) {
+                console.error('Stories list element not found');
+                return;
+            }
             storiesList.innerHTML = '';
             window.stories = stories; // Expose stories globally for story.js
             stories.forEach((story, index) => {
@@ -690,6 +694,10 @@
         // Function to render chat items
         function renderChats() {
             const chatList = document.getElementById('chatList');
+            if (!chatList) {
+                console.error('Chat list element not found');
+                return;
+            }
             chatList.innerHTML = '';
             chats.forEach(chat => {
                 const chatElement = document.createElement('div');
@@ -725,6 +733,7 @@
                 `;
                 chatElement.addEventListener('click', () => {
                     if (window.openChatPanel) {
+                        console.log('Attempting to open chat panel for:', chat.name);
                         window.openChatPanel(chat);
                     } else {
                         console.error('openChatPanel is not defined. Ensure chat-panel.js is loaded correctly.');
@@ -746,6 +755,10 @@
         // Function to render stories skeleton
         function renderStoriesSkeleton() {
             const skeletonStoriesList = document.getElementById('skeletonStoriesList');
+            if (!skeletonStoriesList) {
+                console.error('Skeleton stories list element not found');
+                return;
+            }
             skeletonStoriesList.innerHTML = '';
             for (let i = 0; i < 6; i++) {
                 const skeletonStoryElement = document.createElement('div');
@@ -761,6 +774,10 @@
         // Function to render chat skeleton
         function renderSkeleton() {
             const loadingSkeleton = document.getElementById('loadingSkeleton');
+            if (!loadingSkeleton) {
+                console.error('Loading skeleton element not found');
+                return;
+            }
             loadingSkeleton.innerHTML = '';
             const messageWidths = ['short', 'medium', 'long', '', 'medium', 'short', 'long', ''];
             for (let i = 0; i < 8; i++) {
@@ -794,6 +811,11 @@
             const storiesLoadingSkeleton = document.getElementById('storiesLoadingSkeleton');
             const loadingSkeleton = document.getElementById('loadingSkeleton');
 
+            if (!messagesIcon || !telegramRing || !headerTitle || !storiesContainer || !chatList || !storiesLoadingSkeleton || !loadingSkeleton) {
+                console.error('Missing UI elements for network status update');
+                return;
+            }
+
             if (isOnline) {
                 messagesIcon.classList.add('hidden');
                 telegramRing.classList.remove('hidden');
@@ -826,13 +848,17 @@
 
         // Add FAB click handler
         const fab = document.querySelector('.fab');
-        fab.addEventListener('click', () => {
-            if (navigator.onLine) {
-                console.log('FAB clicked! Add your action here (e.g., open new chat modal).');
-            } else {
-                console.log('Cannot perform action: Device is offline.');
-            }
-        });
+        if (fab) {
+            fab.addEventListener('click', () => {
+                if (navigator.onLine) {
+                    console.log('FAB clicked! Add your action here (e.g., open new chat modal).');
+                } else {
+                    console.log('Cannot perform action: Device is offline.');
+                }
+            });
+        } else {
+            console.error('FAB element not found');
+        }
 
         // Initialize the app
         function init() {
@@ -841,10 +867,18 @@
             updateNetworkStatus();
             window.addEventListener('online', updateNetworkStatus);
             window.addEventListener('offline', updateNetworkStatus);
+            // Initialize chat panel
+            const chatPanel = document.getElementById('chatPanel');
+            if (chatPanel) {
+                chatPanel.classList.add('hidden');
+                console.log('Chat panel initialized');
+            } else {
+                console.error('Chat panel element not found');
+            }
         }
         document.addEventListener('DOMContentLoaded', init);
     </script>
     <script src="story.js"></script>
-    <script defer src="chat-panel.js"></script>
+    <script src="chat-panel.js"></script>
 </body>
 </html>
