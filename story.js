@@ -1,4 +1,4 @@
- // --- CRITICAL FIX: Expose the main function at the top for use by HTML-side listeners ---
+// --- CRITICAL FIX: Expose the main function at the top for use by HTML-side listeners ---
 window.showStoryPopup = showStoryPopup;
 
 /**
@@ -23,6 +23,7 @@ function getDominantColor(imgElement) {
         // Get the pixel data
         const data = context.getImageData(0, 0, width, height).data;
 
+        // Return the color as an RGB string (r, g, b, a)
         return `rgb(${data[0]}, ${data[1]}, ${data[2]})`;
     } catch (e) {
         console.error("Could not read image data for color extraction. Check CORS policy.", e);
@@ -38,16 +39,18 @@ const storyPopupContent = document.querySelector('.story-popup-content');
 const multiProgressBar = document.getElementById('multiProgressBar');
 const navPrevInternal = document.getElementById('navPrevInternal');
 const navNextInternal = document.getElementById('navNextInternal');
+// The like button is now retrieved inside renderContent for dynamic state management
 
 // --- Global State ---
 let progressTimeout = null;
 let currentStoryIndex = 0; 
 let currentInternalStoryIndex = 0; 
-let isNavigating = false;
+let isNavigating = false; // Debounce flag for navigation
 
-const STORY_DURATION = 5000; // 5s
+const STORY_DURATION = 5000; // 5 seconds per story card
 
 // --- Progress Management ---
+
 function clearProgressTimeout() {
     if (progressTimeout) {
         clearTimeout(progressTimeout);
@@ -55,8 +58,13 @@ function clearProgressTimeout() {
     }
 }
 
+/**
+ * Creates and renders a progress bar segment for every internal story card.
+ * @param {Array<Object>} internalStories - The array of story cards for the current user.
+ */
 function renderProgressBars(internalStories) {
     multiProgressBar.innerHTML = '';
+    
     internalStories.forEach((_, index) => {
         const segment = document.createElement('div');
         segment.className = 'progress-bar-segment';
@@ -66,6 +74,10 @@ function renderProgressBars(internalStories) {
     });
 }
 
+/**
+ * Starts the filling animation for the current internal story segment.
+ * Ensures the progress bar is reset and animates only once.
+ */
 function startProgressBar() {
     clearProgressTimeout();
 
@@ -74,32 +86,46 @@ function startProgressBar() {
 
     const innerBar = currentSegment.querySelector('.progress-bar-inner');
 
+    // 1. Reset all segments to ensure no stale transitions
     document.querySelectorAll('.progress-bar-segment').forEach((segment, index) => {
         const bar = segment.querySelector('.progress-bar-inner');
+        
         bar.style.transition = 'none';
+        
         if (index < currentInternalStoryIndex) {
-            bar.style.width = '100%';
+            bar.style.width = '100%'; // Past stories are full
         } else {
-            bar.style.width = '0%';
+            bar.style.width = '0%'; // Current and future stories are empty
         }
     });
 
-    innerBar.offsetHeight; // force reflow
+    // 2. FORCED REFLOW/REDRAW
+    innerBar.offsetHeight; 
+
+    // 3. Start current segment animation
     innerBar.style.transition = `width ${STORY_DURATION}ms linear`;
     innerBar.style.width = '100%';
 
+    // 4. Set timeout for auto-navigation
     progressTimeout = setTimeout(() => {
         nextStory();
     }, STORY_DURATION);
 }
 
 // --- Content Fetching & Rendering ---
+
 async function fetchStoryContent(storyCard) {
     return new Promise(resolve => {
-        setTimeout(() => resolve(storyCard), 300);
+        setTimeout(() => {
+            resolve(storyCard);
+        }, 300);
     });
 }
 
+/**
+ * Renders the story content (Image, Video, or Text) with blurred background/color fallback.
+ * @param {Object} storyCard - The object defining the current internal story.
+ */
 function renderContent(storyCard) {
     storyContentDiv.innerHTML = '';
     const storyContentContainer = document.querySelector('.story-content');
@@ -110,36 +136,42 @@ function renderContent(storyCard) {
     bgLayer.className = 'story-background-layer';
     storyContentContainer.prepend(bgLayer);
 
-    // Reset like button when switching cards
+    // [FIX/UPDATE] Reset like button state for every new card
     const likeButton = document.querySelector('.action-icon-btn.like-btn');
     if (likeButton) likeButton.classList.remove('liked');
 
     if (storyCard.type === 'image') {
         loadingRing.classList.remove('hidden');
+        
         const img = document.createElement('img');
         img.src = storyCard.src;
         img.alt = 'Story image';
         img.className = 'story main';
-
+        
         const bgImg = document.createElement('img');
         bgImg.src = storyCard.src;
         bgImg.alt = 'Blurred background';
         bgImg.className = 'story-bg';
-
+        
         bgLayer.appendChild(bgImg);
         storyContentDiv.appendChild(img);
 
         img.onload = () => {
             loadingRing.classList.add('hidden');
+            
             const dominantColor = getDominantColor(img);
             bgLayer.style.backgroundColor = dominantColor || '#222';
-            setTimeout(() => { bgImg.style.opacity = 1; }, 50);
+            
+            setTimeout(() => {
+                bgImg.style.opacity = 1;
+            }, 50); 
+            
             startProgressBar();
         };
 
         img.onerror = () => {
             loadingRing.classList.add('hidden');
-            storyContentDiv.innerHTML = `<p class="story-text">Error loading image</p>`;
+            storyContentDiv.innerHTML = `<p class="story-text">Error loading image at ${storyCard.src}</p>`;
             bgLayer.style.backgroundColor = '#444';
             startProgressBar();
         };
@@ -153,7 +185,7 @@ function renderContent(storyCard) {
         video.loop = true;
         video.muted = true;
         video.className = 'story main story-video';
-
+        
         bgLayer.style.backgroundColor = '#111';
 
         const bgVideo = video.cloneNode(true);
@@ -170,30 +202,39 @@ function renderContent(storyCard) {
         };
         video.onerror = () => {
             loadingRing.classList.add('hidden');
-            storyContentDiv.innerHTML = `<p class="story-text">Error loading video</p>`;
+            storyContentDiv.innerHTML = `<p class="story-text">Error loading video.</p>`;
             startProgressBar();
         };
-
+        
     } else if (storyCard.type === 'text') {
         loadingRing.classList.add('hidden');
         const p = document.createElement('p');
         p.className = 'story-text';
         p.textContent = storyCard.text;
-
+        
         bgLayer.style.background = 'linear-gradient(135deg, #749cbf, #a855f7)';
         storyContentDiv.appendChild(p);
-
+        
         startProgressBar();
     }
 }
 
-// --- Popup & Navigation ---
+// --- Main Popup/Navigation Function ---
+
+/**
+ * Opens the story pop-up and handles the transition and content loading.
+ * @param {Object} userStory - The object for the current user's story container.
+ * @param {number} userIndex - The index of the user in the global stories array.
+ * @param {number} internalIndex - The index of the story card within the user's stories.
+ * @param {string} direction - 'none', 'next-user', 'prev-user', 'next-internal', 'prev-internal'.
+ */
 function showStoryPopup(userStory, userIndex, internalIndex = 0, direction = 'none') {
     clearProgressTimeout();
+
     currentStoryIndex = userIndex;
     currentInternalStoryIndex = internalIndex;
 
-    // Slide transitions for user navigation
+    // Apply slide transitions for USER navigation
     if (direction === 'next-user') {
         storyPopupContent.style.transform = 'translateX(-50%)';
         setTimeout(() => {
@@ -219,48 +260,35 @@ function showStoryPopup(userStory, userIndex, internalIndex = 0, direction = 'no
         storyPopupContent.style.transform = 'translateX(0)';
     }
 
+    // Initial Popup State (for slide-up transition)
     if (direction === 'none') {
         loadingRing.classList.remove('hidden');
         storyPopup.classList.remove('hidden');
-        setTimeout(() => { storyPopup.classList.add('active'); }, 10);
+        setTimeout(() => {
+            storyPopup.classList.add('active');
+        }, 10);
     }
 
-    // Re-render progress bars
+    // Always re-render progress bars to ensure clean state
     renderProgressBars(userStory.internalStories);
-
-    // Add bottom bar if not present
-    let bottomBar = storyPopupContent.querySelector('.bottom-bar');
-    if (!bottomBar) {
-        bottomBar = document.createElement('div');
-        bottomBar.className = 'bottom-bar';
-        bottomBar.innerHTML = `
-          <div class="reply-input-container">
-            <input type="text" class="reply-input" placeholder="Reply..." />
-          </div>
-          <div class="heart-container">
-            <button class="action-icon-btn like-btn">
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M15.7 4C18.87 4 21 6.98 21 9.76C21 15.39 12.16 20 12 20C11.84 20 3 15.39 3 9.76C3 6.98 5.13 4 8.3 4C10.12 4 11.31 4.91 12 5.71C12.69 4.91 13.88 4 15.7 4Z" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>
-            </button>
-          </div>
-        `;
-        storyPopupContent.appendChild(bottomBar);
-
-        // Heart toggle
-        const likeBtn = bottomBar.querySelector('.like-btn');
-        likeBtn.addEventListener('click', () => {
-            likeBtn.classList.toggle('liked');
-        });
-    }
-
+    
+    // Fetch and Render Content
     const currentStoryCard = userStory.internalStories[currentInternalStoryIndex];
-    if (!currentStoryCard) return hideStoryPopup();
-
-    if (currentStoryCard.type === 'text') loadingRing.classList.add('hidden');
-    fetchStoryContent(currentStoryCard).then(content => renderContent(content));
+    if (!currentStoryCard) return hideStoryPopup(); 
+    
+    if (currentStoryCard.type === 'text') {
+        loadingRing.classList.add('hidden');
+    }
+    
+    fetchStoryContent(currentStoryCard).then(content => {
+        renderContent(content);
+    });
 }
 
 // --- Navigation Helpers ---
+
 function nextStory() {
+    // Check if window.stories exists and is an array
     const stories = window.stories || [];
     if (isNavigating || stories.length === 0) return;
     isNavigating = true;
@@ -269,13 +297,18 @@ function nextStory() {
     const currentUserStory = stories[currentStoryIndex]; 
 
     if (currentInternalStoryIndex < currentUserStory.internalStories.length - 1) {
-        showStoryPopup(currentUserStory, currentStoryIndex, currentInternalStoryIndex + 1, 'next-internal');
+        const nextInternalIndex = currentInternalStoryIndex + 1;
+        showStoryPopup(currentUserStory, currentStoryIndex, nextInternalIndex, 'next-internal');
     } else if (currentStoryIndex < stories.length - 1) {
-        showStoryPopup(stories[currentStoryIndex + 1], currentStoryIndex + 1, 0, 'next-user');
+        const nextUserIndex = currentStoryIndex + 1;
+        showStoryPopup(stories[nextUserIndex], nextUserIndex, 0, 'next-user');
     } else {
         hideStoryPopup();
     }
-    setTimeout(() => { isNavigating = false; }, 200);
+
+    setTimeout(() => {
+        isNavigating = false;
+    }, 200);
 }
 
 function prevStory() {
@@ -287,13 +320,18 @@ function prevStory() {
     const currentUserStory = stories[currentStoryIndex]; 
 
     if (currentInternalStoryIndex > 0) {
-        showStoryPopup(currentUserStory, currentStoryIndex, currentInternalStoryIndex - 1, 'prev-internal');
+        const prevInternalIndex = currentInternalStoryIndex - 1;
+        showStoryPopup(currentUserStory, currentStoryIndex, prevInternalIndex, 'prev-internal');
     } else if (currentStoryIndex > 0) {
-        const prevUserStory = stories[currentStoryIndex - 1];
+        const prevUserIndex = currentStoryIndex - 1;
+        const prevUserStory = stories[prevUserIndex];
         const lastInternalIndex = prevUserStory.internalStories.length - 1;
-        showStoryPopup(prevUserStory, currentStoryIndex - 1, lastInternalIndex, 'prev-user');
+        showStoryPopup(prevUserStory, prevUserIndex, lastInternalIndex, 'prev-user');
     }
-    setTimeout(() => { isNavigating = false; }, 200);
+
+    setTimeout(() => {
+        isNavigating = false;
+    }, 200);
 }
 
 function hideStoryPopup() {
@@ -303,26 +341,33 @@ function hideStoryPopup() {
         storyPopup.classList.add('hidden');
         storyPopup.style.transform = '';
         storyContentDiv.innerHTML = '';
-        const bgLayer = document.querySelector('.story-content .story-background-layer');
+        const storyContentContainer = document.querySelector('.story-content');
+        let bgLayer = storyContentContainer.querySelector('.story-background-layer');
         if (bgLayer) bgLayer.remove();
         storyPopupContent.style.transform = 'translateX(0)';
         loadingRing.classList.add('hidden');
         multiProgressBar.innerHTML = ''; 
+        // Reset like button state when closing
         const likeButton = document.querySelector('.action-icon-btn.like-btn');
         if (likeButton) likeButton.classList.remove('liked');
     }, 300);
 }
 
-// --- Event Listeners ---
+// --- Event Listeners (Internal & Swipe Navigation) ---
+
 if (navNextInternal) navNextInternal.addEventListener('click', nextStory);
 if (navPrevInternal) navPrevInternal.addEventListener('click', prevStory);
 
-let startX = 0, startY = 0;
-const swipeThreshold = 60, swipeDownThreshold = 60;
+let startX = 0;
+let startY = 0;
+const swipeThreshold = 60;
+const swipeDownThreshold = 60;
 
 if (storyPopup) {
     storyPopup.addEventListener('touchstart', (e) => {
+        // [FIX] Prevent action if touch starts on the interactive bottom bar
         if (e.target.closest('.bottom-bar')) return;
+        
         startX = e.touches[0].clientX;
         startY = e.touches[0].clientY;
         storyPopup.style.transition = 'none';
@@ -330,9 +375,14 @@ if (storyPopup) {
     });
 
     storyPopup.addEventListener('touchmove', (e) => {
+        // [FIX] Prevent action if touch starts on the interactive bottom bar
         if (e.target.closest('.bottom-bar')) return;
-        const deltaX = e.touches[0].clientX - startX;
-        const deltaY = e.touches[0].clientY - startY;
+        
+        const currentX = e.touches[0].clientX;
+        const currentY = e.touches[0].clientY;
+        const deltaX = currentX - startX;
+        const deltaY = currentY - startY;
+
         if (Math.abs(deltaY) > Math.abs(deltaX) && deltaY > 0) {
             storyPopup.style.transform = `translateY(${deltaY}px)`;
             e.preventDefault();
@@ -344,57 +394,48 @@ if (storyPopup) {
     });
 
     storyPopup.addEventListener('touchend', (e) => {
+        // [FIX] If touch ends inside the bottom bar area, only restart the timer
         if (e.target.closest('.bottom-bar')) {
             startProgressBar(); 
             return;
         }
-        const deltaX = e.changedTouches[0].clientX - startX;
-        const deltaY = e.changedTouches[0].clientY - startY;
+
+        const currentX = e.changedTouches[0].clientX;
+        const currentY = e.changedTouches[0].clientY;
+        const deltaX = currentX - startX;
+        const deltaY = currentY - startY;
 
         storyPopup.style.transition = 'transform 0.3s ease-in-out';
         storyPopupContent.style.transition = 'transform 0.15s linear';
         
+        // Swipe Down to Dismiss
         if (Math.abs(deltaY) > Math.abs(deltaX) && deltaY > swipeDownThreshold) {
-            hideStoryPopup(); return;
-        }
+            hideStoryPopup();
+            return;
+        } 
+
+        // Swipe Left/Right for User Navigation
         if (Math.abs(deltaX) > swipeThreshold) {
             if (deltaX > 0 && currentStoryIndex > 0) {
-                const prevUserStory = window.stories[currentStoryIndex - 1];
+                const stories = window.stories || [];
+                const prevUserIndex = currentStoryIndex - 1;
+                const prevUserStory = stories[prevUserIndex];
                 const lastInternalIndex = prevUserStory.internalStories.length - 1;
-                showStoryPopup(prevUserStory, currentStoryIndex - 1, lastInternalIndex, 'prev-user');
+                showStoryPopup(prevUserStory, prevUserIndex, lastInternalIndex, 'prev-user');
                 return;
             } else if (deltaX < 0 && currentStoryIndex < (window.stories ? window.stories.length - 1 : 0)) {
-                showStoryPopup(window.stories[currentStoryIndex + 1], currentStoryIndex + 1, 0, 'next-user');
+                const stories = window.stories || [];
+                const nextUserIndex = currentStoryIndex + 1;
+                showStoryPopup(stories[nextUserIndex], nextUserIndex, 0, 'next-user');
                 return;
             }
-        }
+        } 
+
+        // Reset positions and restart timer if no navigation occurred
         storyPopup.style.transform = 'translateY(0)';
         storyPopupContent.style.transform = 'translateX(0)';
+        
         startProgressBar();
     });
 }
-
-// --- NEW FIX: Event Listener for Story Card Clicks ---
-// This assumes:
-// 1. Your story elements have the class 'story-card-trigger'
-// 2. Your story data is loaded into a global array named 'window.stories'
-
-document.addEventListener('DOMContentLoaded', () => {
-    const storyTriggers = document.querySelectorAll('.story-card-trigger');
-
-    storyTriggers.forEach((card, index) => {
-        card.addEventListener('click', () => {
-            const stories = window.stories;
-            
-            // Check if story data is available and the index is valid
-            if (stories && stories[index]) {
-                // Call the main function to show the popup
-                showStoryPopup(stories[index], index);
-            } else {
-                console.error(`Story data not found for index ${index}. Check if window.stories is loaded.`);
-            }
-        });
-    });
-});
-// --- END OF NEW FIX ---
 
