@@ -1,28 +1,12 @@
-// Mock story data (duplicated here for story viewer access)
-const storyDataMocks = {
-    "your-story": [{ id: "your-story-status-1", content: "https://picsum.photos/id/1005/360/640", time: "Just Now", reply: "", isLiked: false }],
-    "1": [{ id: 'emily1', content: 'https://picsum.photos/id/237/360/640', time: 'Just Now', reply: '', isLiked: false }],
-    "2": [{ id: 'michael1', content: 'https://picsum.photos/id/1018/360/640', time: '1 hour ago', reply: '', isLiked: false }],
-    "3": [{ id: 'sarah1', content: 'https://picsum.photos/id/1015/360/640', time: '2 hours ago', reply: '', isLiked: false }],
-    "4": [{ id: 'david1', content: 'https://picsum.photos/id/1016/360/640', time: '3 hours ago', reply: '', isLiked: false }],
-    "5": [{ id: 'jessica1', content: 'https://picsum.photos/id/1019/360/640', time: '4 hours ago', reply: '', isLiked: false }]
-};
+// Expose openStoryViewer globally
+window.openStoryViewer = function(contentUrl) {
+    const storyViewerOverlay = document.getElementById('storyViewerOverlay');
+    const storyViewerContent = document.getElementById('storyViewerContent');
 
-const storyViewerOverlay = document.getElementById('storyViewerOverlay');
-const storyViewerContent = document.getElementById('storyViewerContent');
-
-// Function to open story viewer
-function openStoryViewer(storyId) {
-    const data = storyDataMocks[storyId];
-
-    if (!data || !data[0]?.content) {
-        console.error("Story data not found for ID:", storyId);
-        alert('Failed to find story data.');
-        return;
-    }
+    console.log('Opening story with content:', contentUrl); // Debug log
 
     // Set the story image
-    storyViewerContent.src = data[0].content;
+    storyViewerContent.src = contentUrl;
     storyViewerOverlay.classList.add('show');
     document.body.style.overflow = 'hidden';
 
@@ -113,12 +97,11 @@ function openStoryViewer(storyId) {
         }
     };
     document.addEventListener('keydown', handleEscape);
-}
 
-// Function to close story viewer
-function closeStoryViewer() {
-    storyViewerOverlay.classList.remove('show');
-    storyViewerContent.src = '';
-    storyViewerContent.style.transform = 'translateY(0)';
-    document.body.style.overflow = '';
-}
+    function closeStoryViewer() {
+        storyViewerOverlay.classList.remove('show');
+        storyViewerContent.src = '';
+        storyViewerContent.style.transform = 'translateY(0)';
+        document.body.style.overflow = '';
+    }
+};
