@@ -19,7 +19,6 @@
     opacity: 1;
     align-items: center;
     justify-content: center;
-    position: relative;
 }
 
 .story-viewer-content {
@@ -29,16 +28,4 @@
     max-height: 640px;
     object-fit: contain;
     transition: transform 0.1s ease-out;
-    z-index: 10001; /* Ensure image is below overlay but above background */
-}
-
-.story-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.3); /* Dim, transparent black overlay */
-    z-index: 10002; /* Above the image */
-    pointer-events: none; /* Allow interactions to pass through to the image */
 }
