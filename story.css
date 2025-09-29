@@ -1,0 +1,31 @@
+/* Story Viewer Overlay */
+#storyViewerOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 1);
+    z-index: 10000;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    overflow: hidden;
+    user-select: none;
+}
+
+#storyViewerOverlay.show {
+    display: flex;
+    opacity: 1;
+    align-items: center;
+    justify-content: center;
+}
+
+.story-viewer-content {
+    width: 100%;
+    height: 100%;
+    max-width: 384px;
+    max-height: 640px;
+    object-fit: contain;
+    transition: transform 0.1s ease-out;
+}
