@@ -640,7 +640,14 @@
                 `;
 
                 storyElement.addEventListener('click', () => {
-                    openStoryViewer(story.id); // Call function from story.js
+                    console.log('Story clicked:', story.id); // Debug log
+                    const storyData = storyDataMocks[story.id];
+                    if (storyData && storyData[0]?.content) {
+                        window.openStoryViewer(storyData[0].content); // Call global function
+                    } else {
+                        console.error('No content found for story ID:', story.id);
+                        alert('Failed to find story data.');
+                    }
                 });
 
                 storiesList.appendChild(storyElement);
