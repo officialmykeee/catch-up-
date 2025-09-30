@@ -1,4 +1,4 @@
- // Expose openStoryViewer globally
+// Expose openStoryViewer globally
 window.openStoryViewer = function(contentUrl) {
     const storyViewerOverlay = document.getElementById('storyViewerOverlay');
     const storyViewerContent = document.getElementById('storyViewerContent');
@@ -34,9 +34,15 @@ window.openStoryViewer = function(contentUrl) {
             </svg>
         `;
 
-        // Toggle heart active state
+        // Toggle like/unlike when clicking the circle
         iconBtn.addEventListener('click', () => {
             iconBtn.classList.toggle('active');
+            const heartPath = iconBtn.querySelector('path');
+            if (iconBtn.classList.contains('active')) {
+                heartPath.setAttribute('stroke', '#2596be'); // blue
+            } else {
+                heartPath.setAttribute('stroke', '#9ca3af'); // gray
+            }
         });
 
         replyContainer.appendChild(replyDiv);
