@@ -53,7 +53,7 @@
     color: #9ca3af;
     text-align: left;
     font-family: sans-serif;
-    pointer-events: none;
+    pointer-events: none; /* Non-interactive */
 }
 
 /* Icon button */
@@ -61,7 +61,7 @@
     width: 45px;
     height: 45px;
     border-radius: 50%;
-    background-color: #1f1f1f; /* Match reply bar */
+    background-color: #1f1f1f;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -72,8 +72,10 @@
     width: 24px;
     height: 24px;
     stroke: #9ca3af;
-    transition: stroke 0.3s ease;
+    fill: none;
+    transition: stroke 0.3s ease, fill 0.3s ease;
 }
 .story-reply-icon.active svg {
-    stroke: #2596be; /* Blue when active */
+    stroke: #2596be;
+    fill: #2596be; /* Fill when liked */
 }
