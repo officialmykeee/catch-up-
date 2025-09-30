@@ -1,32 +1,132 @@
-// Expose openChatPanel globally
-window.openChatPanel = function(chat) {
-    const chatPanel = document.getElementById('chatPanel');
-    const chatPanelTitle = document.getElementById('chatPanelTitle');
-    const chatPanelContent = document.getElementById('chatPanelContent');
-    const appContainer = document.querySelector('.app-container');
-    const fab = document.querySelector('.fab');
+// Expose openStoryViewer globally
+window.openStoryViewer = function(contentUrl) {
+    const storyViewerOverlay = document.getElementById('storyViewerOverlay');
+    const storyViewerContent = document.getElementById('storyViewerContent');
 
-    console.log('Opening chat panel for:', chat.name); // Debug log
+    console.log('Opening story with content:', contentUrl); // Debug log
 
-    // Set chat panel content
-    chatPanelTitle.textContent = chat.name;
-    chatPanelContent.innerHTML = chat.messages.map(msg => `
-        <div class="chat-panel-message">${msg.text}</div>
-    `).join('');
+    // Ensure overlay is ready to display
+    storyViewerOverlay.classList.remove('show'); // Reset state
+    storyViewerContent.src = ''; // Clear previous image
+    storyViewerContent.style.transform = 'translateY(0)'; // Reset transform
 
-    // Slide in chat panel, slide out app container
-    chatPanel.classList.add('open');
-    appContainer.classList.add('slide-out');
-    fab.classList.add('hidden');
+    // Set the story image
+    storyViewerContent.src = contentUrl;
 
-    // Add back button handler
-    const backButton = document.querySelector('.chat-panel-back');
-    backButton.onclick = closeChatPanel;
+    // Create or update reply div
+    let replyDiv = document.querySelector('.story-reply');
+    if (replyDiv) {
+        replyDiv.textContent = 'Reply to this story'; // Update text if exists
+    } else {
+        replyDiv = document.createElement('div');
+        replyDiv.className = 'story-reply';
+        replyDiv.textContent = 'Reply to this story';
+        storyViewerOverlay.appendChild(replyDiv);
+    }
 
-    function closeChatPanel() {
-        // Slide out chat panel, slide in app container
-        chatPanel.classList.remove('open');
-        appContainer.classList.remove('slide-out');
-        fab.classList.remove('hidden');
+    // Show the overlay
+    storyViewerOverlay.classList.add('show');
+    document.body.style.overflow = 'hidden';
+
+    // Initialize drag variables
+    let startY = 0;
+    let currentY = 0;
+    let isDragging = false;
+    const sensitivity = 0.5; // Very high sensitivity
+
+    // Touch events
+    storyViewerContent.addEventListener('touchstart', (e) => {
+        startY = e.touches[0].clientY;
+        isDragging = true;
+        storyViewerContent.style.transition = 'none';
+    });
+
+    storyViewerContent.addEventListener('touchmove', (e) => {
+        if (!isDragging) return;
+        currentY = e.touches[0].clientY;
+        const deltaY = (currentY - startY) * sensitivity;
+
+        // Only allow downward drag
+        if (deltaY > 0) {
+            storyViewerContent.style.transform = `translateY(${deltaY}px)`;
+        }
+    });
+
+    storyViewerContent.addEventListener('touchend', () => {
+        if (!isDragging) return;
+        isDragging = false;
+        storyViewerContent.style.transition = 'transform 0.3s ease-out';
+
+        // Close if dragged down significantly (100px)
+        if (currentY - startY > 100) {
+            closeStoryViewer();
+        } else {
+            // Snap back
+            storyViewerContent.style.transform = 'translateY(0)';
+        }
+    });
+
+    // Mouse events for desktop
+    storyViewerContent.addEventListener('mousedown', (e) => {
+        startY = e.clientY;
+        isDragging = true;
+        storyViewerContent.style.transition = 'none';
+    });
+
+    storyViewerContent.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        currentY = e.clientY;
+        const deltaY = (currentY - startY) * sensitivity;
+
+        if (deltaY > 0) {
+            storyViewerContent.style.transform = `translateY(${deltaY}px)`;
+        }
+    });
+
+    storyViewerContent.addEventListener('mouseup', () => {
+        if (!isDragging) return;
+        isDragging = false;
+        storyViewerContent.style.transition = 'transform 0.3s ease-out';
+
+        if (currentY - startY > 100) {
+            closeStoryViewer();
+        } else {
+            storyViewerContent.style.transform = 'translateY(0)';
+        }
+    });
+
+    // Prevent default scrolling on touchmove
+    storyViewerOverlay.addEventListener('touchmove', (e) => {
+        if (e.target !== storyViewerContent) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    // Close on click outside content
+    storyViewerOverlay.addEventListener('click', (e) => {
+        if (e.target === storyViewerOverlay || e.target === replyDiv) {
+            closeStoryViewer();
+        }
+    });
+
+    // Close on Escape key
+    const handleEscape = (e) => {
+        if (e.key === 'Escape') {
+            closeStoryViewer();
+            document.removeEventListener('keydown', handleEscape);
+        }
+    };
+    document.addEventListener('keydown', handleEscape);
+
+    function closeStoryViewer() {
+        console.log('Closing story viewer'); // Debug log
+        storyViewerOverlay.classList.remove('show');
+        storyViewerContent.src = '';
+        storyViewerContent.style.transform = 'translateY(0)';
+        document.body.style.overflow = '';
+        // Remove reply div
+        if (replyDiv) {
+            replyDiv.remove();
+        }
     }
 };
