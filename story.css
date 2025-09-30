@@ -74,6 +74,9 @@
     stroke: #9ca3af;   /* gray outline */
     fill: none;        /* empty heart by default */
     transition: stroke 0.3s ease, fill 0.3s ease;
+    outline: none;
+    -webkit-tap-highlight-color: transparent; /* removes mobile tap reflection */
+    user-select: none;
 }
 .story-reply-icon.active svg {
     stroke: #ff3b94;   /* pink outline */
