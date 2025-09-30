@@ -16,11 +16,11 @@ window.openStoryViewer = function(contentUrl) {
     // Create or update reply div
     let replyDiv = document.querySelector('.story-reply');
     if (replyDiv) {
-        replyDiv.textContent = 'Reply to this story'; // Update text if exists
+        replyDiv.textContent = 'Reply privately...'; // Update text if exists
     } else {
         replyDiv = document.createElement('div');
         replyDiv.className = 'story-reply';
-        replyDiv.textContent = 'Reply to this story';
+        replyDiv.textContent = 'Reply privately...';
         storyViewerOverlay.appendChild(replyDiv);
     }
 
@@ -104,7 +104,7 @@ window.openStoryViewer = function(contentUrl) {
 
     // Close on click outside content
     storyViewerOverlay.addEventListener('click', (e) => {
-        if (e.target === storyViewerOverlay || e.target === replyDiv) {
+        if (e.target === storyViewerOverlay) {
             closeStoryViewer();
         }
     });
