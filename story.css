@@ -31,16 +31,21 @@
     transition: transform 0.1s ease-out;
 }
 
+/* Updated Reply Bar */
 .story-reply {
     position: absolute;
     bottom: 16px;
-    width: 100%;
-    max-width: 352px; /* Adjusted to account for padding */
-    background-color: rgba(255, 255, 255, 0.9);
-    border-radius: 12px;
-    padding: 12px;
-    font-size: 14px;
-    color: #374151;
-    text-align: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 352px;
+    background-color: #1f1f1f; /* Dark background */
+    border-radius: 9999px; /* Fully rounded */
+    padding: 14px 16px;
+    font-size: 15px;
+    color: #9ca3af; /* Light gray text */
+    text-align: left;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    font-family: sans-serif;
+    pointer-events: none; /* Behaves like placeholder */
 }
