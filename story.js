@@ -1,4 +1,4 @@
-// Expose openStoryViewer globally
+ // Expose openStoryViewer globally
 window.openStoryViewer = function(contentUrl) {
     const storyViewerOverlay = document.getElementById('storyViewerOverlay');
     const storyViewerContent = document.getElementById('storyViewerContent');
@@ -30,11 +30,11 @@ window.openStoryViewer = function(contentUrl) {
         iconBtn.innerHTML = `
             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path d="M15.7 4C18.87 4 21 6.98 21 9.76C21 15.39 12.16 20 12 20C11.84 20 3 15.39 3 9.76C3 6.98 5.13 4 8.3 4C10.12 4 11.31 4.91 12 5.71C12.69 4.91 13.88 4 15.7 4Z" 
-                stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
         `;
 
-        // ✅ Fix: make sure the WHOLE circle & SVG toggle
+        // Toggle like/unlike
         iconBtn.addEventListener('click', () => {
             iconBtn.classList.toggle('active');
         });
@@ -48,10 +48,13 @@ window.openStoryViewer = function(contentUrl) {
     storyViewerOverlay.classList.add('show');
     document.body.style.overflow = 'hidden';
 
-    // --- Drag & close logic unchanged ---
-    let startY = 0, currentY = 0, isDragging = false;
+    // Drag variables
+    let startY = 0;
+    let currentY = 0;
+    let isDragging = false;
     const sensitivity = 0.5;
 
+    // Touch drag
     storyViewerContent.addEventListener('touchstart', (e) => {
         startY = e.touches[0].clientY;
         isDragging = true;
@@ -61,16 +64,22 @@ window.openStoryViewer = function(contentUrl) {
         if (!isDragging) return;
         currentY = e.touches[0].clientY;
         const deltaY = (currentY - startY) * sensitivity;
-        if (deltaY > 0) storyViewerContent.style.transform = `translateY(${deltaY}px)`;
+        if (deltaY > 0) {
+            storyViewerContent.style.transform = `translateY(${deltaY}px)`;
+        }
     });
     storyViewerContent.addEventListener('touchend', () => {
         if (!isDragging) return;
         isDragging = false;
         storyViewerContent.style.transition = 'transform 0.3s ease-out';
-        if (currentY - startY > 100) closeStoryViewer();
-        else storyViewerContent.style.transform = 'translateY(0)';
+        if (currentY - startY > 100) {
+            closeStoryViewer();
+        } else {
+            storyViewerContent.style.transform = 'translateY(0)';
+        }
     });
 
+    // Mouse drag
     storyViewerContent.addEventListener('mousedown', (e) => {
         startY = e.clientY;
         isDragging = true;
@@ -80,24 +89,34 @@ window.openStoryViewer = function(contentUrl) {
         if (!isDragging) return;
         currentY = e.clientY;
         const deltaY = (currentY - startY) * sensitivity;
-        if (deltaY > 0) storyViewerContent.style.transform = `translateY(${deltaY}px)`;
+        if (deltaY > 0) {
+            storyViewerContent.style.transform = `translateY(${deltaY}px)`;
+        }
     });
     storyViewerContent.addEventListener('mouseup', () => {
         if (!isDragging) return;
         isDragging = false;
         storyViewerContent.style.transition = 'transform 0.3s ease-out';
-        if (currentY - startY > 100) closeStoryViewer();
-        else storyViewerContent.style.transform = 'translateY(0)';
+        if (currentY - startY > 100) {
+            closeStoryViewer();
+        } else {
+            storyViewerContent.style.transform = 'translateY(0)';
+        }
     });
 
+    // Prevent scroll
     storyViewerOverlay.addEventListener('touchmove', (e) => {
         if (e.target !== storyViewerContent) e.preventDefault();
     }, { passive: false });
 
+    // Close on background click
     storyViewerOverlay.addEventListener('click', (e) => {
-        if (e.target === storyViewerOverlay) closeStoryViewer();
+        if (e.target === storyViewerOverlay) {
+            closeStoryViewer();
+        }
     });
 
+    // Close on Escape
     const handleEscape = (e) => {
         if (e.key === 'Escape') {
             closeStoryViewer();
