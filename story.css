@@ -1,4 +1,4 @@
- /* Story Viewer Overlay */
+/* Story Viewer Overlay */
 #storyViewerOverlay {
     position: fixed;
     top: 0;
@@ -73,9 +73,6 @@
     height: 24px;
     stroke: #9ca3af;
     transition: stroke 0.3s ease;
-}
-.story-reply-icon.active {
-    background-color: #1f1f1f; /* Keep same dark bg */
 }
 .story-reply-icon.active svg {
     stroke: #2596be; /* Blue when active */
