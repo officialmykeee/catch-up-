@@ -1,4 +1,4 @@
-/* Story Viewer Overlay */
+ /* Story Viewer Overlay */
 #storyViewerOverlay {
     position: fixed;
     top: 0;
@@ -61,14 +61,22 @@
     width: 45px;
     height: 45px;
     border-radius: 50%;
-    background-color: #f3f4f6; /* Light circle */
+    background-color: #1f1f1f; /* Match reply bar */
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
 }
 .story-reply-icon svg {
     width: 24px;
     height: 24px;
-    stroke: #000;
+    stroke: #9ca3af;
+    transition: stroke 0.3s ease;
+}
+.story-reply-icon.active {
+    background-color: #1f1f1f; /* Keep same dark bg */
+}
+.story-reply-icon.active svg {
+    stroke: #2596be; /* Blue when active */
 }
