@@ -25,27 +25,50 @@
 .story-viewer-content {
     width: 100%;
     max-width: 384px;
-    height: calc(100% - 60px); /* Leave space for reply div */
-    max-height: 640px;
+    height: calc(100% - 120px); /* Reduced so reply bar has space */
+    max-height: 560px;
     object-fit: contain;
     transition: transform 0.1s ease-out;
 }
 
-/* Updated Reply Bar */
-.story-reply {
+/* Reply container (bar + icon) */
+.story-reply-container {
     position: absolute;
     bottom: 16px;
-    left: 50%;
-    transform: translateX(-50%);
     width: 90%;
-    max-width: 352px;
-    background-color: #1f1f1f; /* Dark background */
-    border-radius: 9999px; /* Fully rounded */
+    max-width: 384px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+/* Reply bar */
+.story-reply {
+    flex: 1;
+    background-color: #1f1f1f;
+    border-radius: 9999px;
     padding: 14px 16px;
     font-size: 15px;
-    color: #9ca3af; /* Light gray text */
+    color: #9ca3af;
     text-align: left;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     font-family: sans-serif;
-    pointer-events: none; /* Behaves like placeholder */
+    pointer-events: none;
+}
+
+/* Icon button */
+.story-reply-icon {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background-color: #f3f4f6; /* Light circle */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+.story-reply-icon svg {
+    width: 24px;
+    height: 24px;
+    stroke: #000;
 }
