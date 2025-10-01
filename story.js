@@ -2,40 +2,33 @@
 window.openStoryViewer = function (contentUrl) {
     const storyViewerOverlay = document.getElementById('storyViewerOverlay');
     const storyViewerContent = document.getElementById('storyViewerContent');
+    const storyCon = storyViewerContent.closest('.storycon');
 
     console.log('Opening story with content:', contentUrl);
 
     // Reset
     storyViewerOverlay.classList.remove('show');
     storyViewerContent.src = '';
-
-    // Remove old blur background if exists
-    let oldBlur = storyViewerOverlay.querySelector('.story-blur-bg');
-    if (oldBlur) oldBlur.remove();
+    storyCon.querySelectorAll('.story-blur-bg').forEach(el => el.remove());
 
     // Set story image
     storyViewerContent.src = contentUrl;
 
-    // Once the image loads, adjust layout
+    // Once image loads, decide tall vs medium
     storyViewerContent.onload = () => {
-        const img = storyViewerContent;
+        const isTall = storyViewerContent.naturalHeight > storyViewerContent.naturalWidth * 1.3;
 
-        // Reset to default
-        img.style.objectFit = 'contain';
-
-        // Detect dimensions
-        const aspectRatio = img.naturalWidth / img.naturalHeight;
-        const container = document.querySelector('.storycon');
-
-        if (img.naturalHeight > img.naturalWidth) {
-            // Tall image → cover fully
-            img.style.objectFit = 'cover';
+        if (isTall) {
+            // Tall image: cover full box
+            storyViewerContent.style.objectFit = 'cover';
         } else {
-            // Medium/short → center with blurred background
-            let blurBg = document.createElement('div');
+            // Medium/short image: center with blur background
+            storyViewerContent.style.objectFit = 'contain';
+
+            const blurBg = document.createElement('div');
             blurBg.className = 'story-blur-bg';
-            blurBg.style.backgroundImage = `url('${contentUrl}')`;
-            container.insertBefore(blurBg, img);
+            blurBg.style.backgroundImage = `url(${contentUrl})`;
+            storyCon.insertBefore(blurBg, storyViewerContent);
         }
     };
 
@@ -86,9 +79,9 @@ window.openStoryViewer = function (contentUrl) {
     let startY = 0;
     let currentY = 0;
     let isDragging = false;
-    const closeThreshold = 20; // Extremely sensitive (only 20px swipe needed)
+    const closeThreshold = 20; // Extremely sensitive
 
-    // --- Touch drag (close only, no image shift) ---
+    // --- Touch drag (close only) ---
     storyViewerContent.addEventListener('touchstart', (e) => {
         startY = e.touches[0].clientY;
         isDragging = true;
@@ -96,16 +89,13 @@ window.openStoryViewer = function (contentUrl) {
     storyViewerContent.addEventListener('touchmove', (e) => {
         if (!isDragging) return;
         currentY = e.touches[0].clientY;
-        const deltaY = currentY - startY;
-        if (deltaY > closeThreshold) {
-            closeStoryViewer();
-        }
+        if (currentY - startY > closeThreshold) closeStoryViewer();
     });
     storyViewerContent.addEventListener('touchend', () => {
         isDragging = false;
     });
 
-    // --- Mouse drag (close only, no image shift) ---
+    // --- Mouse drag (close only) ---
     storyViewerContent.addEventListener('mousedown', (e) => {
         startY = e.clientY;
         isDragging = true;
@@ -113,10 +103,7 @@ window.openStoryViewer = function (contentUrl) {
     storyViewerContent.addEventListener('mousemove', (e) => {
         if (!isDragging) return;
         currentY = e.clientY;
-        const deltaY = currentY - startY;
-        if (deltaY > closeThreshold) {
-            closeStoryViewer();
-        }
+        if (currentY - startY > closeThreshold) closeStoryViewer();
     });
     storyViewerContent.addEventListener('mouseup', () => {
         isDragging = false;
@@ -129,9 +116,7 @@ window.openStoryViewer = function (contentUrl) {
 
     // Close on background click
     storyViewerOverlay.addEventListener('click', (e) => {
-        if (e.target === storyViewerOverlay) {
-            closeStoryViewer();
-        }
+        if (e.target === storyViewerOverlay) closeStoryViewer();
     });
 
     // Close on Escape
@@ -149,8 +134,6 @@ window.openStoryViewer = function (contentUrl) {
         storyViewerContent.src = '';
         document.body.style.overflow = '';
         if (replyContainer) replyContainer.remove();
-
-        let blurBg = storyViewerOverlay.querySelector('.story-blur-bg');
-        if (blurBg) blurBg.remove();
+        storyCon.querySelectorAll('.story-blur-bg').forEach(el => el.remove());
     }
 };
