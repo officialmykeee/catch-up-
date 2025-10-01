@@ -1,86 +1,93 @@
-/* Overlay */
+/* Story Overlay */
 #storyViewerOverlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 1);
-  z-index: 10000;
-  display: none;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  overflow: hidden;
-  flex-direction: column;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 9999;
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 #storyViewerOverlay.show {
-  display: flex;
   opacity: 1;
 }
 
-/* Story container with border-radius */
-.story-wrapper {
+/* Slide container (draggable & animated) */
+.story-slide-container {
   position: relative;
   width: 100%;
-  max-width: 384px;
-  height: calc(100% - 120px);
-  max-height: 560px;
-  border-radius: 20px;
+  max-width: 420px;
+  height: 90%; /* leave some margin top/bottom */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease-out;
+  border-radius: 24px;
+  overflow: hidden;
+}
+
+/* Story Image Wrapper */
+.story-image-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 24px;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-/* Blurred background */
-.story-bg {
+/* Blurred Background */
+.story-image-wrapper::before {
+  content: "";
   position: absolute;
   inset: 0;
   background-size: cover;
   background-position: center;
-  filter: blur(25px);
+  filter: blur(30px);
   transform: scale(1.2);
+  z-index: 1;
 }
 
-/* Foreground story content */
-.story-viewer-content {
+/* Foreground Image (always full width inside rounded div) */
+.story-image {
   position: relative;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  z-index: 1;
-  border-radius: 20px;
+  z-index: 2;
+  width: 100%;          /* edge-to-edge horizontally */
+  height: auto;
+  max-height: 100%;
+  object-fit: cover;    /* fill left + right, keep aspect */
+  border-radius: 24px;
 }
 
 /* Reply container */
 .story-reply-container {
   position: absolute;
-  bottom: 16px;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
   width: 90%;
-  max-width: 384px;
+  max-width: 400px;
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 25px;
+  padding: 10px 15px;
+  z-index: 3;
 }
 
-/* Reply input style */
 .story-reply {
+  color: #aaa;
+  font-size: 14px;
   flex: 1;
-  background-color: #1f1f1f;
-  border-radius: 9999px;
-  padding: 14px 16px;
-  font-size: 15px;
-  color: #9ca3af;
-  text-align: left;
-  font-family: sans-serif;
-  pointer-events: none;
 }
 
-/* Like/heart button */
+/* Icon button */
 .story-reply-icon {
   width: 45px;
   height: 45px;
@@ -91,8 +98,6 @@
   justify-content: center;
   cursor: pointer;
   transition: transform 0.2s ease;
-  
-  /* Remove reflection/focus flash */
   outline: none;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
@@ -101,15 +106,15 @@
 .story-reply-icon svg {
   width: 24px;
   height: 24px;
-  stroke: #9ca3af; /* gray outline */
-  fill: none;      /* empty heart default */
+  stroke: #9ca3af;
+  fill: none;
   transition: stroke 0.3s ease, fill 0.3s ease;
-  pointer-events: none; /* parent div handles click */
+  pointer-events: none;
 }
 
 .story-reply-icon.active svg {
-  stroke: #ff3b94; /* pink outline */
-  fill: #ff3b94;   /* solid pink */
+  stroke: #ff3b94;
+  fill: #ff3b94;
 }
 
 .story-reply-icon.active {
