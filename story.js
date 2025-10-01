@@ -1,4 +1,4 @@
- // Expose openStoryViewer globally
+// Expose openStoryViewer globally
 window.openStoryViewer = function(contentUrl) {
     const storyViewerOverlay = document.getElementById('storyViewerOverlay');
     const storyViewerContent = document.getElementById('storyViewerContent');
@@ -38,10 +38,10 @@ window.openStoryViewer = function(contentUrl) {
             iconBtn.classList.toggle('active');
             const heartPath = iconBtn.querySelector('path');
             if (iconBtn.classList.contains('active')) {
-                heartPath.setAttribute('fill', '#2596be'); // full blue fill
-                heartPath.setAttribute('stroke', '#2596be');
+                heartPath.setAttribute('fill', '#e1306c'); // Instagram pink
+                heartPath.setAttribute('stroke', '#e1306c');
             } else {
-                heartPath.setAttribute('fill', 'none'); // empty
+                heartPath.setAttribute('fill', 'none');
                 heartPath.setAttribute('stroke', '#9ca3af'); // gray
             }
         });
@@ -59,7 +59,7 @@ window.openStoryViewer = function(contentUrl) {
     let startY = 0;
     let currentY = 0;
     let isDragging = false;
-    const sensitivity = 0.5;
+    const closeThreshold = 20; // Extremely sensitive (only 20px swipe needed)
 
     // --- Touch drag (close only, no image shift) ---
     storyViewerContent.addEventListener('touchstart', (e) => {
@@ -69,8 +69,8 @@ window.openStoryViewer = function(contentUrl) {
     storyViewerContent.addEventListener('touchmove', (e) => {
         if (!isDragging) return;
         currentY = e.touches[0].clientY;
-        const deltaY = (currentY - startY) * sensitivity;
-        if (deltaY > 100) {
+        const deltaY = currentY - startY;
+        if (deltaY > closeThreshold) {
             closeStoryViewer();
         }
     });
@@ -86,8 +86,8 @@ window.openStoryViewer = function(contentUrl) {
     storyViewerContent.addEventListener('mousemove', (e) => {
         if (!isDragging) return;
         currentY = e.clientY;
-        const deltaY = (currentY - startY) * sensitivity;
-        if (deltaY > 100) {
+        const deltaY = currentY - startY;
+        if (deltaY > closeThreshold) {
             closeStoryViewer();
         }
     });
