@@ -1,4 +1,4 @@
-/* Story Viewer Overlay */
+ /* Story Viewer Overlay */
 #storyViewerOverlay {
     position: fixed;
     top: 0;
@@ -22,7 +22,7 @@
     opacity: 1;
 }
 
-/* Story container box */
+/* Story container */
 .storycon {
     max-height: 640vh;
     background: #242323;
@@ -31,19 +31,18 @@
     position: relative;
     top: -38px;
     border-radius: 8px;
-    overflow: hidden; /* ensures image respects rounded corners */
+    overflow: hidden; /* ensures image respects corners */
     display: flex;
-    flex-direction: column;
+    justify-content: center;
     align-items: center;
 }
 
-/* Story content image/video */
-.story-viewer-content {
-    width: 100%;            /* fill full width of .storycon */
-    height: auto;
+/* Story image */
+.storycon img.story-viewer-content {
+    width: 100%;       /* edge-to-edge horizontally */
+    height: auto;      /* keeps aspect ratio */
+    object-fit: cover; /* fills box, crops if needed */
     display: block;
-    object-fit: cover;      /* crop if necessary to fill width */
-    border-radius: 0;
     transition: transform 0.1s ease-out;
 }
 
@@ -72,29 +71,33 @@
     pointer-events: none;
 }
 
-/* Icon button (like/heart) */
+/* Like button circle */
 .story-reply-icon {
     width: 45px;
     height: 45px;
     border-radius: 50%;
-    background-color: #1f1f1f; /* match reply bar */
+    background-color: #1f1f1f;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: background-color 0.3s ease, transform 0.2s ease;
 }
+
+/* Heart SVG */
 .story-reply-icon svg {
     width: 24px;
     height: 24px;
     fill: none;
     stroke: #9ca3af;
     stroke-width: 2;
-    transition: all 0.3s ease;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: stroke 0.3s ease, fill 0.3s ease;
 }
 
-/* Active state — heart fully colored */
-.story-reply-icon.active svg path {
-    fill: #2596be;  /* fill heart with color */
-    stroke: #2596be;
+/* Active (liked) */
+.story-reply-icon.active svg {
+    fill: #2596be;     /* full color fill */
+    stroke: #2596be;   /* match outline */
 }
