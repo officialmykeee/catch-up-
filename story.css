@@ -1,153 +1,91 @@
-/* ====================================
-   1. Story Viewer Overlay & Wrapper
-   ==================================== */
-
+ 
+    /* Story Viewer Overlay */
 #storyViewerOverlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0); /* Start transparent */
-    backdrop-filter: blur(0px); /* Start un-blurred */
+    background-color: rgba(0, 0, 0, 1);
+    z-index: 10000;
+    display: none;
     opacity: 0;
-    visibility: hidden;
-    transition: background-color 0.3s ease, backdrop-filter 0.3s ease, opacity 0.3s ease, visibility 0.3s ease;
-    z-index: 1000;
-    display: flex;
-    align-items: center; /* Center vertically */
-    justify-content: center; /* Center horizontally */
-    padding: 0 10px; /* Provides edge clearance for the rounded content */
-    box-sizing: border-box;
+    transition: opacity 0.3s ease;
+    overflow: hidden;
+    user-select: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 #storyViewerOverlay.show {
-    background-color: rgba(0, 0, 0, 0.9); /* Dark background when active */
-    backdrop-filter: blur(20px); /* Blur background when active */
+    display: flex;
     opacity: 1;
-    visibility: visible;
 }
 
-/* --- New Wrapper for the Rounded Content --- */
-#storyViewerWrapper {
-    width: 100%; /* Take full width of the overlay padding */
-    max-width: 500px; /* Optional: Keep the story content centered and max-width on larger screens */
-    height: 90vh; /* Make the wrapper take up most of the viewport height */
-    overflow: hidden; /* **Crucial:** Clips the image/content to the border-radius */
-    
-    /* The desired large border-radius to almost reach the edges */
-    border-radius: 40px; 
-    
-    /* Set an initial transform to hide the content just off-screen (slide-in start) */
-    transform: translateY(100%);
-    transition: transform 0.3s ease-out; 
-    
-    position: relative; 
-    margin-top: auto; 
-    margin-bottom: auto; 
-    will-change: transform; /* Performance hint */
-}
-
-#storyViewerOverlay.show #storyViewerWrapper {
-    /* Slide the wrapper into view when the overlay is shown */
-    transform: translateY(0);
-}
-
-/* Story Content (The Image/Video element inside the wrapper) */
-#storyViewerContent {
-    display: block;
+.story-viewer-content {
     width: 100%;
-    height: 100%;
-    object-fit: cover; /* Ensures the image covers the wrapper without distortion */
-    cursor: grab;
-    user-select: none;
-    
-    /* The drag transform is applied here */
-    transition: none !important; 
-    transform: translateY(0) !important; 
+    max-width: 384px;
+    height: calc(100% - 120px);
+    max-height: 560px;
+    object-fit: contain;
+    transition: transform 0.1s ease-out;
 }
 
-
-/* ====================================
-   2. Story Reply Bar (Bottom)
-   ==================================== */
-
+/* Reply container */
 .story-reply-container {
     position: absolute;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    /* Adjust width to match wrapper's visual space */
-    width: calc(100% - 40px); 
-    max-width: 480px; 
+    bottom: 16px;
+    width: 90%;
+    max-width: 384px;
     display: flex;
     align-items: center;
-    z-index: 1001; /* Above the wrapper */
+    justify-content: space-between;
+    gap: 8px;
 }
 
+/* Reply bar */
 .story-reply {
-    flex-grow: 1;
-    height: 45px;
-    background-color: rgba(31, 31, 31, 0.7); /* Slightly transparent background */
-    backdrop-filter: blur(8px); /* Blur for a modern effect */
-    color: #f3f4f6;
-    border-radius: 22.5px;
-    padding: 0 15px;
-    display: flex;
-    align-items: center;
-    font-size: 16px;
-    margin-right: 10px;
-    cursor: text;
-    user-select: none;
-    transition: background-color 0.2s ease;
+    flex: 1;
+    background-color: #1f1f1f;
+    border-radius: 9999px;
+    padding: 14px 16px;
+    font-size: 15px;
+    color: #9ca3af;
+    text-align: left;
+    font-family: sans-serif;
+    pointer-events: none;
 }
-
-.story-reply:hover {
-    background-color: rgba(31, 31, 31, 0.9);
-}
-
-/* ====================================
-   3. Icon Button (Like Button)
-   ==================================== */
 
 /* Icon button */
-.story-reply-icon { 
-    width: 45px; 
-    height: 45px; 
-    border-radius: 50%; 
-    background-color: #1f1f1f; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    cursor: pointer; 
-    transition: transform 0.2s ease; 
-    /* Remove reflection/focus flash */
-    outline: none; 
-    -webkit-tap-highlight-color: transparent; /* removes mobile tap reflection */
-    user-select: none; 
-} 
-
-.story-reply-icon svg { 
-    width: 24px; 
-    height: 24px; 
-    stroke: #9ca3af; /* gray outline */
-    fill: none; /* empty heart by default */
-    transition: stroke 0.3s ease, fill 0.3s ease; 
-    pointer-events: none; /* so clicks register on parent circle */
-} 
-
-.story-reply-icon.active svg { 
-    stroke: #ff3b94; /* pink outline */
-    fill: #ff3b94; /* solid pink fill */
-} 
-
-.story-reply-icon.active { 
+.story-reply-icon {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background-color: #1f1f1f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+.story-reply-icon svg {
+    width: 24px;
+    height: 24px;
+    stroke: #9ca3af;   /* gray outline */
+    fill: none;        /* empty heart by default */
+    transition: stroke 0.3s ease, fill 0.3s ease;
+}
+.story-reply-icon.active svg {
+    stroke: #ff3b94;   /* pink outline */
+    fill: #ff3b94;     /* solid pink fill */
+}
+.story-reply-icon.active {
     animation: pop 0.3s ease; /* pop animation */
-} 
-
-@keyframes pop { 
-    0% { transform: scale(1); } 
-    50% { transform: scale(1.3); } 
-    100% { transform: scale(1); } 
 }
 
+@keyframes pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+}
