@@ -1,5 +1,4 @@
- 
-    /* Story Viewer Overlay */
+/* Story Viewer Overlay */
 #storyViewerOverlay {
     position: fixed;
     top: 0;
@@ -23,16 +22,32 @@
     opacity: 1;
 }
 
-.story-viewer-content {
-    width: 100%;
+/* Story container box */
+.storycon {
+    max-height: 640vh;
+    background: #242323;
     max-width: 384px;
-    height: calc(100% - 120px);
-    max-height: 560px;
-    object-fit: contain;
+    width: 90%;
+    position: relative;
+    top: -38px;
+    border-radius: 8px;
+    overflow: hidden; /* ensures image respects rounded corners */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Story content image/video */
+.story-viewer-content {
+    width: 100%;            /* fill full width of .storycon */
+    height: auto;
+    display: block;
+    object-fit: cover;      /* crop if necessary to fill width */
+    border-radius: 0;
     transition: transform 0.1s ease-out;
 }
 
-/* Reply container */
+/* Reply container (bar + icon) */
 .story-reply-container {
     position: absolute;
     bottom: 16px;
@@ -57,35 +72,29 @@
     pointer-events: none;
 }
 
-/* Icon button */
+/* Icon button (like/heart) */
 .story-reply-icon {
     width: 45px;
     height: 45px;
     border-radius: 50%;
-    background-color: #1f1f1f;
+    background-color: #1f1f1f; /* match reply bar */
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: transform 0.2s ease;
+    transition: background-color 0.3s ease, transform 0.2s ease;
 }
 .story-reply-icon svg {
     width: 24px;
     height: 24px;
-    stroke: #9ca3af;   /* gray outline */
-    fill: none;        /* empty heart by default */
-    transition: stroke 0.3s ease, fill 0.3s ease;
-}
-.story-reply-icon.active svg {
-    stroke: #ff3b94;   /* pink outline */
-    fill: #ff3b94;     /* solid pink fill */
-}
-.story-reply-icon.active {
-    animation: pop 0.3s ease; /* pop animation */
+    fill: none;
+    stroke: #9ca3af;
+    stroke-width: 2;
+    transition: all 0.3s ease;
 }
 
-@keyframes pop {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.3); }
-    100% { transform: scale(1); }
+/* Active state — heart fully colored */
+.story-reply-icon.active svg path {
+    fill: #2596be;  /* fill heart with color */
+    stroke: #2596be;
 }
