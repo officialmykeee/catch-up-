@@ -1,4 +1,4 @@
- /* Story Viewer Overlay */
+/* Story Viewer Overlay */
 #storyViewerOverlay {
     position: fixed;
     top: 0;
@@ -22,6 +22,20 @@
     opacity: 1;
 }
 
+/* Blurred background for medium images */
+.story-blur-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    filter: blur(25px) brightness(0.6);
+    z-index: 1;
+    border-radius: 8px;
+}
+
 /* Story container */
 .storycon {
     max-height: 640vh;
@@ -35,15 +49,18 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    z-index: 2; /* keep above blur */
 }
 
 /* Story image */
 .storycon img.story-viewer-content {
     width: 100%;       /* edge-to-edge horizontally */
     height: auto;      /* keeps aspect ratio */
-    object-fit: cover; /* fills box, crops if needed */
+    object-fit: contain; /* default (JS changes if tall) */
     display: block;
     transition: transform 0.1s ease-out;
+    z-index: 3;
+    border-radius: 8px;
 }
 
 /* Reply container (bar + icon) */
@@ -56,6 +73,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 8px;
+    z-index: 4;
 }
 
 /* Reply bar */
@@ -98,6 +116,6 @@
 
 /* Active (liked) */
 .story-reply-icon.active svg {
-    fill: #2596be;     /* full color fill */
-    stroke: #2596be;   /* match outline */
+    fill: #e1306c;     /* Instagram pink */
+    stroke: #e1306c;   /* match outline */
 }
