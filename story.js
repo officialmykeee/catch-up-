@@ -1,5 +1,5 @@
 // Expose openStoryViewer globally
-window.openStoryViewer = function(contentUrl) {
+window.openStoryViewer = function (contentUrl) {
     const storyViewerOverlay = document.getElementById('storyViewerOverlay');
     const storyViewerContent = document.getElementById('storyViewerContent');
 
@@ -9,8 +9,35 @@ window.openStoryViewer = function(contentUrl) {
     storyViewerOverlay.classList.remove('show');
     storyViewerContent.src = '';
 
+    // Remove old blur background if exists
+    let oldBlur = storyViewerOverlay.querySelector('.story-blur-bg');
+    if (oldBlur) oldBlur.remove();
+
     // Set story image
     storyViewerContent.src = contentUrl;
+
+    // Once the image loads, adjust layout
+    storyViewerContent.onload = () => {
+        const img = storyViewerContent;
+
+        // Reset to default
+        img.style.objectFit = 'contain';
+
+        // Detect dimensions
+        const aspectRatio = img.naturalWidth / img.naturalHeight;
+        const container = document.querySelector('.storycon');
+
+        if (img.naturalHeight > img.naturalWidth) {
+            // Tall image → cover fully
+            img.style.objectFit = 'cover';
+        } else {
+            // Medium/short → center with blurred background
+            let blurBg = document.createElement('div');
+            blurBg.className = 'story-blur-bg';
+            blurBg.style.backgroundImage = `url('${contentUrl}')`;
+            container.insertBefore(blurBg, img);
+        }
+    };
 
     // Create or update reply container
     let replyContainer = document.querySelector('.story-reply-container');
@@ -122,5 +149,8 @@ window.openStoryViewer = function(contentUrl) {
         storyViewerContent.src = '';
         document.body.style.overflow = '';
         if (replyContainer) replyContainer.remove();
+
+        let blurBg = storyViewerOverlay.querySelector('.story-blur-bg');
+        if (blurBg) blurBg.remove();
     }
 };
