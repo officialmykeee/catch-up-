@@ -1,155 +1,72 @@
-/* story.css additions for multi-story view */
+/* story.css */
 
-/* Main Overlay (keep existing styles) */
+/* Story Viewer Overlay */
 #storyViewerOverlay {
-    /* ... existing styles ... */
-    /* Ensure it can stack elements like header/progress */
-    display: flex;
-    flex-direction: column; 
-    align-items: center;
-    justify-content: center;
-}
-
-/* Story Header */
-.story-header {
-    position: absolute;
-    top: 24px;
-    width: 90%;
-    max-width: 384px;
-    z-index: 10001; /* Above progress bar */
-    display: flex;
-    align-items: center;
-    padding: 0 8px;
-    gap: 12px;
-}
-
-.story-header-avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    object-fit: cover;
-    background-color: #999; /* Placeholder */
-}
-
-.story-info {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    color: white;
-    line-height: 1.2;
-}
-
-.story-username-display {
-    font-weight: 600;
-    font-size: 14px;
-}
-
-.story-timestamp-display {
-    font-size: 12px;
-    color: #ccc;
-}
-
-.story-close-btn {
-    width: 24px;
-    height: 24px;
-    color: white;
-    cursor: pointer;
-}
-
-/* Progress Bars */
-.story-progress-container {
-    position: absolute;
-    top: 8px;
-    width: 90%;
-    max-width: 384px;
-    display: flex;
-    gap: 4px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 1);
     z-index: 10000;
-    padding: 0 8px;
-}
-
-.progress-bar {
-    height: 3px;
-    background-color: rgba(255, 255, 255, 0.5);
-    flex: 1;
-    border-radius: 2px;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
     overflow: hidden;
+    user-select: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
-.progress-fill {
-    height: 100%;
-    width: 0%;
-    background-color: white;
-    transform-origin: left;
-}
-
-/* Main Story Container (storycon) */
-.storycon {
-    /* ... existing styles ... */
-    /* Should be slightly lower to accommodate header/progress */
-    top: 0; 
-    margin-top: 50px; /* Offset for header/progress */
-    
-    /* Change flex properties to support the full content wrapper */
-    justify-content: flex-start; 
-    align-items: flex-start;
-    overflow: hidden; /* Crucial for hiding other slides */
-}
-
-/* Story Page Wrapper (holds all slides) */
-.story-page-wrapper {
-    width: 100%;
-    height: 100%;
+#storyViewerOverlay.show {
     display: flex;
-    transition: transform 0.3s ease-out; /* For sliding between pages */
+    opacity: 1;
 }
 
-/* Individual Story Page (The slide) */
-.story-page {
-    min-width: 100%;
-    height: 100%;
-    flex-shrink: 0;
+/* Story container */
+.storycon {
+    /* Adjusted from 640vh to 95vh for proper screen containment */
+    max-height: 95vh; 
+    background: #242323;
+    max-width: 384px;
+    width: 90%;
+    position: relative;
+    top: -38px;
+    border-radius: 8px;
+    overflow: hidden; /* ensures image respects corners */
     display: flex;
     justify-content: center;
     align-items: center;
-    position: relative;
-    overflow: hidden;
 }
 
-/* Story image inside the slide (keep existing styles) */
-.story-page img.story-viewer-content {
-    /* Keep width/height 100% since it's inside story-page */
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    position: relative;
-    z-index: 1;
-}
-
-/* Navigation Areas */
-.story-nav-area {
+/* Blurred background for medium/short images */
+.story-blur-bg {
     position: absolute;
     top: 0;
-    width: 40%; /* Left/Right tapable areas */
-    height: 100%;
-    z-index: 5; /* Above content, below header/reply */
-    cursor: pointer;
-}
-
-.story-nav-area.left {
     left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    filter: blur(30px) brightness(0.6);
+    z-index: 0; /* sits behind the image */
+    border-radius: 8px;
 }
 
-.story-nav-area.right {
-    right: 0;
+/* Story image */
+.storycon img.story-viewer-content {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    display: block;
+    transition: transform 0.1s ease-out;
+    position: relative;
+    z-index: 1;
+    border-radius: 8px;
 }
 
-/* Center tap area for drag-to-close */
-.story-nav-area.left + .story-nav-area.right {
-    width: 20%; /* Gap in the middle for drag-to-close */
-}
-
-/* Story Reply Container (adjust position for new storycon structure) */
+/* Reply container (bar + icon) */
 .story-reply-container {
     position: absolute;
     bottom: 16px;
@@ -159,7 +76,50 @@
     align-items: center;
     justify-content: space-between;
     gap: 8px;
-    z-index: 10;
+    z-index: 2;
 }
 
+/* Reply bar */
+.story-reply {
+    flex: 1;
+    background-color: #1f1f1f;
+    border-radius: 9999px;
+    padding: 14px 16px;
+    font-size: 15px;
+    color: #9ca3af;
+    text-align: left;
+    font-family: sans-serif;
+    pointer-events: none;
+}
+
+/* Like button circle */
+.story-reply-icon {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background-color: #1f1f1f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+/* Heart SVG */
+.story-reply-icon svg {
+    width: 24px;
+    height: 24px;
+    fill: none;
+    stroke: #9ca3af;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: stroke 0.3s ease, fill 0.3s ease;
+}
+
+/* Active (liked) */
+.story-reply-icon.active svg {
+    fill: #e1306c;     /* Instagram pink */
+    stroke: #e1306c;   /* match outline */
+}
 
