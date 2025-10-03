@@ -38,22 +38,22 @@
         <div class="stories-container" id="storiesContainer">
             <div class="stories-scroll">
                 <div class="stories-list" id="storiesList">
-                    </div>
+                </div>
             </div>
         </div>
 
         <div class="skeleton-stories-container hidden" id="storiesLoadingSkeleton">
             <div class="stories-scroll">
                 <div class="skeleton-stories-list" id="skeletonStoriesList">
-                    </div>
+                </div>
             </div>
         </div>
 
         <div class="chat-list" id="chatList">
-            </div>
+        </div>
 
         <div class="chat-list hidden" id="loadingSkeleton">
-            </div>
+        </div>
     </div>
 
     <div id="chatPanel">
@@ -65,7 +65,7 @@
         </div>
         <div class="chat-panel-content" id="chatPanelContent">
             </div>
-        </div>
+    </div>
 
     <button class="fab" aria-label="Create new chat" title="Create new chat">
         <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -74,39 +74,12 @@
         </svg>
     </button>
 
-    <div id="storyViewerOverlay">
-        <div class="story-progress-container" id="storyProgressContainer">
-            </div>
-        
-        <div class="story-header">
-            <div class="story-avatar-sm" id="storyHeaderAvatar"></div>
-            <div class="story-info">
-                <span class="story-username-display" id="storyHeaderUsername"></span>
-                <span class="story-timestamp-display" id="storyHeaderTimestamp"></span>
-            </div>
-            <svg class="story-close-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M18 6L6 18M6 6l12 12"/>
-            </svg>
-        </div>
-
-        <div class="storycon" id="storyCon">
-            <div class="story-page-wrapper" id="storyPageWrapper">
-                </div>
-
-            <div class="story-nav-area left" id="navAreaLeft"></div>
-            <div class="story-nav-area right" id="navAreaRight"></div>
-
-            <div class="story-reply-container">
-                <div class="story-reply">Reply privately...</div>
-                <div class="story-reply-icon">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M15.7 4C18.87 4 21 6.98 21 9.76C21 15.39 12.16 20 12 20C11.84 20 3 15.39 3 9.76C3 6.98 5.13 4 8.3 4C10.12 4 11.31 4.91 12 5.71C12.69 4.91 13.88 4 15.7 4Z" 
-                        stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </div>
-            </div>
+<div id="storyViewerOverlay">
+        <div class="storycon">
+        <img class="story-viewer-content" id="storyViewerContent" src="" alt="Story content">
         </div>
     </div>
+
     <script type="module">
         import { initNetworkLogic } from './network.js';
         
@@ -119,4 +92,5 @@
     <script src="network.js" type="module"></script>
 </body>
 </html>
+
 
