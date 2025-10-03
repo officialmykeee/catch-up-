@@ -15,6 +15,7 @@ function updateStoryViewer() {
     const storyViewerContent = document.getElementById('storyViewerContent');
     const storyCon = storyViewerContent.closest('.storycon');
     const progressBarsContainer = document.querySelector('.story-progress-bars');
+    const prevArea = document.querySelector('.story-nav-prev');
 
     // Reset existing content
     storyViewerContent.src = '';
@@ -43,6 +44,13 @@ function updateStoryViewer() {
     iconBtn.classList.toggle('active', currentStory.isLiked);
     heartPath.setAttribute('fill', currentStory.isLiked ? '#e1306c' : 'none');
     heartPath.setAttribute('stroke', currentStory.isLiked ? '#e1306c' : '#9ca3af');
+
+    // Update navigation visibility
+    if (currentUserId === 'your-story' && currentStoryIndex === 0) {
+        if (prevArea) prevArea.style.display = 'none'; // Hide prev navigation for first story of "Your story"
+    } else {
+        if (prevArea) prevArea.style.display = 'block'; // Show prev navigation for all other cases
+    }
 
     // Update progress bars
     updateProgressBars();
@@ -120,6 +128,8 @@ function closeStoryViewer() {
     const storyCon = storyViewerContent.closest('.storycon');
     const replyContainer = document.querySelector('.story-reply-container');
     const progressBarsContainer = document.querySelector('.story-progress-bars');
+    const prevArea = document.querySelector('.story-nav-prev');
+    const nextArea = document.querySelector('.story-nav-next');
 
     console.log('Closing story viewer');
 
@@ -132,6 +142,8 @@ function closeStoryViewer() {
     storyViewerContent.src = '';
     if (replyContainer) replyContainer.remove();
     if (progressBarsContainer) progressBarsContainer.remove();
+    if (prevArea) prevArea.remove(); // Remove navigation areas
+    if (nextArea) nextArea.remove();
     storyCon.querySelectorAll('.story-blur-bg').forEach(el => el.remove());
 
     // Reset state
@@ -183,7 +195,7 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
     if (!progressBarsContainer) {
         progressBarsContainer = document.createElement('div');
         progressBarsContainer.className = 'story-progress-bars';
-        storyCon.appendChild(progressBarsContainer); // Append to storycon instead of overlay
+        storyCon.appendChild(progressBarsContainer);
     }
 
     // Create reply container
@@ -229,25 +241,30 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
     storyViewerOverlay.classList.add('show');
     document.body.style.overflow = 'hidden';
 
-    // Update viewer with initial story
+    // Create navigation areas
+    let prevArea = document.querySelector('.story-nav-prev');
+    let nextArea = document.querySelector('.story-nav-next');
+    if (!prevArea) {
+        prevArea = document.createElement('div');
+        prevArea.className = 'story-nav-area story-nav-prev';
+        storyViewerOverlay.appendChild(prevArea);
+        prevArea.addEventListener('click', (e) => {
+            e.stopPropagation();
+            goToPreviousStory();
+        });
+    }
+    if (!nextArea) {
+        nextArea = document.createElement('div');
+        nextArea.className = 'story-nav-area story-nav-next';
+        storyViewerOverlay.appendChild(nextArea);
+        nextArea.addEventListener('click', (e) => {
+            e.stopPropagation();
+            goToNextStory();
+        });
+    }
+
+    // Update viewer with initial story (includes navigation visibility)
     updateStoryViewer();
-
-    // --- Navigation Areas ---
-    const prevArea = document.createElement('div');
-    prevArea.className = 'story-nav-area story-nav-prev';
-    const nextArea = document.createElement('div');
-    nextArea.className = 'story-nav-area story-nav-next';
-    storyViewerOverlay.appendChild(prevArea);
-    storyViewerOverlay.appendChild(nextArea);
-
-    prevArea.addEventListener('click', (e) => {
-        e.stopPropagation();
-        goToPreviousStory();
-    });
-    nextArea.addEventListener('click', (e) => {
-        e.stopPropagation();
-        goToNextStory();
-    });
 
     // --- Drag and Close Logic ---
     let startY = 0;
