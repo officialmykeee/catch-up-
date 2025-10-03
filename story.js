@@ -74,8 +74,7 @@ function updateProgressBars() {
     const activeBar = progressBarsContainer.querySelector('.progress-bar.active');
     if (activeBar) {
         activeBar.style.animation = 'none'; // Reset animation
-        // Force reflow to restart animation
-        void activeBar.offsetWidth;
+        void activeBar.offsetWidth; // Force reflow
         activeBar.style.animation = `progress ${STORY_DURATION}ms linear forwards`;
 
         // Schedule next story after animation completes
@@ -179,12 +178,12 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
     storyCon.querySelectorAll('.story-blur-bg').forEach(el => el.remove());
     clearTimeout(window.storyProgressTimeout);
 
-    // Create progress bars container
+    // Create progress bars container inside storycon
     let progressBarsContainer = document.querySelector('.story-progress-bars');
     if (!progressBarsContainer) {
         progressBarsContainer = document.createElement('div');
         progressBarsContainer.className = 'story-progress-bars';
-        storyViewerOverlay.insertBefore(progressBarsContainer, storyCon);
+        storyCon.appendChild(progressBarsContainer); // Append to storycon instead of overlay
     }
 
     // Create reply container
