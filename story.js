@@ -1,10 +1,9 @@
 // story.js
 
 // --- Global Variables and State ---
-let currentUserId = null; // Track current user
-let currentStoryData = []; // Track user's stories
-let currentStoryIndex = 0; // Track current story index
-let progressInterval = null; // For progress bar animation
+let currentUserId = null;
+let currentStoryData = [];
+let currentStoryIndex = 0;
 const STORY_DURATION = 5000; // 5 seconds per story
 
 // --- Helper Functions ---
@@ -20,7 +19,6 @@ function updateStoryViewer() {
     // Reset existing content
     storyViewerContent.src = '';
     storyCon.querySelectorAll('.story-blur-bg').forEach(el => el.remove());
-    clearInterval(progressInterval); // Stop any existing animation
 
     // Set new story content
     const currentStory = currentStoryData[currentStoryIndex];
@@ -46,7 +44,7 @@ function updateStoryViewer() {
     heartPath.setAttribute('fill', currentStory.isLiked ? '#e1306c' : 'none');
     heartPath.setAttribute('stroke', currentStory.isLiked ? '#e1306c' : '#9ca3af');
 
-    // Reset and start progress bars
+    // Update progress bars
     updateProgressBars();
 }
 
@@ -64,33 +62,35 @@ function updateProgressBars() {
         const bar = document.createElement('div');
         bar.className = 'progress-bar';
         if (index < currentStoryIndex) {
-            bar.style.width = '100%'; // Completed stories
+            bar.classList.add('completed'); // Completed stories
         } else if (index === currentStoryIndex) {
-            bar.style.width = '0%'; // Current story starts at 0
-            bar.classList.add('active');
+            bar.classList.add('active'); // Current story
         }
         barContainer.appendChild(bar);
         progressBarsContainer.appendChild(barContainer);
     });
 
-    // Animate the current progress bar
+    // Start animation for the current progress bar
     const activeBar = progressBarsContainer.querySelector('.progress-bar.active');
-    let progress = 0;
-    clearInterval(progressInterval);
-    progressInterval = setInterval(() => {
-        progress += 100 / (STORY_DURATION / 100); // Increment every 100ms
-        activeBar.style.width = `${progress}%`;
-        if (progress >= 100) {
-            clearInterval(progressInterval);
+    if (activeBar) {
+        activeBar.style.animation = 'none'; // Reset animation
+        // Force reflow to restart animation
+        void activeBar.offsetWidth;
+        activeBar.style.animation = `progress ${STORY_DURATION}ms linear forwards`;
+
+        // Schedule next story after animation completes
+        clearTimeout(window.storyProgressTimeout);
+        window.storyProgressTimeout = setTimeout(() => {
             goToNextStory();
-        }
-    }, 100);
+        }, STORY_DURATION);
+    }
 }
 
 /**
  * Navigates to the previous story or closes if at the start.
  */
 function goToPreviousStory() {
+    clearTimeout(window.storyProgressTimeout); // Stop current timer
     if (currentStoryIndex > 0) {
         currentStoryIndex--;
         updateStoryViewer();
@@ -103,6 +103,7 @@ function goToPreviousStory() {
  * Navigates to the next story or closes if at the end.
  */
 function goToNextStory() {
+    clearTimeout(window.storyProgressTimeout); // Stop current timer
     if (currentStoryIndex < currentStoryData.length - 1) {
         currentStoryIndex++;
         updateStoryViewer();
@@ -124,7 +125,7 @@ function closeStoryViewer() {
     console.log('Closing story viewer');
 
     // Stop progress animation
-    clearInterval(progressInterval);
+    clearTimeout(window.storyProgressTimeout);
 
     // Hide overlay and reset
     storyViewerOverlay.classList.remove('show');
@@ -176,7 +177,7 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
     storyViewerOverlay.classList.remove('show');
     storyViewerContent.src = '';
     storyCon.querySelectorAll('.story-blur-bg').forEach(el => el.remove());
-    clearInterval(progressInterval);
+    clearTimeout(window.storyProgressTimeout);
 
     // Create progress bars container
     let progressBarsContainer = document.querySelector('.story-progress-bars');
@@ -211,7 +212,7 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
             const isActive = iconBtn.classList.contains('active');
             heartPath.setAttribute('fill', isActive ? '#e1306c' : 'none');
             heartPath.setAttribute('stroke', isActive ? '#e1306c' : '#9ca3af');
-            currentStoryData[currentStoryIndex].isLiked = isActive; // Update mock data
+            currentStoryData[currentStoryIndex].isLiked = isActive;
         });
 
         replyContainer.appendChild(replyDiv);
