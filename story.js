@@ -1,4 +1,5 @@
-// story.js
+    // story.js
+import { stories, storyDataMocks } from './constory.js';
 
 // --- Global Functions and Event Handlers for Cleanup ---
 
@@ -15,8 +16,10 @@ const handleEscape = (e) => {
 function closeStoryViewer() {
     const storyViewerOverlay = document.getElementById('storyViewerOverlay');
     const storyViewerContent = document.getElementById('storyViewerContent');
-    const storyCon = storyViewerContent.closest('.storycon');
+    const storyCon = storyViewerContent?.closest('.storycon');
     const replyContainer = document.querySelector('.story-reply-container');
+
+    if (!storyViewerOverlay || !storyViewerContent) return;
 
     console.log('Closing story viewer');
 
@@ -27,7 +30,7 @@ function closeStoryViewer() {
     // Clean up dynamic elements and content
     storyViewerContent.src = '';
     if (replyContainer) replyContainer.remove();
-    storyCon.querySelectorAll('.story-blur-bg').forEach(el => el.remove());
+    if (storyCon) storyCon.querySelectorAll('.story-blur-bg').forEach(el => el.remove());
 
     // Remove the Escape key listener
     document.removeEventListener('keydown', handleEscape);
@@ -46,10 +49,10 @@ window.closeStoryViewer = closeStoryViewer;
 window.openStoryViewer = function (userId) {
     const storyViewerOverlay = document.getElementById('storyViewerOverlay');
     const storyViewerContent = document.getElementById('storyViewerContent');
-    const storyCon = storyViewerContent.closest('.storycon');
+    const storyCon = storyViewerContent?.closest('.storycon');
     const closeThreshold = 20;
 
-    // Get this user's stories from network.js
+    // Get this user's stories from constory.js
     const storiesForUser = storyDataMocks[userId];
     if (!storiesForUser || storiesForUser.length === 0) {
         console.error("No stories found for user:", userId);
@@ -88,7 +91,6 @@ window.openStoryViewer = function (userId) {
         let iconBtn;
 
         if (!replyContainer) {
-            // Create reply container if not present
             replyContainer = document.createElement('div');
             replyContainer.className = 'story-reply-container';
 
@@ -119,10 +121,8 @@ window.openStoryViewer = function (userId) {
             storyViewerOverlay.appendChild(replyContainer);
 
         } else {
-            // Reuse existing
             iconBtn = replyContainer.querySelector('.story-reply-icon');
             const heartPath = iconBtn.querySelector('path');
-
             iconBtn.classList.toggle('active', story.isLiked);
             heartPath.setAttribute('fill', story.isLiked ? '#e1306c' : 'none');
             heartPath.setAttribute('stroke', story.isLiked ? '#e1306c' : '#9ca3af');
@@ -132,7 +132,6 @@ window.openStoryViewer = function (userId) {
     // --- Navigation ---
     showStory(currentIndex);
 
-    // Clicking right side = next, left side = prev
     storyViewerContent.onclick = (e) => {
         const half = storyViewerContent.clientWidth / 2;
         if (e.offsetX > half) {
@@ -156,7 +155,6 @@ window.openStoryViewer = function (userId) {
     let startY = 0;
     let isDragging = false;
 
-    // Touch drag
     storyViewerContent.ontouchstart = (e) => {
         startY = e.touches[0].clientY;
         isDragging = true;
@@ -167,7 +165,6 @@ window.openStoryViewer = function (userId) {
     };
     storyViewerContent.ontouchend = () => { isDragging = false; };
 
-    // Mouse drag
     storyViewerContent.onmousedown = (e) => {
         startY = e.clientY;
         isDragging = true;
@@ -178,29 +175,24 @@ window.openStoryViewer = function (userId) {
     };
     storyViewerContent.onmouseup = () => { isDragging = false; };
 
-    // Prevent scroll on overlay bg
     storyViewerOverlay.addEventListener('touchmove', (e) => {
         if (e.target !== storyViewerContent) e.preventDefault();
     }, { passive: false });
 
-    // Close on background click
     storyViewerOverlay.addEventListener('click', (e) => {
         if (e.target === storyViewerOverlay) closeStoryViewer();
     });
 
-    // Show overlay
     storyViewerOverlay.classList.add('show');
     document.body.style.overflow = 'hidden';
 
-    // Escape key
     document.addEventListener('keydown', handleEscape);
 };
 
 
-// --- Auto-bind avatars from network.js to open stories ---
-
+// --- Auto-bind avatars (safety in case renderStories isn’t called) ---
 window.addEventListener("DOMContentLoaded", () => {
-    const storyListContainer = document.getElementById("storyList"); 
+    const storyListContainer = document.getElementById("storyList");
     if (!storyListContainer) return;
 
     stories.forEach(user => {
@@ -210,12 +202,9 @@ window.addEventListener("DOMContentLoaded", () => {
             <img src="${user.avatar}" alt="${user.username}" />
             <span>${user.username}</span>
         `;
-
-        // When clicked → open story for that user
         storyItem.addEventListener("click", () => {
             openStoryViewer(user.id);
         });
-
         storyListContainer.appendChild(storyItem);
     });
 });
