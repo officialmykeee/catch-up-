@@ -49,9 +49,9 @@ window.openStoryViewer = function (userId) {
     const storyCon = storyViewerContent.closest('.storycon');
     const closeThreshold = 20;
 
-    // Get this user's stories from network.js mock
-    const stories = storyDataMocks[userId];
-    if (!stories || stories.length === 0) {
+    // Get this user's stories from network.js
+    const storiesForUser = storyDataMocks[userId];
+    if (!storiesForUser || storiesForUser.length === 0) {
         console.error("No stories found for user:", userId);
         return;
     }
@@ -60,8 +60,8 @@ window.openStoryViewer = function (userId) {
 
     // --- Function to show a story ---
     function showStory(index) {
-        const story = stories[index];
-        console.log(`Showing story ${story.id} (${index + 1}/${stories.length})`);
+        const story = storiesForUser[index];
+        console.log(`Showing story ${story.id} (${index + 1}/${storiesForUser.length})`);
 
         // Reset image + blur
         storyViewerContent.src = '';
@@ -132,12 +132,23 @@ window.openStoryViewer = function (userId) {
     // --- Navigation ---
     showStory(currentIndex);
 
-    storyViewerContent.onclick = () => {
-        if (currentIndex < stories.length - 1) {
-            currentIndex++;
-            showStory(currentIndex);
+    // Clicking right side = next, left side = prev
+    storyViewerContent.onclick = (e) => {
+        const half = storyViewerContent.clientWidth / 2;
+        if (e.offsetX > half) {
+            // Next story
+            if (currentIndex < storiesForUser.length - 1) {
+                currentIndex++;
+                showStory(currentIndex);
+            } else {
+                closeStoryViewer();
+            }
         } else {
-            closeStoryViewer();
+            // Previous story
+            if (currentIndex > 0) {
+                currentIndex--;
+                showStory(currentIndex);
+            }
         }
     };
 
@@ -184,3 +195,27 @@ window.openStoryViewer = function (userId) {
     // Escape key
     document.addEventListener('keydown', handleEscape);
 };
+
+
+// --- Auto-bind avatars from network.js to open stories ---
+
+window.addEventListener("DOMContentLoaded", () => {
+    const storyListContainer = document.getElementById("storyList"); 
+    if (!storyListContainer) return;
+
+    stories.forEach(user => {
+        const storyItem = document.createElement("div");
+        storyItem.className = "story-avatar";
+        storyItem.innerHTML = `
+            <img src="${user.avatar}" alt="${user.username}" />
+            <span>${user.username}</span>
+        `;
+
+        // When clicked → open story for that user
+        storyItem.addEventListener("click", () => {
+            openStoryViewer(user.id);
+        });
+
+        storyListContainer.appendChild(storyItem);
+    });
+});
