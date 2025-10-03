@@ -1,3 +1,5 @@
+/* story.css */
+
 /* Story Viewer Overlay */
 #storyViewerOverlay {
     position: fixed;
@@ -24,7 +26,8 @@
 
 /* Story container */
 .storycon {
-    max-height: 640vh;
+    /* Adjusted from 640vh to 95vh for proper screen containment */
+    max-height: 95vh; 
     background: #242323;
     max-width: 384px;
     width: 90%;
@@ -119,3 +122,4 @@
     fill: #e1306c;     /* Instagram pink */
     stroke: #e1306c;   /* match outline */
 }
+
