@@ -6,9 +6,9 @@ let currentStoriesData = [];
 let progressTimers = [];
 let animationFrameId = null;
 const STORY_DURATION = 7000; // 7 seconds per slide
-const closeThreshold = 50;   // Drag distance to close
+const closeThreshold = 50;   // Drag distance (px) to close
 
-// --- DOM Elements ---
+// --- DOM Elements (Fetched once) ---
 const storyViewerOverlay = document.getElementById('storyViewerOverlay');
 const storyPageWrapper = document.getElementById('storyPageWrapper');
 const progressContainer = document.getElementById('storyProgressContainer');
@@ -33,8 +33,9 @@ function stopStoryProgress() {
         animationFrameId = null;
     }
     document.querySelectorAll('.progress-fill').forEach(fill => {
+        fill.style.transition = 'none'; // Temporarily disable transition for reset
         fill.style.animation = 'none';
-        fill.offsetHeight; // Reflow trick
+        fill.offsetHeight; // Force reflow
     });
 }
 
@@ -51,13 +52,23 @@ function startStoryProgress() {
 
     // Fill previous bars completely
     for (let i = 0; i < currentStoryIndex; i++) {
-        progressContainer.children[i].querySelector('.progress-fill').style.width = '100%';
+        const prevFill = progressContainer.children[i].querySelector('.progress-fill');
+        prevFill.style.transition = 'none';
+        prevFill.style.width = '100%';
+    }
+    
+    // Reset/Pause subsequent bars
+    for (let i = currentStoryIndex + 1; i < currentStoriesData.length; i++) {
+        const nextFill = progressContainer.children[i].querySelector('.progress-fill');
+        nextFill.style.transition = 'none';
+        nextFill.style.width = '0%';
     }
 
     // Set up the current bar
+    progressFill.style.transition = 'none';
     progressFill.style.width = '0%';
     
-    // Simple animation loop for smooth progress
+    // Animation loop for smooth progress
     function animate(currentTime) {
         const elapsed = currentTime - startTime;
         const progress = Math.min(elapsed / STORY_DURATION, 1);
@@ -70,14 +81,14 @@ function startStoryProgress() {
 
     animationFrameId = requestAnimationFrame(animate);
 
-    // Set a timer to move to the next slide when the duration is complete
+    // Timer to move to the next slide when duration is complete
     const timeout = setTimeout(showNextStory, STORY_DURATION);
     progressTimers.push(timeout);
 }
 
 
 /**
- * Moves the story carousel to a specific index.
+ * Moves the story carousel to a specific index, respecting navigation rules.
  * @param {number} newIndex - The target index of the story slide.
  */
 function navigateToStory(newIndex) {
@@ -85,17 +96,20 @@ function navigateToStory(newIndex) {
         return;
     }
 
-    // Check "Your story" specific back navigation rule
-    if (currentStoriesData[0].isOwnStory && newIndex < currentStoryIndex && newIndex === 0) {
-        // If navigating from story 1 -> 0, and it's your own story, DONT allow invisible back nav.
+    // --- CRITICAL NAVIGATION RULE ---
+    const isOwnStory = currentStoriesData[0]?.isOwnStory;
+    if (isOwnStory && newIndex < currentStoryIndex && newIndex === 0) {
+        // Rule: "Your story" first internal story should not allow back invisible navigation.
         return; 
     }
 
     // Update the progress bar for the story we are leaving
     const prevFill = progressContainer.children[currentStoryIndex]?.querySelector('.progress-fill');
     if (prevFill) {
-        prevFill.style.width = newIndex > currentStoryIndex ? '100%' : '0%';
-        prevFill.style.transition = 'width 0.1s ease'; // Quick transition
+        // Quick transition for smooth progress bar update
+        prevFill.style.transition = 'width 0.2s ease-out'; 
+        // Fill if going forward, reset if going backward
+        prevFill.style.width = newIndex > currentStoryIndex ? '100%' : '0%'; 
     }
 
     currentStoryIndex = newIndex;
@@ -105,12 +119,10 @@ function navigateToStory(newIndex) {
     storyPageWrapper.style.transform = `translateX(${offset}%)`;
 
     // Update timestamp
-    headerTimestamp.textContent = currentStoriesData[currentStoryIndex].timestamp || '';
+    headerTimestamp.textContent = currentStoriesData[currentStoryIndex]?.timestamp || '';
 
-    // Reset transition after navigation for the current bar
-    setTimeout(() => {
-        startStoryProgress();
-    }, 300); // Wait for slide transition to finish
+    // Wait briefly for slide transition before starting new progress animation
+    setTimeout(startStoryProgress, 300); 
 }
 
 /**
@@ -132,30 +144,9 @@ function showPrevStory() {
     if (currentStoryIndex > 0) {
         navigateToStory(currentStoryIndex - 1);
     } else {
-        // First story in the set finishes/is clicked
-        // You might want to close here if you were viewing a multi-user story, 
-        // but for now, we follow the "no back" rule for index 0 of "Your Story"
+        // For index 0, you could implement a rule to go to the previous user's story here,
+        // but for now, we stop, respecting the "Your Story" rule if applicable.
     }
-}
-
-/**
- * Closes the story viewer and cleans up.
- */
-function closeStoryViewer() {
-    stopStoryProgress();
-    console.log('Closing story viewer');
-
-    storyViewerOverlay.classList.remove('show');
-    document.body.style.overflow = '';
-    
-    // Remove the Escape key listener
-    document.removeEventListener('keydown', handleEscape);
-    
-    // Reset state
-    currentStoryIndex = 0;
-    currentStoriesData = [];
-    storyPageWrapper.innerHTML = '';
-    progressContainer.innerHTML = '';
 }
 
 // Function to handle the Escape key press
@@ -165,7 +156,30 @@ const handleEscape = (e) => {
     }
 };
 
-// --- DOM Manipulation and Event Listeners ---
+/**
+ * Closes the story viewer and cleans up the DOM and event listeners.
+ */
+function closeStoryViewer() {
+    stopStoryProgress();
+    console.log('Closing story viewer');
+
+    storyViewerOverlay.classList.remove('show');
+    document.body.style.overflow = '';
+    
+    // Remove the Escape key listener to prevent memory leaks
+    document.removeEventListener('keydown', handleEscape);
+    
+    // Reset state and DOM content
+    currentStoryIndex = 0;
+    currentStoriesData = [];
+    storyPageWrapper.innerHTML = '';
+    progressContainer.innerHTML = '';
+    storyCon.style.transform = ''; // Clear any drag-related transform
+}
+
+// Expose the close function globally
+window.closeStoryViewer = closeStoryViewer;
+
 
 /**
  * Builds the HTML content for the viewer based on the story data.
@@ -188,27 +202,40 @@ function buildStoryViewer(stories) {
     stories.forEach((story, index) => {
         const page = document.createElement('div');
         page.className = 'story-page';
+        
+        // Use a placeholder width for image loading logic
+        const PLACEHOLDER_WIDTH = 384; 
+        const PLACEHOLDER_HEIGHT = 600;
 
-        // Blur Background Logic
-        const isTall = story.naturalHeight > story.naturalWidth * 1.3;
-        if (!isTall) {
-            const blurBg = document.createElement('div');
-            blurBg.className = 'story-blur-bg';
-            blurBg.style.backgroundImage = `url(${story.contentUrl})`;
-            page.appendChild(blurBg);
-        }
+        // Image object used to determine aspect ratio before insertion
+        const tempImg = new Image();
+        tempImg.onload = function() {
+            // Recalculate aspect ratio on load
+            const naturalRatio = this.naturalHeight / this.naturalWidth;
+            const isTall = naturalRatio > 1.3;
+            const imgEl = page.querySelector('img.story-viewer-content');
+            
+            // Adjust content fit
+            if (imgEl) {
+                imgEl.style.objectFit = isTall ? 'cover' : 'contain';
+            }
 
-        // Story Image/Content
+            // Apply blur background logic if not tall
+            if (!isTall && !page.querySelector('.story-blur-bg')) {
+                 const blurBg = document.createElement('div');
+                 blurBg.className = 'story-blur-bg';
+                 blurBg.style.backgroundImage = `url(${story.contentUrl})`;
+                 page.insertBefore(blurBg, imgEl);
+            }
+        };
+        tempImg.src = story.contentUrl;
+
+        // Story Image/Content (inserted first)
         const img = document.createElement('img');
         img.className = 'story-viewer-content';
         img.src = story.contentUrl;
-        img.style.objectFit = isTall ? 'cover' : 'contain';
-        img.onload = () => {
-            // Re-check object fit in case dimensions changed
-            img.style.objectFit = img.naturalHeight > img.naturalWidth * 1.3 ? 'cover' : 'contain';
-        }
-
         page.appendChild(img);
+        
         storyPageWrapper.appendChild(page);
     });
 }
@@ -218,7 +245,7 @@ function buildStoryViewer(stories) {
  * @param {string} username - The owner of the story.
  * @param {string} avatarUrl - The avatar URL of the owner.
  * @param {boolean} isOwnStory - True if the user is viewing their own story.
- * @param {Array<Object>} stories - Array of story content objects.
+ * @param {Array<Object>} stories - Array of story content objects: [{ contentUrl, timestamp }, ...]
  */
 window.openStoryViewer = function (username, avatarUrl, isOwnStory, stories) {
     if (!stories || stories.length === 0) return;
@@ -228,7 +255,8 @@ window.openStoryViewer = function (username, avatarUrl, isOwnStory, stories) {
 
     // Set header info
     headerUsername.textContent = username;
-    // (Avatar URL update left as an exercise for the user, as the HTML structure is simple)
+    // Set the avatar using background-image or child element (implementation depends on your HTML)
+    // Example: document.getElementById('storyHeaderAvatar').style.backgroundImage = `url(${avatarUrl})`;
 
     // Build the slides and progress bars
     buildStoryViewer(currentStoriesData);
@@ -239,7 +267,7 @@ window.openStoryViewer = function (username, avatarUrl, isOwnStory, stories) {
     currentStoryIndex = 0;
     navigateToStory(0); // This will also start the timer
 
-    // Attach listeners
+    // Attach navigation and close listeners
     navAreaRight.onclick = showNextStory;
     navAreaLeft.onclick = showPrevStory;
     storyCloseBtn.onclick = closeStoryViewer;
@@ -249,112 +277,95 @@ window.openStoryViewer = function (username, avatarUrl, isOwnStory, stories) {
     document.addEventListener('keydown', handleEscape);
 };
 
-// --- Drag-to-Close Implementation (Kept similar to your original) ---
+// --- Drag-to-Close Implementation (Attached to storyCon) ---
 
 let startY = 0;
 let isDragging = false;
 
-// Attach listeners to the main story content container (`storyCon`)
-storyCon.onmousedown = (e) => {
-    // Only allow drag-to-close from the center tap area (where nav areas don't overlap)
+const startDrag = (e) => {
+    // Only allow drag-to-close from the center area (avoiding left/right navigation)
+    const clientX = e.type.startsWith('touch') ? e.touches[0].clientX : e.clientX;
+    const clientY = e.type.startsWith('touch') ? e.touches[0].clientY : e.clientY;
+
     const rect = storyCon.getBoundingClientRect();
-    const x = e.clientX - rect.left;
+    const x = clientX - rect.left;
+    
+    // Check if click/touch is in the central 20% area
     if (x > rect.width * 0.4 && x < rect.width * 0.6) {
-        startY = e.clientY;
+        startY = clientY;
         isDragging = true;
         stopStoryProgress();
     }
 };
 
-storyCon.onmousemove = (e) => {
+const moveDrag = (e) => {
     if (!isDragging) return;
-    const dragDistance = e.clientY - startY;
+    const clientY = e.type.startsWith('touch') ? e.touches[0].clientY : e.clientY;
+    
+    const dragDistance = clientY - startY;
+    
     if (dragDistance > closeThreshold) {
         closeStoryViewer();
     } else if (dragDistance > 0) {
-        // Slight vertical move to show "pull" effect
+        // Apply "pull" effect
         const scale = 1 - Math.min(dragDistance / 200, 0.05);
         storyCon.style.transform = `translateY(${dragDistance}px) scale(${scale})`;
     }
 };
 
-storyCon.onmouseup = () => {
+const endDrag = () => {
     if (isDragging) {
-        storyCon.style.transform = '';
-        startStoryProgress(); // Restart on release if not closed
-    }
-    isDragging = false;
-};
-
-// Touch drag-to-close logic (simplified and attached to storyCon)
-storyCon.ontouchstart = (e) => {
-    if (e.touches.length === 1) {
-        const rect = storyCon.getBoundingClientRect();
-        const x = e.touches[0].clientX - rect.left;
-        if (x > rect.width * 0.4 && x < rect.width * 0.6) {
-            startY = e.touches[0].clientY;
-            isDragging = true;
-            stopStoryProgress();
+        storyCon.style.transform = ''; // Snap back
+        // Only restart progress if it wasn't closed
+        if (storyViewerOverlay.classList.contains('show')) {
+            startStoryProgress(); 
         }
     }
-};
-
-storyCon.ontouchmove = (e) => {
-    if (!isDragging || e.touches.length > 1) return;
-    const dragDistance = e.touches[0].clientY - startY;
-    if (dragDistance > closeThreshold) {
-        closeStoryViewer();
-    } else if (dragDistance > 0) {
-        const scale = 1 - Math.min(dragDistance / 200, 0.05);
-        storyCon.style.transform = `translateY(${dragDistance}px) scale(${scale})`;
-    }
-};
-
-storyCon.ontouchend = () => {
-    if (isDragging) {
-        storyCon.style.transform = '';
-        startStoryProgress();
-    }
     isDragging = false;
 };
+
+// Attach Drag Listeners to the storyCon element
+storyCon.addEventListener('mousedown', startDrag);
+storyCon.addEventListener('mousemove', moveDrag);
+storyCon.addEventListener('mouseup', endDrag);
+
+storyCon.addEventListener('touchstart', startDrag, { passive: true });
+storyCon.addEventListener('touchmove', moveDrag, { passive: true });
+storyCon.addEventListener('touchend', endDrag);
 
 // Prevent scroll on the overlay background
 storyViewerOverlay.addEventListener('touchmove', (e) => {
-    // Allows vertical drag if dragging is active on the storyCon
+    // Only prevent default if we're not actively dragging (to allow vertical drag movement)
     if (!isDragging) e.preventDefault(); 
 }, { passive: false });
 
-// --- Like Button Logic (Restored from your original) ---
+
+// --- Initialization and Cleanup on Load (The Black Screen Fix) ---
+
 document.addEventListener('DOMContentLoaded', () => {
+    // 1. Attach Like Button Logic (needs to be attached once to the static element)
     const iconBtn = document.querySelector('.story-reply-icon');
-    const heartPath = iconBtn.querySelector('path');
-    
-    iconBtn.addEventListener('click', () => {
-        iconBtn.classList.toggle('active');
-        const isActive = iconBtn.classList.contains('active');
-        heartPath.setAttribute('fill', isActive ? '#e1306c' : 'none');
-        heartPath.setAttribute('stroke', isActive ? '#e1306c' : '#9ca3af');
-    });
+    if (iconBtn) {
+        const heartPath = iconBtn.querySelector('path');
+        iconBtn.addEventListener('click', () => {
+            iconBtn.classList.toggle('active');
+            const isActive = iconBtn.classList.contains('active');
+            heartPath.setAttribute('fill', isActive ? '#e1306c' : 'none');
+            heartPath.setAttribute('stroke', isActive ? '#e1306c' : '#9ca3af');
+        });
+    }
+
+    // 2. CRITICAL: Force the story viewer closed upon page load
+    // This prevents the black screen issue caused by cached state or accidental calls.
+    if (storyViewerOverlay.classList.contains('show')) {
+        console.warn("Story viewer was left open. Forcing close.");
+        if (typeof window.closeStoryViewer === 'function') {
+            window.closeStoryViewer();
+        } else {
+            // Fallback
+            storyViewerOverlay.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+    }
 });
-
-
-// --- Example Usage (For Testing) ---
-
-/* // To test, run this in your console or integrate into your chat list logic:
-
-// Example 1: Your Own Story (Index 0 cannot navigate back)
-openStoryViewer('Me', 'avatar.jpg', true, [
-    { contentUrl: 'story1.jpg', timestamp: '1 hour ago' },
-    { contentUrl: 'story2.jpg', timestamp: '30 minutes ago' },
-    { contentUrl: 'story3.jpg', timestamp: '5 minutes ago' }
-]);
-
-// Example 2: Another User's Story (Full back/forward navigation allowed)
-openStoryViewer('Emily', 'emily.jpg', false, [
-    { contentUrl: 'emily_story1.jpg', timestamp: '2 hours ago' },
-    { contentUrl: 'emily_story2.jpg', timestamp: '45 minutes ago' }
-]);
-
-// Note: You will need to replace 'story1.jpg' etc., with actual image URLs for it to work.
-*/
 
