@@ -19,17 +19,33 @@
     justify-content: center;
 }
 
+/* Show overlay */
 #storyViewerOverlay.show {
     display: flex;
     opacity: 1;
 }
 
+/* Story container */
+.storycon {
+    max-height: 95vh;
+    background: #242323;
+    max-width: 384px;
+    width: 90%;
+    position: relative;
+    top: -38px;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 /* Progress Bars */
 .story-progress-bars {
     position: absolute;
-    top: 8px;
-    width: 90%;
-    max-width: 384px;
+    top: 2px; /* 2px gap from top of storycon */
+    left: 8px;
+    right: 8px; /* Aligns with storycon's border-radius */
     display: flex;
     gap: 4px;
     z-index: 2;
@@ -37,7 +53,7 @@
 
 .progress-bar-container {
     flex: 1;
-    height: 4px;
+    height: 2px; /* Reduced height for smaller progress bar */
     background-color: rgba(255, 255, 255, 0.3);
     border-radius: 2px;
     overflow: hidden;
@@ -82,21 +98,6 @@
 
 .story-nav-next {
     right: 0;
-}
-
-/* Story container */
-.storycon {
-    max-height: 95vh;
-    background: #242323;
-    max-width: 384px;
-    width: 90%;
-    position: relative;
-    top: -38px;
-    border-radius: 8px;
-    overflow: hidden;
-    display: flex;
-    justify-content: center;
-    align-items: center;
 }
 
 /* Blurred background for medium/short images */
