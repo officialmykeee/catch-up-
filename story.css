@@ -46,11 +46,24 @@
 .progress-bar {
     height: 100%;
     background-color: #ffffff;
-    transition: width linear;
+    width: 0;
+}
+
+.progress-bar.completed {
+    width: 100%;
 }
 
 .progress-bar.active {
-    transition: width 5s linear; /* Matches STORY_DURATION */
+    animation: progress 5000ms linear forwards; /* Matches STORY_DURATION */
+}
+
+@keyframes progress {
+    from {
+        width: 0;
+    }
+    to {
+        width: 100%;
+    }
 }
 
 /* Navigation Areas */
