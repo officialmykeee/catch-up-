@@ -1,12 +1,57 @@
-// Expose openStoryViewer globally
+// story.js
+
+// --- Global Functions and Event Handlers for Cleanup ---
+
+// Function to handle the Escape key press
+const handleEscape = (e) => {
+    if (e.key === 'Escape') {
+        closeStoryViewer();
+    }
+};
+
+/**
+ * Closes the story viewer and cleans up the DOM and event listeners.
+ */
+function closeStoryViewer() {
+    const storyViewerOverlay = document.getElementById('storyViewerOverlay');
+    const storyViewerContent = document.getElementById('storyViewerContent');
+    const storyCon = storyViewerContent.closest('.storycon');
+    const replyContainer = document.querySelector('.story-reply-container');
+
+    console.log('Closing story viewer');
+
+    // Hide overlay and reset body scroll
+    storyViewerOverlay.classList.remove('show');
+    document.body.style.overflow = '';
+
+    // Clean up dynamic elements and content
+    storyViewerContent.src = '';
+    if (replyContainer) replyContainer.remove();
+    storyCon.querySelectorAll('.story-blur-bg').forEach(el => el.remove());
+
+    // Remove the Escape key listener to prevent it from firing when the viewer is closed
+    document.removeEventListener('keydown', handleEscape);
+}
+
+// Expose the close function for background clicks or drag events outside the open flow
+window.closeStoryViewer = closeStoryViewer;
+
+
+// --- Main Open Function ---
+
+/**
+ * Opens the story viewer with the specified image content.
+ * @param {string} contentUrl - The URL of the story image.
+ */
 window.openStoryViewer = function (contentUrl) {
     const storyViewerOverlay = document.getElementById('storyViewerOverlay');
     const storyViewerContent = document.getElementById('storyViewerContent');
     const storyCon = storyViewerContent.closest('.storycon');
+    const closeThreshold = 20; // Drag distance in pixels to trigger close
 
     console.log('Opening story with content:', contentUrl);
 
-    // Reset
+    // Initial reset
     storyViewerOverlay.classList.remove('show');
     storyViewerContent.src = '';
     storyCon.querySelectorAll('.story-blur-bg').forEach(el => el.remove());
@@ -14,15 +59,13 @@ window.openStoryViewer = function (contentUrl) {
     // Set story image
     storyViewerContent.src = contentUrl;
 
-    // Once image loads, decide tall vs medium
+    // Once image loads, decide tall vs medium and apply blur background if needed
     storyViewerContent.onload = () => {
         const isTall = storyViewerContent.naturalHeight > storyViewerContent.naturalWidth * 1.3;
 
         if (isTall) {
-            // Tall image: cover full box
             storyViewerContent.style.objectFit = 'cover';
         } else {
-            // Medium/short image: center with blur background
             storyViewerContent.style.objectFit = 'contain';
 
             const blurBg = document.createElement('div');
@@ -31,20 +74,21 @@ window.openStoryViewer = function (contentUrl) {
             storyCon.insertBefore(blurBg, storyViewerContent);
         }
     };
-
-    // Create or update reply container
+    
+    // --- Dynamic Reply Container Logic ---
     let replyContainer = document.querySelector('.story-reply-container');
+    let iconBtn;
+
     if (!replyContainer) {
+        // Create elements only once if they don't exist
         replyContainer = document.createElement('div');
         replyContainer.className = 'story-reply-container';
 
-        // Reply bar
         const replyDiv = document.createElement('div');
         replyDiv.className = 'story-reply';
         replyDiv.textContent = 'Reply privately...';
 
-        // Icon button
-        const iconBtn = document.createElement('div');
+        iconBtn = document.createElement('div');
         iconBtn.className = 'story-reply-icon';
         iconBtn.innerHTML = `
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -53,63 +97,64 @@ window.openStoryViewer = function (contentUrl) {
             </svg>
         `;
 
-        // Toggle like/unlike when clicking the circle
+        // Toggle like/unlike logic
         iconBtn.addEventListener('click', () => {
             iconBtn.classList.toggle('active');
             const heartPath = iconBtn.querySelector('path');
-            if (iconBtn.classList.contains('active')) {
-                heartPath.setAttribute('fill', '#e1306c'); // Instagram pink
-                heartPath.setAttribute('stroke', '#e1306c');
-            } else {
-                heartPath.setAttribute('fill', 'none');
-                heartPath.setAttribute('stroke', '#9ca3af'); // gray
-            }
+            const isActive = iconBtn.classList.contains('active');
+            heartPath.setAttribute('fill', isActive ? '#e1306c' : 'none');
+            heartPath.setAttribute('stroke', isActive ? '#e1306c' : '#9ca3af');
         });
 
         replyContainer.appendChild(replyDiv);
         replyContainer.appendChild(iconBtn);
         storyViewerOverlay.appendChild(replyContainer);
+
+    } else {
+        // Elements exist, just get the button and reset its state
+        iconBtn = replyContainer.querySelector('.story-reply-icon');
+        const heartPath = iconBtn.querySelector('path');
+        
+        iconBtn.classList.remove('active');
+        heartPath.setAttribute('fill', 'none');
+        heartPath.setAttribute('stroke', '#9ca3af');
     }
 
     // Show overlay
     storyViewerOverlay.classList.add('show');
     document.body.style.overflow = 'hidden';
 
-    // Drag variables
+    // --- Drag and Close Logic ---
     let startY = 0;
-    let currentY = 0;
     let isDragging = false;
-    const closeThreshold = 20; // Extremely sensitive
-
-    // --- Touch drag (close only) ---
-    storyViewerContent.addEventListener('touchstart', (e) => {
+    
+    // Touch drag
+    storyViewerContent.ontouchstart = (e) => {
         startY = e.touches[0].clientY;
         isDragging = true;
-    });
-    storyViewerContent.addEventListener('touchmove', (e) => {
+    };
+    storyViewerContent.ontouchmove = (e) => {
         if (!isDragging) return;
-        currentY = e.touches[0].clientY;
-        if (currentY - startY > closeThreshold) closeStoryViewer();
-    });
-    storyViewerContent.addEventListener('touchend', () => {
+        if (e.touches[0].clientY - startY > closeThreshold) closeStoryViewer();
+    };
+    storyViewerContent.ontouchend = () => {
         isDragging = false;
-    });
+    };
 
-    // --- Mouse drag (close only) ---
-    storyViewerContent.addEventListener('mousedown', (e) => {
+    // Mouse drag
+    storyViewerContent.onmousedown = (e) => {
         startY = e.clientY;
         isDragging = true;
-    });
-    storyViewerContent.addEventListener('mousemove', (e) => {
+    };
+    storyViewerContent.onmousemove = (e) => {
         if (!isDragging) return;
-        currentY = e.clientY;
-        if (currentY - startY > closeThreshold) closeStoryViewer();
-    });
-    storyViewerContent.addEventListener('mouseup', () => {
+        if (e.clientY - startY > closeThreshold) closeStoryViewer();
+    };
+    storyViewerContent.onmouseup = () => {
         isDragging = false;
-    });
+    };
 
-    // Prevent scroll
+    // Prevent scroll on the overlay background (for touch devices)
     storyViewerOverlay.addEventListener('touchmove', (e) => {
         if (e.target !== storyViewerContent) e.preventDefault();
     }, { passive: false });
@@ -119,21 +164,8 @@ window.openStoryViewer = function (contentUrl) {
         if (e.target === storyViewerOverlay) closeStoryViewer();
     });
 
-    // Close on Escape
-    const handleEscape = (e) => {
-        if (e.key === 'Escape') {
-            closeStoryViewer();
-            document.removeEventListener('keydown', handleEscape);
-        }
-    };
+    // Close on Escape - *Attach the external handler*
     document.addEventListener('keydown', handleEscape);
-
-    function closeStoryViewer() {
-        console.log('Closing story viewer');
-        storyViewerOverlay.classList.remove('show');
-        storyViewerContent.src = '';
-        document.body.style.overflow = '';
-        if (replyContainer) replyContainer.remove();
-        storyCon.querySelectorAll('.story-blur-bg').forEach(el => el.remove());
-    }
 };
+
+
