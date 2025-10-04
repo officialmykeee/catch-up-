@@ -1,13 +1,13 @@
 // story.js
 
+// --- Import from network.js ---
+import { stories, storyDataMocks, getNextStoryUserId, getPrevStoryUserId } from './network.js';
+
 // --- Global Variables and State ---
 let currentUserId = null;
 let currentStoryData = [];
 let currentStoryIndex = 0;
 const STORY_DURATION = 5000; // 5 seconds per story
-
-// Access storyDataMocks globally (add window.storyDataMocks = storyDataMocks; in network.js)
-const storyDataMocks = window.storyDataMocks;
 
 // --- Helper Functions ---
 
@@ -17,7 +17,6 @@ const storyDataMocks = window.storyDataMocks;
 function updateStoryViewer() {
     const storyViewerContent = document.getElementById('storyViewerContent');
     const storyCon = storyViewerContent.closest('.storycon');
-    const progressBarsContainer = document.querySelector('.story-progress-bars');
     const prevArea = document.querySelector('.story-nav-prev');
 
     // Reset existing content
@@ -27,6 +26,13 @@ function updateStoryViewer() {
     // Set new story content
     const currentStory = currentStoryData[currentStoryIndex];
     storyViewerContent.src = currentStory.content;
+
+    // Update the username in the header (Find the user data from the global stories array)
+    const currentUser = stories.find(s => s.id === currentUserId);
+    const storyHeaderUsername = document.querySelector('.story-header-username');
+    if (storyHeaderUsername && currentUser) {
+        storyHeaderUsername.textContent = currentUser.username;
+    }
 
     // Handle image load for blur background
     storyViewerContent.onload = () => {
@@ -48,12 +54,9 @@ function updateStoryViewer() {
     heartPath.setAttribute('fill', currentStory.isLiked ? '#e1306c' : 'none');
     heartPath.setAttribute('stroke', currentStory.isLiked ? '#e1306c' : '#9ca3af');
 
-    // Update navigation visibility
-    if (currentUserId === 'your-story' && currentStoryIndex === 0) {
-        if (prevArea) prevArea.style.display = 'none'; // Hide prev navigation for first story of "Your story"
-    } else {
-        if (prevArea) prevArea.style.display = 'block'; // Show prev navigation for all other cases
-    }
+    // Update navigation visibility: Hide prev button only if at the first story of the first user.
+    const isFirstStoryInSequence = currentStoryIndex === 0 && getPrevStoryUserId(currentUserId) === null;
+    if (prevArea) prevArea.style.display = isFirstStoryInSequence ? 'none' : 'block';
 
     // Update progress bars
     updateProgressBars();
@@ -64,6 +67,7 @@ function updateStoryViewer() {
  */
 function updateProgressBars() {
     const progressBarsContainer = document.querySelector('.story-progress-bars');
+    if (!progressBarsContainer) return;
     progressBarsContainer.innerHTML = ''; // Clear existing bars
 
     // Create a progress bar for each story
@@ -75,12 +79,12 @@ function updateProgressBars() {
 
         if (index < currentStoryIndex) {
             bar.classList.add('completed');
-            bar.style.width = '100%'; // Explicitly set for completed
+            bar.style.width = '100%'; 
         } else if (index === currentStoryIndex) {
             bar.classList.add('active');
-            bar.style.width = '0%'; // Explicitly reset to 0% for active
+            bar.style.width = '0%'; 
         } else {
-            bar.style.width = '0%'; // Future bars at 0%
+            bar.style.width = '0%'; 
         }
 
         barContainer.appendChild(bar);
@@ -90,15 +94,14 @@ function updateProgressBars() {
     // Start animation for the current progress bar
     const activeBar = progressBarsContainer.querySelector('.progress-bar.active');
     if (activeBar) {
-        activeBar.style.animation = 'none'; // Reset animation
-        void activeBar.offsetWidth; // Force reflow
+        activeBar.style.animation = 'none'; 
+        void activeBar.offsetWidth; 
 
-        // Use setTimeout to ensure DOM renders initial state before starting animation
+        // Start animation and set timer for next story
         setTimeout(() => {
             activeBar.style.animation = `progress ${STORY_DURATION}ms linear forwards`;
         }, 0);
 
-        // Schedule next story after animation completes
         clearTimeout(window.storyProgressTimeout);
         window.storyProgressTimeout = setTimeout(() => {
             goToNextStory();
@@ -107,32 +110,32 @@ function updateProgressBars() {
 }
 
 /**
- * Navigates to the previous story or closes if at the start of "Your story".
+ * Navigates to the previous story or to the previous user's last story.
  */
 function goToPreviousStory() {
     clearTimeout(window.storyProgressTimeout); // Stop current timer
+
     if (currentStoryIndex > 0) {
+        // Go to previous story segment for the current user
         currentStoryIndex--;
         updateStoryViewer();
-    } else if (currentUserId !== 'your-story') {
-        // Navigate to previous user's last story
-        const currentUserIndex = window.stories.findIndex(story => story.id === currentUserId);
-        if (currentUserIndex > 0) {
-            const prevUser = window.stories[currentUserIndex - 1];
-            const prevUserStories = storyDataMocks[prevUser.id];
-            if (prevUserStories && prevUserStories.length > 0) {
-                currentUserId = prevUser.id;
-                currentStoryData = prevUserStories;
-                currentStoryIndex = prevUserStories.length - 1; // Start at last story
-                updateStoryViewer();
-            } else {
-                closeStoryViewer();
-            }
+    } else {
+        // Go to previous user's last story
+        const prevUserId = getPrevStoryUserId(currentUserId);
+        
+        if (prevUserId) {
+            const prevUserStories = storyDataMocks[prevUserId];
+            
+            // Update state to previous user's last story
+            currentUserId = prevUserId;
+            currentStoryData = prevUserStories;
+            currentStoryIndex = prevUserStories.length - 1; // Start at last story
+            updateStoryViewer();
         } else {
+            // No previous user, close viewer (or stay at the first story)
+            // We close the viewer if this is the very first user's story
             closeStoryViewer();
         }
-    } else {
-        closeStoryViewer();
     }
 }
 
@@ -141,24 +144,25 @@ function goToPreviousStory() {
  */
 function goToNextStory() {
     clearTimeout(window.storyProgressTimeout); // Stop current timer
+    
     if (currentStoryIndex < currentStoryData.length - 1) {
+        // Go to next story segment for the current user
         currentStoryIndex++;
         updateStoryViewer();
     } else {
-        // Navigate to next user's first story
-        const currentUserIndex = window.stories.findIndex(story => story.id === currentUserId);
-        if (currentUserIndex < window.stories.length - 1) {
-            const nextUser = window.stories[currentUserIndex + 1];
-            const nextUserStories = storyDataMocks[nextUser.id];
-            if (nextUserStories && nextUserStories.length > 0) {
-                currentUserId = nextUser.id;
-                currentStoryData = nextUserStories;
-                currentStoryIndex = 0;
-                updateStoryViewer();
-            } else {
-                closeStoryViewer();
-            }
+        // Go to next user's first story
+        const nextUserId = getNextStoryUserId(currentUserId);
+        
+        if (nextUserId) {
+            const nextUserStories = storyDataMocks[nextUserId];
+            
+            // Update state to next user's first story
+            currentUserId = nextUserId;
+            currentStoryData = nextUserStories;
+            currentStoryIndex = 0; // Start at the first story of the next user
+            updateStoryViewer();
         } else {
+            // No next user, close viewer
             closeStoryViewer();
         }
     }
@@ -171,8 +175,10 @@ function closeStoryViewer() {
     const storyViewerOverlay = document.getElementById('storyViewerOverlay');
     const storyViewerContent = document.getElementById('storyViewerContent');
     const storyCon = storyViewerContent.closest('.storycon');
+    // Select all dynamically created elements for cleanup
     const replyContainer = document.querySelector('.story-reply-container');
     const progressBarsContainer = document.querySelector('.story-progress-bars');
+    const storyHeader = document.querySelector('.story-header');
     const prevArea = document.querySelector('.story-nav-prev');
     const nextArea = document.querySelector('.story-nav-next');
 
@@ -181,12 +187,14 @@ function closeStoryViewer() {
     // Stop progress animation
     clearTimeout(window.storyProgressTimeout);
 
-    // Hide overlay and reset
+    // Hide overlay and remove dynamic elements
     storyViewerOverlay.classList.remove('show');
     document.body.style.overflow = '';
     storyViewerContent.src = '';
+    
     if (replyContainer) replyContainer.remove();
     if (progressBarsContainer) progressBarsContainer.remove();
+    if (storyHeader) storyHeader.remove(); // Remove header too
     if (prevArea) prevArea.remove();
     if (nextArea) nextArea.remove();
     storyCon.querySelectorAll('.story-blur-bg').forEach(el => el.remove());
@@ -235,6 +243,30 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
     storyCon.querySelectorAll('.story-blur-bg').forEach(el => el.remove());
     clearTimeout(window.storyProgressTimeout);
 
+    // Find current user data for avatar and name
+    const currentUser = stories.find(s => s.id === userId);
+
+    // Create Header (with username and close button)
+    let storyHeader = document.querySelector('.story-header');
+    if (!storyHeader) {
+        storyHeader = document.createElement('div');
+        storyHeader.className = 'story-header';
+        storyHeader.innerHTML = `
+            <div class="story-user-info">
+                <img src="${currentUser ? currentUser.avatar : ''}" alt="Avatar" class="story-header-avatar">
+                <span class="story-header-username">${currentUser ? currentUser.username : ''}</span>
+            </div>
+            <div class="story-header-close">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </div>
+        `;
+        storyViewerOverlay.appendChild(storyHeader);
+        storyHeader.querySelector('.story-header-close').addEventListener('click', closeStoryViewer);
+    }
+    
     // Create progress bars container inside storycon
     let progressBarsContainer = document.querySelector('.story-progress-bars');
     if (!progressBarsContainer) {
@@ -298,6 +330,8 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
         nextArea = document.createElement('div');
         nextArea.className = 'story-nav-area story-nav-next';
         storyViewerOverlay.appendChild(nextArea);
+        // Add the '>' icon for the next user tap area
+        nextArea.innerHTML = '<span class="next-user-indicator">&gt;</span>';
         nextArea.addEventListener('click', (e) => {
             e.stopPropagation();
             goToNextStory();
@@ -311,7 +345,7 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
     // Update viewer with initial story
     updateStoryViewer();
 
-    // --- Drag and Close Logic ---
+    // --- Drag and Close Logic (Remains unchanged) ---
     let startY = 0;
     let isDragging = false;
 
@@ -344,8 +378,10 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
     }, { passive: false });
 
     storyViewerOverlay.addEventListener('click', (e) => {
+        // Only close if clicking the actual overlay background, not the content or controls
         if (e.target === storyViewerOverlay) closeStoryViewer();
     });
 
     document.addEventListener('keydown', handleEscape);
 };
+
