@@ -18,7 +18,7 @@ window.stories = [
 ];
 
 // Mock story content data (exposed globally for story.js)
-const storyDataMocks = {
+window.storyDataMocks = {
     "your-story": [
         { id: "your-story-status-1", content: "https://picsum.photos/id/1005/360/640", time: "Just Now", reply: "", isLiked: false },
         { id: "your-story-status-2", content: "https://picsum.photos/id/1006/360/640", time: "5 min ago", reply: "", isLiked: false }
@@ -44,7 +44,6 @@ const storyDataMocks = {
         { id: "jessica2", content: "https://picsum.photos/id/1020/360/640", time: "5 hours ago", reply: "", isLiked: false }
     ]
 };
-window.storyDataMocks = storyDataMocks; // Expose globally
 
 // Chat data (unchanged)
 const chats = [
@@ -118,7 +117,7 @@ function renderStories() {
 
         storyElement.addEventListener('click', () => {
             console.log('Story clicked:', story.id);
-            const storyData = storyDataMocks[story.id];
+            const storyData = window.storyDataMocks[story.id];
             if (storyData && storyData.length > 0) {
                 window.openStoryViewer(story.id, storyData, 0);
             } else {
