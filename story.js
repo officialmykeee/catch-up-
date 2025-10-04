@@ -6,7 +6,7 @@ let currentStoryData = [];
 let currentStoryIndex = 0;
 const STORY_DURATION = 5000; // 5 seconds per story
 
-// Access storyDataMocks globally
+// Access storyDataMocks globally (add window.storyDataMocks = storyDataMocks; in network.js)
 const storyDataMocks = window.storyDataMocks;
 
 // --- Helper Functions ---
@@ -57,9 +57,6 @@ function updateStoryViewer() {
 
     // Update progress bars
     updateProgressBars();
-
-    // Debug log
-    console.log(`Viewing story: user=${currentUserId}, index=${currentStoryIndex}, content=${currentStory.content}`);
 }
 
 /**
@@ -75,11 +72,17 @@ function updateProgressBars() {
         barContainer.className = 'progress-bar-container';
         const bar = document.createElement('div');
         bar.className = 'progress-bar';
+
         if (index < currentStoryIndex) {
-            bar.classList.add('completed'); // Completed stories
+            bar.classList.add('completed');
+            bar.style.width = '100%'; // Explicitly set for completed
         } else if (index === currentStoryIndex) {
-            bar.classList.add('active'); // Current story
+            bar.classList.add('active');
+            bar.style.width = '0%'; // Explicitly reset to 0% for active
+        } else {
+            bar.style.width = '0%'; // Future bars at 0%
         }
+
         barContainer.appendChild(bar);
         progressBarsContainer.appendChild(barContainer);
     });
@@ -89,12 +92,15 @@ function updateProgressBars() {
     if (activeBar) {
         activeBar.style.animation = 'none'; // Reset animation
         void activeBar.offsetWidth; // Force reflow
-        activeBar.style.animation = `progress ${STORY_DURATION}ms linear forwards`;
+
+        // Use setTimeout to ensure DOM renders initial state before starting animation
+        setTimeout(() => {
+            activeBar.style.animation = `progress ${STORY_DURATION}ms linear forwards`;
+        }, 0);
 
         // Schedule next story after animation completes
         clearTimeout(window.storyProgressTimeout);
         window.storyProgressTimeout = setTimeout(() => {
-            console.log(`Progress bar complete for user=${currentUserId}, index=${currentStoryIndex}`);
             goToNextStory();
         }, STORY_DURATION);
     }
@@ -111,11 +117,10 @@ function goToPreviousStory() {
     } else if (currentUserId !== 'your-story') {
         // Navigate to previous user's last story
         const currentUserIndex = window.stories.findIndex(story => story.id === currentUserId);
-        if (currentUserIndex > 0) { // Ensure not at the first user
+        if (currentUserIndex > 0) {
             const prevUser = window.stories[currentUserIndex - 1];
             const prevUserStories = storyDataMocks[prevUser.id];
             if (prevUserStories && prevUserStories.length > 0) {
-                console.log(`Navigating back to user=${prevUser.id}`);
                 currentUserId = prevUser.id;
                 currentStoryData = prevUserStories;
                 currentStoryIndex = prevUserStories.length - 1; // Start at last story
@@ -138,7 +143,6 @@ function goToNextStory() {
     clearTimeout(window.storyProgressTimeout); // Stop current timer
     if (currentStoryIndex < currentStoryData.length - 1) {
         currentStoryIndex++;
-        console.log(`Navigating to next story: user=${currentUserId}, index=${currentStoryIndex}`);
         updateStoryViewer();
     } else {
         // Navigate to next user's first story
@@ -147,17 +151,14 @@ function goToNextStory() {
             const nextUser = window.stories[currentUserIndex + 1];
             const nextUserStories = storyDataMocks[nextUser.id];
             if (nextUserStories && nextUserStories.length > 0) {
-                console.log(`Navigating to next user: ${nextUser.id}`);
                 currentUserId = nextUser.id;
                 currentStoryData = nextUserStories;
-                currentStoryIndex = 0; // Start at first story
+                currentStoryIndex = 0;
                 updateStoryViewer();
             } else {
-                console.log(`No stories for next user: ${nextUser.id}, closing viewer`);
                 closeStoryViewer();
             }
         } else {
-            console.log('No more users, closing viewer');
             closeStoryViewer();
         }
     }
@@ -309,17 +310,8 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
 
     // Update viewer with initial story
     updateStoryViewer();
-    console.log(`Initial view: user=${currentUserId}, index=${currentStoryIndex}`);
-}
 
-/**
- * Drag and close logic
- */
-function setupDragAndClose() {
-    const storyViewerOverlay = document.getElementById('storyViewerOverlay');
-    const storyViewerContent = document.getElementById('storyViewerContent');
-    const closeThreshold = 20;
-
+    // --- Drag and Close Logic ---
     let startY = 0;
     let isDragging = false;
 
@@ -356,13 +348,4 @@ function setupDragAndClose() {
     });
 
     document.addEventListener('keydown', handleEscape);
-}
-
-const handleEscape = (e) => {
-    if (e.key === 'Escape') {
-        closeStoryViewer();
-    }
 };
-
-// Initialize drag and close logic
-setupDragAndClose();
