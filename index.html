@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hi-Lite Messenger</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div class="telegram-ring">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.95 5.86l-1.9 9.03c-.14.65-.74.81-1.26.54l-2.9-2.14-1.4 1.35c-.16.15-.3.28-.63.28l.2-3.06 5.6-5.07c.24-.22.02-.34-.36-.12L7.2 12.4l-2.9-1c-.65-.2-.66-.73.14-1.08l11.3-4.36c.54-.2 1.02.13.96.9z"/>
+                    </svg>
+                </div>
+                <div class="messages-icon hidden">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
+                    </svg>
+                </div>
+                <h1 class="header-title">Messages</h1>
+            </div>
+        </header>
+
+        <div id="storiesLoadingSkeleton" class="stories-skeleton"></div>
+        <div id="storiesContainer" class="stories-container hidden">
+            <div id="storiesList" class="stories-list"></div>
+        </div>
+
+        <div id="loadingSkeleton" class="loading-skeleton"></div>
+        <div id="chatList" class="chat-list hidden"></div>
+
+        <div class="fab">
+            <svg viewBox="0 0 24 24">
+                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+            </svg>
+        </div>
+
+        <div id="storyViewerOverlay">
+            <div class="storycon">
+                <img id="storyViewerContent" class="story-viewer-content" src="" alt="Story">
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="network.js"></script>
+    <script src="skele.js"></script>
+    <script src="story.js"></script>
+</body>
+</html>
