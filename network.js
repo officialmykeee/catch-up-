@@ -17,10 +17,7 @@ const stories = [
     { id: "5", username: "Jessica", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=face", hasNewStory: true }
 ];
 
-// Expose stories array globally for story.js
-window.stories = stories;
-
-// Mock story content data
+// Mock story content data (updated to include multiple stories per user)
 const storyDataMocks = {
     "your-story": [
         { id: "your-story-status-1", content: "https://picsum.photos/id/1005/360/640", time: "Just Now", reply: "", isLiked: false },
@@ -46,7 +43,7 @@ const storyDataMocks = {
         { id: "jessica1", content: "https://picsum.photos/id/1019/360/640", time: "4 hours ago", reply: "", isLiked: false },
         { id: "jessica2", content: "https://picsum.photos/id/1020/360/640", time: "5 hours ago", reply: "", isLiked: false }
     ]
-];
+};
 
 // Chat data (unchanged)
 const chats = [
@@ -122,7 +119,7 @@ function renderStories() {
             console.log('Story clicked:', story.id);
             const storyData = storyDataMocks[story.id];
             if (storyData && storyData.length > 0) {
-                window.openStoryViewer(story.id, storyData, 0);
+                window.openStoryViewer(story.id, storyData, 0); // Pass user ID, story data, and start at index 0
             } else {
                 console.error('No content found for story ID:', story.id);
                 alert('Failed to find story data.');
