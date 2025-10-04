@@ -7,8 +7,8 @@ import { renderStoriesSkeleton, renderChatSkeleton } from './skele.js';
 
 // --- Mock Data ---
 
-// Stories data (exposed globally for story.js)
-window.stories = [
+// Stories data
+const stories = [
     { id: "your-story", username: "Your story", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face", hasNewStory: false, isYourStory: true },
     { id: "1", username: "Emily", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=face", hasNewStory: true },
     { id: "2", username: "Michael", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face", hasNewStory: true },
@@ -17,7 +17,7 @@ window.stories = [
     { id: "5", username: "Jessica", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=face", hasNewStory: true }
 ];
 
-// Mock story content data (exposed globally)
+// Mock story content data (updated to include multiple stories per user)
 const storyDataMocks = {
     "your-story": [
         { id: "your-story-status-1", content: "https://picsum.photos/id/1005/360/640", time: "Just Now", reply: "", isLiked: false },
@@ -44,7 +44,50 @@ const storyDataMocks = {
         { id: "jessica2", content: "https://picsum.photos/id/1020/360/640", time: "5 hours ago", reply: "", isLiked: false }
     ]
 };
-window.storyDataMocks = storyDataMocks;
+
+// Chat data (unchanged)
+const chats = [
+    {
+        id: "1",
+        name: "Emma Wilson",
+        lastMessage: "Hey! Are we still on for dinner tonight?",
+        timestamp: "2:34 PM",
+        avatar: "EW",
+        unreadCount: 2,
+        isOnline: true,
+        messages: [{ id: "m1", text: "Hey! Are we still on for dinner tonight?", time: "2:34 PM", isSent: false }]
+    },
+    {
+        id: "2",
+        name: "Family",
+        lastMessage: "Mom: Don't forget about Sunday brunch!",
+        timestamp: "1:15 PM",
+        avatar: "F",
+        unreadCount: 5,
+        messages: [{ id: "m2", text: "Mom: Don't forget about Sunday brunch!", time: "1:15 PM", isSent: false }]
+    },
+    {
+        id: "3",
+        name: "Tech Team Chat",
+        lastMessage: "Deploy successful. Monitoring logs now.",
+        timestamp: "10:00 AM",
+        avatar: "TT",
+        unreadCount: 0,
+        isSent: true,
+        isOnline: false,
+        messages: []
+    },
+    {
+        id: "4",
+        name: "Alice Johnson",
+        lastMessage: "Sounds good, I'll send you the details.",
+        timestamp: "Yesterday",
+        avatar: "AJ",
+        unreadCount: 0,
+        isOnline: true,
+        messages: []
+    },
+];
 
 // --- Rendering Functions ---
 
@@ -54,7 +97,7 @@ function renderStories() {
     if (!storiesList) return;
     storiesList.innerHTML = '';
 
-    window.stories.forEach(story => {
+    stories.forEach(story => {
         const storyElement = document.createElement('div');
         storyElement.className = 'story-item';
 
@@ -74,9 +117,9 @@ function renderStories() {
 
         storyElement.addEventListener('click', () => {
             console.log('Story clicked:', story.id);
-            const storyData = window.storyDataMocks[story.id];
+            const storyData = storyDataMocks[story.id];
             if (storyData && storyData.length > 0) {
-                window.openStoryViewer(story.id, storyData, 0);
+                window.openStoryViewer(story.id, storyData, 0); // Pass user ID, story data, and start at index 0
             } else {
                 console.error('No content found for story ID:', story.id);
                 alert('Failed to find story data.');
