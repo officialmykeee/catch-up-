@@ -3,16 +3,12 @@
  * Handles network status checking, data fetching simulation, and UI updates.
  */
 
-// Import from story.js
-import { openStoryViewer } from './story.js';
-// Assuming you have a skele.js file for your skeleton loading
 import { renderStoriesSkeleton, renderChatSkeleton } from './skele.js';
-
 
 // --- Mock Data ---
 
-// Stories data - EXPORTED
-export const stories = [
+// Stories data (exposed globally for story.js)
+window.stories = [
     { id: "your-story", username: "Your story", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face", hasNewStory: false, isYourStory: true },
     { id: "1", username: "Emily", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=face", hasNewStory: true },
     { id: "2", username: "Michael", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face", hasNewStory: true },
@@ -21,8 +17,8 @@ export const stories = [
     { id: "5", username: "Jessica", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=face", hasNewStory: true }
 ];
 
-// Mock story content data - EXPORTED
-export const storyDataMocks = {
+// Mock story content data (exposed globally for story.js)
+const storyDataMocks = {
     "your-story": [
         { id: "your-story-status-1", content: "https://picsum.photos/id/1005/360/640", time: "Just Now", reply: "", isLiked: false },
         { id: "your-story-status-2", content: "https://picsum.photos/id/1006/360/640", time: "5 min ago", reply: "", isLiked: false }
@@ -48,6 +44,7 @@ export const storyDataMocks = {
         { id: "jessica2", content: "https://picsum.photos/id/1020/360/640", time: "5 hours ago", reply: "", isLiked: false }
     ]
 };
+window.storyDataMocks = storyDataMocks; // Expose globally
 
 // Chat data (unchanged)
 const chats = [
@@ -93,57 +90,15 @@ const chats = [
     },
 ];
 
-// --- Story Navigation Logic (EXPORTED) ---
-
-/**
- * Finds the ID of the next user in the stories list who has a story.
- */
-export function getNextStoryUserId(currentUserId) {
-    const currentIndex = stories.findIndex(story => story.id === currentUserId);
-    if (currentIndex === -1) {
-        return null;
-    }
-
-    for (let i = currentIndex + 1; i < stories.length; i++) {
-        const nextStory = stories[i];
-        if (storyDataMocks[nextStory.id] && storyDataMocks[nextStory.id].length > 0) {
-            return nextStory.id;
-        }
-    }
-
-    return null;
-}
-
-/**
- * Finds the ID of the previous user in the stories list who has a story.
- */
-export function getPrevStoryUserId(currentUserId) {
-    const currentIndex = stories.findIndex(story => story.id === currentUserId);
-
-    if (currentIndex === -1) {
-        return null;
-    }
-
-    for (let i = currentIndex - 1; i >= 0; i--) {
-        const prevStory = stories[i];
-        if (storyDataMocks[prevStory.id] && storyDataMocks[prevStory.id].length > 0) {
-            return prevStory.id;
-        }
-    }
-
-    return null;
-}
-
-
 // --- Rendering Functions ---
 
-// Function to render stories (FIXED TO USE IMPORTED openStoryViewer)
+// Function to render stories
 function renderStories() {
     const storiesList = document.getElementById('storiesList');
     if (!storiesList) return;
     storiesList.innerHTML = '';
 
-    stories.forEach(story => {
+    window.stories.forEach(story => {
         const storyElement = document.createElement('div');
         storyElement.className = 'story-item';
 
@@ -165,8 +120,7 @@ function renderStories() {
             console.log('Story clicked:', story.id);
             const storyData = storyDataMocks[story.id];
             if (storyData && storyData.length > 0) {
-                // *** FIX APPLIED HERE ***: Calling the imported function directly
-                openStoryViewer(story.id, storyData, 0); 
+                window.openStoryViewer(story.id, storyData, 0);
             } else {
                 console.error('No content found for story ID:', story.id);
                 alert('Failed to find story data.');
