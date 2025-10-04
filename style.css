@@ -172,8 +172,12 @@ body {
 }
 
 .story-avatar-ring.has-story {
-    background: linear-gradient(45deg, #fbbf24, #ef4444, #a855f7);
+    background: #749cbf;
 }
+
+/* .story-avatar-ring.has-story {
+    background: linear-gradient(45deg, #fbbf24, #ef4444, #a855f7);
+} */
 
 .story-avatar-bg {
     width: 100%;
