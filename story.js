@@ -6,6 +6,10 @@ let currentStoryData = [];
 let currentStoryIndex = 0;
 const STORY_DURATION = 5000; // 5 seconds per story
 
+// Mock storyDataMocks access (since story.js is not a module, use window)
+const storyDataMocks = window.storyDataMocks || {}; // Fallback to empty object
+const stories = window.stories || []; // Access global stories array
+
 // --- Helper Functions ---
 
 /**
@@ -107,15 +111,35 @@ function goToPreviousStory() {
 }
 
 /**
- * Navigates to the next story or closes if at the end.
+ * Navigates to the next story or the next user's first story, or closes if at the end.
  */
 function goToNextStory() {
     clearTimeout(window.storyProgressTimeout); // Stop current timer
     if (currentStoryIndex < currentStoryData.length - 1) {
+        // Move to the next story within the current user
         currentStoryIndex++;
         updateStoryViewer();
     } else {
-        closeStoryViewer();
+        // Find the next user in the stories array
+        const currentUserIndex = stories.findIndex(story => story.id === currentUserId);
+        const nextUserIndex = currentUserIndex + 1;
+        if (nextUserIndex < stories.length) {
+            // Load the next user's stories
+            const nextUser = stories[nextUserIndex];
+            const nextStoryData = storyDataMocks[nextUser.id];
+            if (nextStoryData && nextStoryData.length > 0) {
+                currentUserId = nextUser.id;
+                currentStoryData = nextStoryData;
+                currentStoryIndex = 0;
+                updateStoryViewer();
+            } else {
+                console.error('No content found for next user ID:', nextUser.id);
+                closeStoryViewer();
+            }
+        } else {
+            // No more users, close the viewer
+            closeStoryViewer();
+        }
     }
 }
 
@@ -142,7 +166,7 @@ function closeStoryViewer() {
     storyViewerContent.src = '';
     if (replyContainer) replyContainer.remove();
     if (progressBarsContainer) progressBarsContainer.remove();
-    if (prevArea) prevArea.remove(); // Remove navigation areas
+    if (prevArea) prevArea.remove();
     if (nextArea) nextArea.remove();
     storyCon.querySelectorAll('.story-blur-bg').forEach(el => el.remove());
 
