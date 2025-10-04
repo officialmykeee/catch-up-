@@ -3,11 +3,15 @@
  * Handles network status checking, data fetching simulation, and UI updates.
  */
 
+// Import from story.js
+import { openStoryViewer } from './story.js';
+// Assuming you have a skele.js file for your skeleton loading
 import { renderStoriesSkeleton, renderChatSkeleton } from './skele.js';
+
 
 // --- Mock Data ---
 
-// Stories data - NOW EXPORTED
+// Stories data - EXPORTED
 export const stories = [
     { id: "your-story", username: "Your story", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face", hasNewStory: false, isYourStory: true },
     { id: "1", username: "Emily", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=face", hasNewStory: true },
@@ -17,7 +21,7 @@ export const stories = [
     { id: "5", username: "Jessica", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=face", hasNewStory: true }
 ];
 
-// Mock story content data (updated to include multiple stories per user) - NOW EXPORTED
+// Mock story content data - EXPORTED
 export const storyDataMocks = {
     "your-story": [
         { id: "your-story-status-1", content: "https://picsum.photos/id/1005/360/640", time: "Just Now", reply: "", isLiked: false },
@@ -89,61 +93,51 @@ const chats = [
     },
 ];
 
-// --- Story Navigation Logic ---
+// --- Story Navigation Logic (EXPORTED) ---
 
 /**
  * Finds the ID of the next user in the stories list who has a story.
- * @param {string} currentUserId The ID of the user whose story is currently being viewed.
- * @returns {string | null} The ID of the next user with a story, or null if it's the last one.
  */
 export function getNextStoryUserId(currentUserId) {
-    // Find the index of the current user
     const currentIndex = stories.findIndex(story => story.id === currentUserId);
-
     if (currentIndex === -1) {
-        return null; // User not found
+        return null;
     }
 
-    // Loop through the rest of the stories
     for (let i = currentIndex + 1; i < stories.length; i++) {
         const nextStory = stories[i];
-        // Check if the user has any stories in the mocks
         if (storyDataMocks[nextStory.id] && storyDataMocks[nextStory.id].length > 0) {
             return nextStory.id;
         }
     }
 
-    return null; // No more stories
+    return null;
 }
 
 /**
  * Finds the ID of the previous user in the stories list who has a story.
- * @param {string} currentUserId The ID of the user whose story is currently being viewed.
- * @returns {string | null} The ID of the previous user with a story, or null if it's the first one.
  */
 export function getPrevStoryUserId(currentUserId) {
     const currentIndex = stories.findIndex(story => story.id === currentUserId);
 
     if (currentIndex === -1) {
-        return null; // User not found
+        return null;
     }
 
-    // Loop backward through the previous stories
     for (let i = currentIndex - 1; i >= 0; i--) {
         const prevStory = stories[i];
-        // Check if the user has any stories in the mocks
         if (storyDataMocks[prevStory.id] && storyDataMocks[prevStory.id].length > 0) {
             return prevStory.id;
         }
     }
 
-    return null; // No previous stories
+    return null;
 }
 
 
 // --- Rendering Functions ---
 
-// Function to render stories
+// Function to render stories (FIXED TO USE IMPORTED openStoryViewer)
 function renderStories() {
     const storiesList = document.getElementById('storiesList');
     if (!storiesList) return;
@@ -171,8 +165,8 @@ function renderStories() {
             console.log('Story clicked:', story.id);
             const storyData = storyDataMocks[story.id];
             if (storyData && storyData.length > 0) {
-                // Pass user ID, story data, and start at index 0
-                window.openStoryViewer(story.id, storyData, 0); 
+                // *** FIX APPLIED HERE ***: Calling the imported function directly
+                openStoryViewer(story.id, storyData, 0); 
             } else {
                 console.error('No content found for story ID:', story.id);
                 alert('Failed to find story data.');
@@ -343,4 +337,6 @@ export function initNetworkLogic() {
         }
     });
 }
+
+
 
