@@ -47,13 +47,13 @@ function updateStoryViewer() {
 
     // Reset existing content
     storyViewerContent.src = '';
-    storyCon.querySelectorAll('.story-blur-bg').forEach(el => el.remove());
+    storyCon.querySelectorAll('.story-blur-bg, .story-gradient-overlay').forEach(el => el.remove());
 
     // Set new story content
     const currentStory = currentStoryData[currentStoryIndex];
     storyViewerContent.src = currentStory.content;
 
-    // Handle image load for blur background
+    // Handle image load for blur background and gradient overlay
     storyViewerContent.onload = () => {
         const isTall = storyViewerContent.naturalHeight > storyViewerContent.naturalWidth * 1.3;
         storyViewerContent.style.objectFit = isTall ? 'cover' : 'contain';
@@ -64,6 +64,11 @@ function updateStoryViewer() {
             blurBg.style.backgroundImage = `url(${currentStory.content})`;
             storyCon.insertBefore(blurBg, storyViewerContent);
         }
+
+        // Add gradient overlay for all images
+        const gradientOverlay = document.createElement('div');
+        gradientOverlay.className = 'story-gradient-overlay';
+        storyCon.insertBefore(gradientOverlay, storyViewerContent);
     };
 
     // Update like button state
@@ -204,7 +209,7 @@ function closeStoryViewer() {
     if (progressBarsContainer) progressBarsContainer.remove();
     if (prevArea) prevArea.remove();
     if (nextArea) nextArea.remove();
-    storyCon.querySelectorAll('.story-blur-bg').forEach(el => el.remove());
+    storyCon.querySelectorAll('.story-blur-bg, .story-gradient-overlay').forEach(el => el.remove());
 
     // Reset state
     currentUserId = null;
@@ -247,7 +252,7 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
     // Reset existing content
     storyViewerOverlay.classList.remove('show');
     storyViewerContent.src = '';
-    storyCon.querySelectorAll('.story-blur-bg').forEach(el => el.remove());
+    storyCon.querySelectorAll('.story-blur-bg, .story-gradient-overlay').forEach(el => el.remove());
     clearTimeout(window.storyProgressTimeout);
 
     // Create progress bars container inside storycon
