@@ -123,8 +123,7 @@ body {
 .stories-container {
     background-color: white;
     padding: 12px 0;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
-                0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     position: sticky;
     top: 48px;
     z-index: 19;
@@ -523,73 +522,51 @@ body {
     fill: none;
 }
 
-/* =====================================================
-   MULTIPLE STORY RING SYSTEM (NEW)
-   ===================================================== */
-.story-avatar {
+/* --- WHATSAPP-STYLE SEGMENTED STORY RING FIX --- */
+.story-avatar-ring {
     position: relative;
-    width: 60px;
-    height: 60px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
     border-radius: 50%;
+    padding: 0;
+}
+
+.story-avatar-bg {
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: white;
     display: flex;
     align-items: center;
     justify-content: center;
+    overflow: hidden;
 }
 
-.story-avatar-img {
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    object-fit: cover;
-    background-color: #222;
-}
-
-.story-ring {
-    position: absolute;
+.story-avatar {
     width: 100%;
     height: 100%;
-    transform: rotate(-90deg);
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* Segmented ring arcs */
+.story-ring-segment {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 3px solid transparent;
     pointer-events: none;
+    clip-path: circle(50% at 50% 50%);
 }
 
-.story-segment {
-    fill: none;
-    stroke: var(--story-ring-color, #25d366);
-    stroke-width: 4;
-    stroke-linecap: round;
-    stroke-dasharray: 290;
-    stroke-dashoffset: 0;
-    transition: stroke 0.3s ease;
+.story-ring-segment.active {
+    border-color: #749cbf;
 }
 
-.story-avatar.inactive .story-segment {
-    stroke: #555;
-    opacity: 0.4;
-}
-
-.story-avatar.single .story-segment {
-    stroke-dasharray: 290;
-    stroke-dashoffset: 0;
-}
-
-.story-avatar.double .story-segment:nth-child(1) {
-    stroke-dasharray: 145 145;
-    stroke-dashoffset: 0;
-}
-.story-avatar.double .story-segment:nth-child(2) {
-    stroke-dasharray: 145 145;
-    stroke-dashoffset: -145;
-}
-
-.story-avatar.triple .story-segment:nth-child(1) {
-    stroke-dasharray: 96.6 193.4;
-    stroke-dashoffset: 0;
-}
-.story-avatar.triple .story-segment:nth-child(2) {
-    stroke-dasharray: 96.6 193.4;
-    stroke-dashoffset: -96.6;
-}
-.story-avatar.triple .story-segment:nth-child(3) {
-    stroke-dasharray: 96.6 193.4;
-    stroke-dashoffset: -193.2;
+/* even spacing between multiple story arcs */
+.story-ring-segment:not(:last-child) {
+    mask: conic-gradient(black 0deg calc(100% - 4deg), transparent calc(100% - 4deg));
 }
