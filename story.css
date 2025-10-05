@@ -19,10 +19,20 @@
     justify-content: center;
 }
 
-/* Show overlay */
 #storyViewerOverlay.show {
     display: flex;
     opacity: 1;
+}
+
+/* Global tap highlight removal for all elements in the story viewer */
+#storyViewerOverlay * {
+    -webkit-tap-highlight-color: transparent !important;
+    -moz-tap-highlight-color: transparent !important;
+    outline: none !important;
+}
+
+#storyViewerOverlay *:active {
+    outline: none !important;
 }
 
 /* Story container */
@@ -90,8 +100,10 @@
     height: calc(100% - 77px); /* Exclude bottom 77px to avoid overlapping reply container */
     z-index: 3; /* Lower than story-reply-container */
     cursor: pointer;
-    -webkit-tap-highlight-color: transparent; /* Remove browser tap highlight */
-    user-select: none; /* Prevent text selection */
+    -webkit-tap-highlight-color: transparent;
+    -moz-tap-highlight-color: transparent;
+    user-select: none;
+    outline: none;
 }
 
 .story-nav-prev {
@@ -100,6 +112,10 @@
 
 .story-nav-next {
     right: 0;
+}
+
+.story-nav-area:active {
+    outline: none;
 }
 
 /* Blurred background for medium/short images */
@@ -126,6 +142,9 @@
     position: relative;
     z-index: 1;
     border-radius: 8px;
+    -webkit-tap-highlight-color: transparent;
+    -moz-tap-highlight-color: transparent;
+    outline: none;
 }
 
 /* Reply container */
@@ -166,7 +185,13 @@
     cursor: pointer;
     transition: background-color 0.3s ease, transform 0.2s ease;
     z-index: 5; /* Ensure like button is clickable above all else */
-    -webkit-tap-highlight-color: transparent; /* Remove browser tap highlight for like button */
+    -webkit-tap-highlight-color: transparent;
+    -moz-tap-highlight-color: transparent;
+    outline: none;
+}
+
+.story-reply-icon:active {
+    outline: none;
 }
 
 /* Heart SVG */
