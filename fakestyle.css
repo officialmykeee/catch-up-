@@ -1,5 +1,6 @@
 /* style.css */
 
+/* ——— Base reset ——— */
 * {
     margin: 0;
     padding: 0;
@@ -26,7 +27,7 @@ body {
     transform: translateX(-100%);
 }
 
-/* Header styles */
+/* ——— Header ——— */
 .header {
     background-color: white;
     padding: 12px 16px;
@@ -119,11 +120,12 @@ body {
     display: none;
 }
 
-/* Stories section */
+/* ——— Stories Section ——— */
 .stories-container {
     background-color: white;
     padding: 12px 0;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                0 2px 4px -1px rgba(0, 0, 0, 0.06);
     position: sticky;
     top: 48px;
     z-index: 19;
@@ -156,37 +158,37 @@ body {
     cursor: pointer;
 }
 
+/* ——— Avatar Ring ——— */
 .story-avatar-container {
     position: relative;
 }
 
+/* Outer container that holds arcs */
 .story-avatar-ring {
+    position: relative;
     width: 64px;
     height: 64px;
     border-radius: 50%;
-    padding: 2px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.story-avatar-ring.your-story {
-    background-color: #d1d5db;
-}
-
-.story-avatar-ring.has-story {
-    background: #749cbf;
-}
-
-/* .story-avatar-ring.has-story {
-    background: linear-gradient(45deg, #fbbf24, #ef4444, #a855f7);
-} */
-
+/* The white padding around avatar */
 .story-avatar-bg {
-    width: 100%;
-    height: 100%;
-    background-color: white;
+    width: 56px;
+    height: 56px;
+    background: white;
     border-radius: 50%;
-    padding: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+    z-index: 2;
 }
 
+/* Actual image */
 .story-avatar {
     width: 100%;
     height: 100%;
@@ -194,23 +196,55 @@ body {
     object-fit: cover;
 }
 
-.story-plus {
+/* Segmented ring arcs (multiple stories) */
+.story-ring-segment {
     position: absolute;
-    bottom: -4px;
-    right: -4px;
-    width: 24px;
-    height: 24px;
-    background-color: #3b82f6;
+    top: 0;
+    left: 0;
+    width: 64px;
+    height: 64px;
     border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 2px solid white;
-    color: white;
-    font-size: 12px;
-    font-weight: bold;
+    border: 3px solid transparent;
+    pointer-events: none;
+    clip-path: circle(50% at 50% 50%);
+    transform: rotate(var(--start-angle));
+    z-index: 1;
 }
 
+/* Active ring segment color */
+.story-ring-segment.active {
+    border-color: #25d366; /* WhatsApp green tone */
+}
+
+/* mask spacing between arcs */
+.story-ring-segment:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: 50%;
+    background: white;
+    transform: rotate(var(--gap-angle));
+}
+
+/* Single-story continuous ring */
+.story-avatar-ring.single-ring::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 3px solid #25d366;
+}
+
+/* "Your Story" grey ring */
+.story-avatar-ring.your-story::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 3px solid #d1d5db;
+}
+
+/* ——— Username ——— */
 .story-username {
     font-size: 12px;
     color: #374151;
@@ -221,7 +255,7 @@ body {
     white-space: nowrap;
 }
 
-/* Chat list styles */
+/* ——— Chat list ——— */
 .chat-list {
     background-color: white;
     flex: 1;
@@ -253,6 +287,7 @@ body {
     gap: 12px;
 }
 
+/* Chat avatar, names, timestamp remain identical */
 .chat-avatar-container {
     position: relative;
     flex-shrink: 0;
@@ -304,36 +339,9 @@ body {
     flex: 1;
 }
 
-.chat-meta {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    margin-left: auto;
-}
-
 .chat-timestamp {
     font-size: 14px;
     color: #6b7280;
-}
-
-.unread-badge {
-    background-color: #3b82f6;
-    color: white;
-    font-size: 12px;
-    font-weight: 500;
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-left: 4px;
-}
-
-.sent-indicator {
-    width: 16px;
-    height: 16px;
-    margin-left: 4px;
 }
 
 .chat-message {
@@ -344,134 +352,7 @@ body {
     white-space: nowrap;
 }
 
-.chat-message.unread {
-    color: black;
-    font-weight: 500;
-}
-
-/* Skeleton loading styles */
-.skeleton {
-    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-    background-color: #e5e7eb;
-    border-radius: 4px;
-}
-
-.skeleton-circle {
-    border-radius: 50%;
-}
-
-@keyframes pulse {
-    0%, 100% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.5;
-    }
-}
-
-/* Stories skeleton styles */
-.skeleton-stories-container {
-    background-color: white;
-    padding: 12px 0;
-}
-
-.skeleton-stories-list {
-    display: flex;
-    gap: 16px;
-    padding: 0 16px;
-    width: max-content;
-}
-
-.skeleton-story-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    flex-shrink: 0;
-}
-
-.skeleton-story-avatar {
-    width: 64px;
-    height: 64px;
-    background-color: #e5e7eb;
-    border-radius: 50%;
-    flex-shrink: 0;
-}
-
-.skeleton-story-name {
-    height: 12px;
-    width: 50px;
-    background-color: #e5e7eb;
-    border-radius: 3px;
-}
-
-/* Chat skeleton styles */
-.skeleton-chat-item {
-    padding: 12px 16px;
-}
-
-.skeleton-chat-content {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.skeleton-avatar {
-    width: 48px;
-    height: 48px;
-    background-color: #e5e7eb;
-    border-radius: 50%;
-    flex-shrink: 0;
-}
-
-.skeleton-details {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.skeleton-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 4px;
-}
-
-.skeleton-name {
-    height: 14px;
-    background-color: #e5e7eb;
-    border-radius: 3px;
-    width: 120px;
-}
-
-.skeleton-time {
-    height: 12px;
-    background-color: #e5e7eb;
-    border-radius: 3px;
-    width: 50px;
-}
-
-.skeleton-message {
-    height: 12px;
-    background-color: #e5e7eb;
-    border-radius: 3px;
-    width: 200px;
-}
-
-.skeleton-message.short {
-    width: 150px;
-}
-
-.skeleton-message.medium {
-    width: 180px;
-}
-
-.skeleton-message.long {
-    width: 220px;
-}
-
-/* FAB styles */
+/* ——— Floating Button ——— */
 :root {
     --fab-size: 56px;
     --fab-color: #749cbf;
@@ -487,25 +368,13 @@ body {
     box-shadow: var(--fab-shadow);
     display: inline-grid;
     place-items: center;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-    border: none;
-    outline: none;
-    cursor: pointer;
     position: fixed;
     bottom: 20px;
     right: 20px;
     z-index: 1000;
-    transition: opacity 0.3s ease;
-}
-
-.fab.hidden {
-    opacity: 0;
-    pointer-events: none;
-}
-
-.fab:active {
-    transform: translateY(1px) scale(0.98);
+    border: none;
+    outline: none;
+    cursor: pointer;
 }
 
 .fab svg {
@@ -520,53 +389,4 @@ body {
     stroke-linejoin: round;
     stroke-width: 8;
     fill: none;
-}
-
-/* --- WHATSAPP-STYLE SEGMENTED STORY RING FIX --- */
-.story-avatar-ring {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 64px;
-    height: 64px;
-    border-radius: 50%;
-    padding: 0;
-}
-
-.story-avatar-bg {
-    width: 58px;
-    height: 58px;
-    border-radius: 50%;
-    background: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-}
-
-.story-avatar {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    object-fit: cover;
-}
-
-/* Segmented ring arcs */
-.story-ring-segment {
-    position: absolute;
-    inset: 0;
-    border-radius: 50%;
-    border: 3px solid transparent;
-    pointer-events: none;
-    clip-path: circle(50% at 50% 50%);
-}
-
-.story-ring-segment.active {
-    border-color: #749cbf;
-}
-
-/* even spacing between multiple story arcs */
-.story-ring-segment:not(:last-child) {
-    mask: conic-gradient(black 0deg calc(100% - 4deg), transparent calc(100% - 4deg));
 }
