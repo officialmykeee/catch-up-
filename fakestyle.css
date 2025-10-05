@@ -1,6 +1,6 @@
-/* style.css */
-
-/* ——— Base reset ——— */
+  /* -----------------------------
+   Base Reset
+------------------------------ */
 * {
     margin: 0;
     padding: 0;
@@ -13,6 +13,9 @@ body {
     min-height: 100vh;
 }
 
+/* -----------------------------
+   App Container
+------------------------------ */
 .app-container {
     max-width: 384px;
     margin: 0 auto;
@@ -27,7 +30,9 @@ body {
     transform: translateX(-100%);
 }
 
-/* ——— Header ——— */
+/* -----------------------------
+   Header
+------------------------------ */
 .header {
     background-color: white;
     padding: 12px 16px;
@@ -79,48 +84,9 @@ body {
     fill: #749cbf;
 }
 
-.telegram-ring {
-    width: 24px;
-    height: 24px;
-    animation: rotate 2s linear infinite;
-}
-
-.telegram-ring circle {
-    fill: none;
-    stroke: #d1d4db;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-dasharray: 1, 200;
-    stroke-dashoffset: 0;
-    animation: dash 1.5s ease-in-out infinite;
-}
-
-@keyframes rotate {
-    100% {
-        transform: rotate(360deg);
-    }
-}
-
-@keyframes dash {
-    0% {
-        stroke-dasharray: 1, 200;
-        stroke-dashoffset: 0;
-    }
-    50% {
-        stroke-dasharray: 90, 150;
-        stroke-dashoffset: -35;
-    }
-    100% {
-        stroke-dasharray: 90, 150;
-        stroke-dashoffset: -124;
-    }
-}
-
-.hidden {
-    display: none;
-}
-
-/* ——— Stories Section ——— */
+/* -----------------------------
+   Stories Section
+------------------------------ */
 .stories-container {
     background-color: white;
     padding: 12px 0;
@@ -158,37 +124,38 @@ body {
     cursor: pointer;
 }
 
-/* ——— Avatar Ring ——— */
 .story-avatar-container {
     position: relative;
 }
 
-/* Outer container that holds arcs */
+/* -----------------------------
+   WHATSAPP-STYLE STORY RING
+------------------------------ */
 .story-avatar-ring {
     position: relative;
     width: 64px;
     height: 64px;
     border-radius: 50%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* The white padding around avatar */
-.story-avatar-bg {
-    width: 56px;
-    height: 56px;
-    background: white;
-    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
-    position: relative;
-    z-index: 2;
 }
 
-/* Actual image */
+.story-avatar-ring.your-story {
+    background-color: #d1d5db;
+}
+
+.story-avatar-bg {
+    width: 56px;
+    height: 56px;
+    background-color: white;
+    border-radius: 50%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .story-avatar {
     width: 100%;
     height: 100%;
@@ -196,55 +163,48 @@ body {
     object-fit: cover;
 }
 
-/* Segmented ring arcs (multiple stories) */
+/* -----------------------------
+   MULTI-RING PROGRESS ARCS
+------------------------------ */
 .story-ring-segment {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 64px;
-    height: 64px;
-    border-radius: 50%;
+    inset: 0;
     border: 3px solid transparent;
+    border-radius: 50%;
     pointer-events: none;
-    clip-path: circle(50% at 50% 50%);
-    transform: rotate(var(--start-angle));
-    z-index: 1;
+    transform: rotate(var(--start, 0deg));
+    clip-path: polygon(50% 50%, 100% 0, 100% 100%);
 }
 
-/* Active ring segment color */
 .story-ring-segment.active {
-    border-color: #25d366; /* WhatsApp green tone */
+    border-color: #749cbf;
 }
 
-/* mask spacing between arcs */
-.story-ring-segment:not(:last-child)::after {
-    content: "";
-    position: absolute;
-    inset: -2px;
-    border-radius: 50%;
-    background: white;
-    transform: rotate(var(--gap-angle));
+.story-ring-segment:nth-child(1) { --start: 0deg; }
+.story-ring-segment:nth-child(2) { --start: 120deg; }
+.story-ring-segment:nth-child(3) { --start: 240deg; }
+
+/* (Auto spaces arcs based on JS story count) */
+.story-avatar-ring[data-segments="1"] .story-ring-segment {
+    border-color: #749cbf;
+    clip-path: none;
 }
 
-/* Single-story continuous ring */
-.story-avatar-ring.single-ring::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: 50%;
-    border: 3px solid #25d366;
+.story-avatar-ring[data-segments="2"] .story-ring-segment:nth-child(1) {
+    clip-path: polygon(50% 50%, 100% 0, 100% 50%);
+}
+.story-avatar-ring[data-segments="2"] .story-ring-segment:nth-child(2) {
+    clip-path: polygon(50% 50%, 100% 50%, 100% 100%);
 }
 
-/* "Your Story" grey ring */
-.story-avatar-ring.your-story::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: 50%;
-    border: 3px solid #d1d5db;
+/* Adjust spacing for 3+ stories */
+.story-avatar-ring[data-segments="3"] .story-ring-segment {
+    clip-path: polygon(50% 50%, 100% 0, 100% 33%);
 }
 
-/* ——— Username ——— */
+/* -----------------------------
+   Story Username
+------------------------------ */
 .story-username {
     font-size: 12px;
     color: #374151;
@@ -255,7 +215,9 @@ body {
     white-space: nowrap;
 }
 
-/* ——— Chat list ——— */
+/* -----------------------------
+   Chat List
+------------------------------ */
 .chat-list {
     background-color: white;
     flex: 1;
@@ -264,33 +226,18 @@ body {
 
 .chat-item {
     padding: 12px 16px;
-    cursor: pointer;
     transition: background-color 0.1s;
     background-color: white;
-}
-
-.chat-item:first-child {
-    padding-top: 20px;
 }
 
 .chat-item:hover {
     background-color: #f9fafb;
 }
 
-.chat-item.pressed {
-    background-color: #e5e7eb;
-}
-
 .chat-content {
     display: flex;
     align-items: center;
     gap: 12px;
-}
-
-/* Chat avatar, names, timestamp remain identical */
-.chat-avatar-container {
-    position: relative;
-    flex-shrink: 0;
 }
 
 .chat-avatar {
@@ -302,57 +249,11 @@ body {
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 14px;
-    font-weight: 500;
 }
 
-.online-indicator {
-    position: absolute;
-    bottom: -2px;
-    right: -2px;
-    width: 14px;
-    height: 14px;
-    background-color: #10b981;
-    border: 2px solid white;
-    border-radius: 50%;
-}
-
-.chat-details {
-    flex: 1;
-    min-width: 0;
-}
-
-.chat-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 2px;
-}
-
-.chat-name {
-    font-weight: 600;
-    color: black;
-    font-size: 16px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    flex: 1;
-}
-
-.chat-timestamp {
-    font-size: 14px;
-    color: #6b7280;
-}
-
-.chat-message {
-    font-size: 14px;
-    color: #4b5563;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-/* ——— Floating Button ——— */
+/* -----------------------------
+   Floating Action Button (FAB)
+------------------------------ */
 :root {
     --fab-size: 56px;
     --fab-color: #749cbf;
@@ -366,27 +267,17 @@ body {
     border-radius: 50%;
     background: var(--fab-color);
     box-shadow: var(--fab-shadow);
-    display: inline-grid;
+    display: grid;
     place-items: center;
     position: fixed;
     bottom: 20px;
     right: 20px;
-    z-index: 1000;
     border: none;
-    outline: none;
     cursor: pointer;
+    transition: opacity 0.3s ease;
 }
 
-.fab svg {
-    width: var(--icon-size);
-    height: var(--icon-size);
-    display: block;
-}
-
-.plus-shape {
-    stroke: #fff;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    stroke-width: 8;
-    fill: none;
+.fab.hidden {
+    opacity: 0;
+    pointer-events: none;
 }
