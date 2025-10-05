@@ -90,6 +90,8 @@
     height: calc(100% - 77px); /* Exclude bottom 77px to avoid overlapping reply container */
     z-index: 3; /* Lower than story-reply-container */
     cursor: pointer;
+    -webkit-tap-highlight-color: transparent; /* Remove browser tap highlight */
+    user-select: none; /* Prevent text selection */
 }
 
 .story-nav-prev {
@@ -164,6 +166,7 @@
     cursor: pointer;
     transition: background-color 0.3s ease, transform 0.2s ease;
     z-index: 5; /* Ensure like button is clickable above all else */
+    -webkit-tap-highlight-color: transparent; /* Remove browser tap highlight for like button */
 }
 
 /* Heart SVG */
