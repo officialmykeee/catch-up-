@@ -6,7 +6,7 @@ let currentStoryData = [];
 let currentStoryIndex = 0;
 const STORY_DURATION = 5000; // 5 seconds per story
 
-// Access storyDataMocks globally (assuming network.js exposes it or we simulate it here for context)
+// Access storyDataMocks globally
 const storyDataMocks = window.storyDataMocks || {
     "your-story": [
         { id: "your-story-status-1", content: "https://picsum.photos/id/1005/360/640", time: "Just Now", reply: "", isLiked: false },
@@ -277,7 +277,9 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
             </svg>
         `;
 
-        iconBtn.addEventListener('click', () => {
+        iconBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent navigation areas from capturing click
+            console.log('Like button clicked for story:', currentStoryData[currentStoryIndex].id);
             iconBtn.classList.toggle('active');
             const heartPath = iconBtn.querySelector('path');
             const isActive = iconBtn.classList.contains('active');
@@ -306,6 +308,7 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
         storyViewerOverlay.appendChild(prevArea);
         prevArea.addEventListener('click', (e) => {
             e.stopPropagation();
+            console.log('Previous navigation clicked');
             goToPreviousStory();
         });
     }
@@ -315,6 +318,7 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
         storyViewerOverlay.appendChild(nextArea);
         nextArea.addEventListener('click', (e) => {
             e.stopPropagation();
+            console.log('Next navigation clicked');
             goToNextStory();
         });
     }
