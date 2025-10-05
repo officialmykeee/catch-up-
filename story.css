@@ -53,7 +53,7 @@
 
 .progress-bar-container {
     flex: 1;
-    height: 2px; /* Reduced height for smaller progress bar */
+    height: 2px; /* Smaller progress bar */
     background-color: rgba(255, 255, 255, 0.3);
     border-radius: 2px;
     overflow: hidden;
@@ -87,8 +87,8 @@
     position: absolute;
     top: 0;
     width: 40%;
-    height: 100%;
-    z-index: 3;
+    height: calc(100% - 77px); /* Exclude bottom 77px to avoid overlapping reply container */
+    z-index: 3; /* Lower than story-reply-container */
     cursor: pointer;
 }
 
@@ -136,7 +136,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 8px;
-    z-index: 2;
+    z-index: 4; /* Higher than story-nav-area to ensure clickability */
 }
 
 /* Reply bar */
@@ -163,6 +163,7 @@
     justify-content: center;
     cursor: pointer;
     transition: background-color 0.3s ease, transform 0.2s ease;
+    z-index: 5; /* Ensure like button is clickable above all else */
 }
 
 /* Heart SVG */
