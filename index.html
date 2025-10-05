@@ -4,9 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hi-Lite Messenger</title>
-     <link rel="stylesheet" href="teststyle.css">
-    <link rel="stylesheet" href="story.css">
-    <link rel="stylesheet" href="chat-p.css"></head>
+    <link rel="stylesheet" href="teststyle.css">
+</head>
 <body>
     <div class="app-container">
         <div class="header">
@@ -31,74 +30,59 @@
             </div>
         </div>
 
-        <div class="stories-container">
+        <!-- ✅ Updated structure -->
+        <div class="stories-container" id="storiesContainer">
             <div class="stories-scroll">
-                <div class="stories-list">
-                    <div class="story-item">
-                        <div class="story-avatar-container">
-                            <div class="story-avatar-ring your-story">
-                                <div class="story-avatar-bg">
-                                    <div class="story-avatar">Y</div>
-                                </div>
-                            </div>
-                            <div class="story-plus">+</div>
-                        </div>
-                        <span class="story-username">Your Story</span>
-                    </div>
-
-                    <div class="story-item">
-                        <div class="story-avatar-container">
-                            <div class="story-avatar-ring has-story segments-1">
-                                <div class="story-avatar-bg">
-                                    <div class="story-avatar">J</div>
-                                </div>
-                            </div>
-                        </div>
-                        <span class="story-username">John</span>
-                    </div>
-
-                    <div class="story-item">
-                        <div class="story-avatar-container">
-                            <div class="story-avatar-ring has-story segments-2">
-                                <div class="story-avatar-bg">
-                                    <div class="story-avatar">E</div>
-                                </div>
-                            </div>
-                        </div>
-                        <span class="story-username">Emily</span>
-                    </div>
-
-                    <div class="story-item">
-                        <div class="story-avatar-container">
-                            <div class="story-avatar-ring has-story segments-3">
-                                <div class="story-avatar-bg">
-                                    <div class="story-avatar">S</div>
-                                </div>
-                            </div>
-                        </div>
-                        <span class="story-username">Sarah</span>
-                    </div>
-
-                    <div class="story-item">
-                        <div class="story-avatar-container">
-                            <div class="story-avatar-ring has-story segments-4">
-                                <div class="story-avatar-bg">
-                                    <div class="story-avatar">M</div>
-                                </div>
-                            </div>
-                        </div>
-                        <span class="story-username">Mike</span>
-                    </div>
-                </div>
+                <div class="stories-list" id="storiesList"></div>
             </div>
+        </div>
+
+        <div class="skeleton-stories-container hidden" id="storiesLoadingSkeleton">
+            <div class="stories-scroll">
+                <div class="skeleton-stories-list" id="skeletonStoriesList"></div>
+            </div>
+        </div>
+
+        <div class="chat-list" id="chatList"></div>
+
+        <div class="chat-list hidden" id="loadingSkeleton"></div>
+    </div>
+
+    <!-- ✅ Chat panel -->
+    <div id="chatPanel">
+        <div class="chat-panel-header">
+            <svg class="chat-panel-back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M15 18l-6-6 6-6" />
+            </svg>
+            <h2 class="chat-panel-title" id="chatPanelTitle"></h2>
+        </div>
+        <div class="chat-panel-content" id="chatPanelContent"></div>
+    </div>
+
+    <!-- ✅ Floating Action Button -->
+    <button class="fab" aria-label="Create new chat" title="Create new chat">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <line class="plus-shape" x1="50" y1="25" x2="50" y2="75" />
+            <line class="plus-shape" x1="25" y1="50" x2="75" y2="50" />
+        </svg>
+    </button>
+
+    <!-- ✅ Story Viewer Overlay -->
+    <div id="storyViewerOverlay">
+        <div class="storycon">
+            <img class="story-viewer-content" id="storyViewerContent" src="" alt="Story content">
         </div>
     </div>
 
+    <!-- ✅ Script imports -->
+    <script type="module">
+        import { initNetworkLogic } from './network.js';
+        document.addEventListener('DOMContentLoaded', initNetworkLogic);
+    </script>
 
-<script src="story.js"></script>    
-<script src="chat-p.js"></script>      
-<script src="skele.js" type="module"></script>      
-<script src="network.js" type="module"></script> 
-    
+    <script src="story.js"></script>
+    <script src="chat-p.js"></script>
+    <script src="skele.js" type="module"></script>
+    <script src="network.js" type="module"></script>
 </body>
 </html>
