@@ -37,10 +37,10 @@
 
 /* Story container */
 .storycon {
-    max-height: 95vh;
+    max-height: calc(100vh - 60px); /* Adjusted to avoid browser top bar */
     background: #242323;
-    max-width: 384px;
-    width: 90%;
+    max-width: 384px; /* Kept as requested */
+    width: 95%; /* Changed from 90% to 95% */
     position: relative;
     top: -38px;
     border-radius: 8px;
@@ -151,8 +151,8 @@
 .story-reply-container {
     position: absolute;
     bottom: 16px;
-    width: 90%;
-    max-width: 384px;
+    width: 95%; /* Match storycon width */
+    max-width: 384px; /* Match storycon max-width */
     display: flex;
     align-items: center;
     justify-content: space-between;
