@@ -1,3 +1,5 @@
+/* style.css */
+
 * {
     margin: 0;
     padding: 0;
@@ -170,64 +172,6 @@ body {
     justify-content: center;
 }
 
-/* No stories - gray ring */
-.story-avatar-ring.no-story {
-    background: #d1d5db;
-}
-
-/* All stories viewed - gray ring */
-.story-avatar-ring.all-viewed {
-    background: #d1d5db;
-}
-
-/* Has stories - dynamic segmented ring */
-.story-avatar-ring.has-story {
-    background: conic-gradient(
-        var(--segment-colors, #749cbf)
-    );
-}
-
-/* Dynamic segment calculation based on story count */
-.story-avatar-ring.has-story[data-story-count="1"] {
-    background: var(--segment-colors, #749cbf);
-}
-
-.story-avatar-ring.has-story[data-story-count="2"] {
-    background: conic-gradient(
-        from 0deg,
-        var(--segment-colors, #749cbf 0deg 170deg, transparent 170deg 180deg, #749cbf 180deg 360deg)
-    );
-}
-
-.story-avatar-ring.has-story[data-story-count="3"] {
-    background: conic-gradient(
-        from 0deg,
-        var(--segment-colors, #749cbf 0deg 110deg, transparent 110deg 120deg, #749cbf 120deg 230deg, transparent 230deg 240deg, #749cbf 240deg 360deg)
-    );
-}
-
-.story-avatar-ring.has-story[data-story-count="4"] {
-    background: conic-gradient(
-        from 0deg,
-        var(--segment-colors, #749cbf 0deg 80deg, transparent 80deg 90deg, #749cbf 90deg 170deg, transparent 170deg 180deg, #749cbf 180deg 260deg, transparent 260deg 270deg, #749cbf 270deg 360deg)
-    );
-}
-
-.story-avatar-ring.has-story[data-story-count="5"] {
-    background: conic-gradient(
-        from 0deg,
-        var(--segment-colors, #749cbf 0deg 65deg, transparent 65deg 72deg, #749cbf 72deg 137deg, transparent 137deg 144deg, #749cbf 144deg 209deg, transparent 209deg 216deg, #749cbf 216deg 281deg, transparent 281deg 288deg, #749cbf 288deg 360deg)
-    );
-}
-
-/* Fallback for more than 5 stories */
-.story-avatar-ring.has-story[data-story-count]:not([data-story-count="1"]):not([data-story-count="2"]):not([data-story-count="3"]):not([data-story-count="4"]):not([data-story-count="5"]) {
-    background: conic-gradient(
-        from 0deg,
-        var(--segment-colors, #749cbf 0deg 65deg, transparent 65deg 72deg, #749cbf 72deg 137deg, transparent 137deg 144deg, #749cbf 144deg 209deg, transparent 209deg 216deg, #749cbf 216deg 281deg, transparent 281deg 288deg, #749cbf 288deg 360deg)
-    );
-}
-
 .story-avatar-bg {
     width: 100%;
     height: 100%;
@@ -258,6 +202,16 @@ body {
     color: white;
     font-size: 12px;
     font-weight: bold;
+}
+
+.story-username {
+    font-size: 12px;
+    color: #374151;
+    text-align: center;
+    max-width: 70px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 /* Story viewer overlay */
@@ -609,7 +563,7 @@ body {
 .skeleton-chat-content {
     display: flex;
     align-items: center;
-    gapme: 12px;
+    gap: 12px;
 }
 
 .skeleton-avatar {
