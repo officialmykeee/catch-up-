@@ -160,24 +160,50 @@ body {
     position: relative;
 }
 
+/* Story avatar ring container - handles the gradient ring */
 .story-avatar-ring {
-    width: 64px;
-    height: 64px;
+    width: 68px;
+    height: 68px;
     border-radius: 50%;
     padding: 2px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
+/* Your story - gray ring with segments */
 .story-avatar-ring.your-story {
-    background-color: #d1d5db;
+    background: conic-gradient(
+        from 0deg,
+        #d1d5db 0deg 85deg,
+        transparent 85deg 95deg,
+        #d1d5db 95deg 175deg,
+        transparent 175deg 185deg,
+        #d1d5db 185deg 265deg,
+        transparent 265deg 275deg,
+        #d1d5db 275deg 360deg
+    );
 }
 
-.story-avatar-ring.has-story {
+/* Single story - solid blue ring */
+.story-avatar-ring.single-story {
     background: #749cbf;
 }
 
-/* .story-avatar-ring.has-story {
-    background: linear-gradient(45deg, #fbbf24, #ef4444, #a855f7);
-} */
+/* Has story - multiple segmented rings like WhatsApp */
+.story-avatar-ring.has-story {
+    background: conic-gradient(
+        from 0deg,
+        #749cbf 0deg 85deg,
+        transparent 85deg 95deg,
+        #749cbf 95deg 175deg,
+        transparent 175deg 185deg,
+        #749cbf 185deg 265deg,
+        transparent 265deg 275deg,
+        #749cbf 275deg 360deg
+    );
+}
 
 .story-avatar-bg {
     width: 100%;
@@ -219,6 +245,163 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+/* Story viewer overlay */
+#storyViewerOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+    display: none;
+    z-index: 1000;
+}
+
+#storyViewerOverlay.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Story container */
+.storycon {
+    position: relative;
+    width: 100%;
+    max-width: 384px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Story viewer content */
+#storyViewerContent {
+    width: 100%;
+    height: 100%;
+    max-height: 672px; /* 16:9 aspect ratio for 384px width */
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+/* Blur background */
+.story-blur-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    filter: blur(20px);
+    z-index: -1;
+}
+
+/* Gradient overlay */
+.story-gradient-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3), transparent 50%, rgba(0, 0, 0, 0.3));
+    z-index: -1;
+}
+
+/* Progress bars */
+.story-progress-bars {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    display: flex;
+    gap: 4px;
+    z-index: 10;
+}
+
+.progress-bar-container {
+    flex: 1;
+    height: 3px;
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background-color: white;
+    width: 0;
+}
+
+.progress-bar.completed {
+    width: 100%;
+}
+
+.progress-bar.active {
+    width: 0;
+    animation: progress 5000ms linear forwards;
+}
+
+@keyframes progress {
+    from {
+        width: 0;
+    }
+    to {
+        width: 100%;
+    }
+}
+
+/* Reply container */
+.story-reply-container {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    right: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.story-reply {
+    flex: 1;
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    cursor: text;
+}
+
+.story-reply-icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.story-reply-icon.active {
+    transform: scale(1.1);
+}
+
+/* Navigation areas */
+.story-nav-area {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    width: 40%;
+    z-index: 10;
+}
+
+.story-nav-prev {
+    left: 0;
+}
+
+.story-nav-next {
+    right: 0;
 }
 
 /* Chat list styles */
@@ -391,8 +574,8 @@ body {
 }
 
 .skeleton-story-avatar {
-    width: 64px;
-    height: 64px;
+    width: 68px;
+    height: 68px;
     background-color: #e5e7eb;
     border-radius: 50%;
     flex-shrink: 0;
@@ -521,4 +704,3 @@ body {
     stroke-width: 8;
     fill: none;
 }
-
