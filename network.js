@@ -43,7 +43,7 @@ window.storyDataMocks = {
         { id: "jessica1", content: "https://picsum.photos/id/1019/360/640", time: "4 hours ago", reply: "", isLiked: false, viewed: false },
         { id: "jessica2", content: "https://picsum.photos/id/1020/360/640", time: "5 hours ago", reply: "", isLiked: false, viewed: false }
     ]
-];
+};
 
 // Chat data (unchanged)
 const chats = [
@@ -156,12 +156,11 @@ function renderStories() {
             console.log('Story clicked:', story.id);
             const storyData = window.storyDataMocks[story.id];
             if (storyData && storyData.length > 0) {
-                // Call the story viewer from story.js
-                if (typeof window.openStoryViewer === 'function') {
+                // Prefer story.js's openStoryViewer if it exists
+                if (typeof window.openStoryViewer === 'function' && window.openStoryViewer !== defaultOpenStoryViewer) {
                     window.openStoryViewer(story.id, storyData, 0);
                 } else {
-                    console.error('openStoryViewer function not found. Please define it in story.js.');
-                    alert('Story viewer functionality is not available.');
+                    defaultOpenStoryViewer(story.id, storyData, 0);
                 }
             } else {
                 console.error('No content found for story ID:', story.id);
@@ -172,6 +171,163 @@ function renderStories() {
         storiesList.appendChild(storyElement);
     });
 }
+
+// Default story viewer function (restored)
+function defaultOpenStoryViewer(storyId, storyData, startIndex = 0) {
+    const overlay = document.getElementById('storyViewerOverlay');
+    if (!overlay) {
+        console.error('Story viewer overlay not found');
+        return;
+    }
+    overlay.classList.add('show');
+
+    const progressBarsContainer = overlay.querySelector('.story-progress-bars');
+    if (!progressBarsContainer) {
+        console.error('Progress bars container not found');
+        return;
+    }
+    progressBarsContainer.innerHTML = '';
+
+    const count = storyData.length;
+    const barContainers = [];
+    for (let i = 0; i < count; i++) {
+        const cont = document.createElement('div');
+        cont.className = 'progress-bar-container';
+        const bar = document.createElement('div');
+        bar.className = 'progress-bar';
+        cont.appendChild(bar);
+        progressBarsContainer.appendChild(cont);
+        barContainers.push(bar);
+    }
+
+    const contentImg = overlay.querySelector('#storyViewerContent');
+    const blurBg = overlay.querySelector('.story-blur-bg');
+    const replyInput = overlay.querySelector('.story-reply');
+    const likeBtn = overlay.querySelector('.story-reply-icon');
+
+    if (replyInput) {
+        replyInput.contentEditable = 'true';
+    }
+
+    let currentIndex = startIndex;
+
+    function updateStoryDisplay() {
+        contentImg.src = storyData[currentIndex].content;
+        blurBg.style.backgroundImage = `url(${storyData[currentIndex].content})`;
+        if (replyInput) {
+            replyInput.textContent = storyData[currentIndex].reply || '';
+        }
+        if (likeBtn) {
+            likeBtn.classList.toggle('active', storyData[currentIndex].isLiked);
+        }
+    }
+
+    function resetProgressBars() {
+        barContainers.forEach((bar, i) => {
+            bar.style.width = '0%';
+            bar.style.animation = 'none';
+            bar.classList.remove('active', 'completed');
+            if (i < currentIndex) {
+                bar.classList.add('completed');
+            }
+        });
+    }
+
+    function startCurrentProgress() {
+        const bar = barContainers[currentIndex];
+        bar.classList.add('active');
+        bar.style.animation = 'progress 5000ms linear forwards';
+        bar.addEventListener('animationend', onProgressEnd, { once: true });
+    }
+
+    function onProgressEnd() {
+        window.markStoryAsViewed(storyId, currentIndex);
+        if (currentIndex < count - 1) {
+            currentIndex++;
+            showStory();
+        } else {
+            closeViewer();
+        }
+    }
+
+    function showStory() {
+        updateStoryDisplay();
+        resetProgressBars();
+        startCurrentProgress();
+    }
+
+    function handleNext() {
+        const bar = barContainers[currentIndex];
+        bar.removeEventListener('animationend', onProgressEnd);
+        bar.style.animation = 'none';
+        bar.style.width = '100%';
+        bar.classList.add('completed');
+        bar.classList.remove('active');
+        window.markStoryAsViewed(storyId, currentIndex);
+        if (currentIndex < count - 1) {
+            currentIndex++;
+            showStory();
+        } else {
+            closeViewer();
+        }
+    }
+
+    function handlePrev() {
+        const bar = barContainers[currentIndex];
+        bar.removeEventListener('animationend', onProgressEnd);
+        bar.style.animation = 'none';
+        bar.style.width = '0%';
+        bar.classList.remove('active', 'completed');
+        if (currentIndex > 0) {
+            currentIndex--;
+            showStory();
+        } else {
+            closeViewer();
+        }
+    }
+
+    const prevArea = overlay.querySelector('.story-nav-prev');
+    const nextArea = overlay.querySelector('.story-nav-next');
+
+    prevArea.addEventListener('click', handlePrev);
+    nextArea.addEventListener('click', handleNext);
+
+    if (likeBtn) {
+        likeBtn.addEventListener('click', () => {
+            storyData[currentIndex].isLiked = !storyData[currentIndex].isLiked;
+            likeBtn.classList.toggle('active', storyData[currentIndex].isLiked);
+        });
+    }
+
+    if (replyInput) {
+        replyInput.addEventListener('input', () => {
+            storyData[currentIndex].reply = replyInput.textContent;
+        });
+    }
+
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+            closeViewer();
+        }
+    });
+
+    function closeViewer() {
+        overlay.classList.remove('show');
+        // Clean up listeners
+        prevArea.removeEventListener('click', handlePrev);
+        nextArea.removeEventListener('click', handleNext);
+        if (likeBtn) likeBtn.removeEventListener('click');
+        if (replyInput) replyInput.removeEventListener('input');
+        overlay.removeEventListener('click');
+        barContainers.forEach(bar => bar.removeEventListener('animationend', onProgressEnd));
+        renderStories(); // Update ring visuals after viewing
+    }
+
+    showStory();
+}
+
+// Rename to avoid overriding story.js's openStoryViewer
+window.defaultOpenStoryViewer = defaultOpenStoryViewer;
 
 // Function to render chat items (unchanged)
 function renderChats() {
