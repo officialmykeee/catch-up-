@@ -17,8 +17,8 @@ window.stories = [
     { id: "5", username: "Jessica", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=face", hasNewStory: true }
 ];
 
-// Mock story content data
-const storyDataMocks = {
+// Mock story content data (exposed globally for story.js)
+window.storyDataMocks = {
     "your-story": [
         { id: "your-story-status-1", content: "https://picsum.photos/id/1005/360/640", time: "Just Now", reply: "", isLiked: false },
         { id: "your-story-status-2", content: "https://picsum.photos/id/1006/360/640", time: "5 min ago", reply: "", isLiked: false }
@@ -101,7 +101,12 @@ function renderStories() {
         const storyElement = document.createElement('div');
         storyElement.className = 'story-item';
 
-        const avatarRingClass = story.isYourStory ? 'your-story' : (story.hasNewStory ? 'has-story' : 'your-story');
+        // Determine the ring class based on story count and user type
+        let avatarRingClass = 'your-story';
+        if (!story.isYourStory) {
+            const storyCount = window.storyDataMocks[story.id]?.length || 0;
+            avatarRingClass = storyCount === 1 ? 'single-story' : (storyCount > 1 ? 'has-story' : 'your-story');
+        }
 
         storyElement.innerHTML = `
             <div class="story-avatar-container">
@@ -117,7 +122,7 @@ function renderStories() {
 
         storyElement.addEventListener('click', () => {
             console.log('Story clicked:', story.id);
-            const storyData = storyDataMocks[story.id];
+            const storyData = window.storyDataMocks[story.id];
             if (storyData && storyData.length > 0) {
                 window.openStoryViewer(story.id, storyData, 0);
             } else {
@@ -290,4 +295,3 @@ export function initNetworkLogic() {
         }
     });
 }
-
