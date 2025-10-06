@@ -37,7 +37,7 @@
 
 /* Story container */
 .storycon {
-    max-height: calc(100vh - 80px); /* Adjusted for Opera Mini and other mobile toolbars */
+    max-height: calc(91vh - 80px); /* Adjusted for Opera Mini and other mobile toolbars */
     background: #242323;
     max-width: 384px;
     width: 95%;
