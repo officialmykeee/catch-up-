@@ -45,7 +45,10 @@ window.storyDataMocks = {
     ]
 };
 
-// Chat data (unchanged)
+// Track viewed stories
+window.viewedStories = {};
+
+// Chat data
 const chats = [
     {
         id: "1",
@@ -101,16 +104,21 @@ function renderStories() {
         const storyElement = document.createElement('div');
         storyElement.className = 'story-item';
 
-        // Determine the ring class based on story count and user type
-        let avatarRingClass = 'your-story';
-        if (!story.isYourStory) {
-            const storyCount = window.storyDataMocks[story.id]?.length || 0;
-            avatarRingClass = storyCount === 1 ? 'single-story' : (storyCount > 1 ? 'has-story' : 'your-story');
-        }
+        // Get story count and viewed status
+        const storyData = window.storyDataMocks[story.id] || [];
+        const storyCount = storyData.length;
+        const viewedStories = window.viewedStories[story.id] || [];
+        const allViewed = storyCount > 0 && viewedStories.length === storyCount;
+
+        // Determine ring class and segment colors
+        let avatarRingClass = storyCount === 0 ? 'no-story' : (allViewed ? 'all-viewed' : 'has-story');
+        const segmentColors = storyData.map((_, index) => 
+            viewedStories.includes(index) ? '#d1d5db' : '#749cbf'
+        );
 
         storyElement.innerHTML = `
             <div class="story-avatar-container">
-                <div class="story-avatar-ring ${avatarRingClass}">
+                <div class="story-avatar-ring ${avatarRingClass}" data-story-count="${storyCount}" style="--segment-colors: ${segmentColors.join(',')};">
                     <div class="story-avatar-bg">
                         <img src="${story.avatar}" alt="${story.username}" class="story-avatar">
                     </div>
@@ -135,7 +143,18 @@ function renderStories() {
     });
 }
 
-// Function to render chat items (unchanged)
+// Function to mark a story as viewed
+window.markStoryAsViewed = function(storyId, storyIndex) {
+    if (!window.viewedStories[storyId]) {
+        window.viewedStories[storyId] = [];
+    }
+    if (!window.viewedStories[storyId].includes(storyIndex)) {
+        window.viewedStories[storyId].push(storyIndex);
+    }
+    renderStories();
+};
+
+// Function to render chat items
 function renderChats() {
     const chatList = document.getElementById('chatList');
     if (!chatList) return;
@@ -198,7 +217,7 @@ function renderChats() {
     });
 }
 
-// --- Network Status Logic (unchanged) ---
+// --- Network Status Logic ---
 
 let isCurrentlyLoading = false;
 
