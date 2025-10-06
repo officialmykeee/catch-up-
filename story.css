@@ -37,9 +37,7 @@
 
 /* Story container */
 .storycon {
-    max-height: calc(100dvh - 80px); /* Dynamic viewport height for modern browsers */
-    min-height: calc(100vh - 80px); /* Fallback for older browsers */
-    height: auto; /* Adaptive height based on content */
+    max-height: calc(100vh - 80px); /* Adjusted for Opera Mini and other mobile toolbars */
     background: #242323;
     max-width: 384px;
     width: 95%;
@@ -87,7 +85,6 @@
     height: 100%;
     background-color: #ffffff;
     width: 0;
-    will-change: width; /* Optimize animation performance */
 }
 
 .progress-bar.completed {
@@ -119,7 +116,18 @@
     -moz-tap-highlight-color: transparent;
     user-select: none;
     outline: none;
-    touch-action: manipulation; /* Remove 300ms tap delay on mobile */
+}
+
+.story-nav-prev {
+    left: 0;
+}
+
+.story-nav-next {
+    right: 0;
+}
+
+.story-nav-area:active {
+    outline: none;
 }
 
 /* Blurred background for medium/short images */
@@ -131,7 +139,7 @@
     height: 100%;
     background-size: cover;
     background-position: center;
-    filter: blur(10px) brightness(0.6); /* Reduced blur for performance */
+    filter: blur(30px) brightness(0.6);
     z-index: 0;
     border-radius: 8px;
 }
@@ -142,6 +150,7 @@
     height: auto;
     object-fit: contain;
     display: block;
+    transition: transform 0.1s ease-out;
     position: relative;
     z-index: 1; /* Same as before, above story-gradient-overlay */
     border-radius: 8px;
