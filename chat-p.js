@@ -6,6 +6,9 @@ window.openChatPanel = function(chat) {
 
     console.log('Opening chat panel for:', chat.name); // Debug log
 
+    // Preserve existing .chat-panel-input if it exists
+    const existingInput = chatPanel.querySelector('.chat-panel-input');
+
     // Build chat panel header and content dynamically
     chatPanel.innerHTML = `
         <div class="chat-panel-header">
@@ -39,8 +42,10 @@ window.openChatPanel = function(chat) {
         </div>
     `;
 
-    // Append the input section
-    if (typeof window.renderInput === 'function') {
+    // Re-append existing input or render new one
+    if (existingInput) {
+        chatPanel.appendChild(existingInput);
+    } else if (typeof window.renderInput === 'function') {
         window.renderInput(chatPanel);
     } else {
         console.warn('renderInput function not found. Ensure input.js is loaded.');
