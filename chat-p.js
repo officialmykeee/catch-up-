@@ -10,7 +10,10 @@ window.openChatPanel = function(chat) {
     chatPanel.innerHTML = `
         <div class="chat-panel-header">
             <div class="chat-panel-back">
-                <i class="fa-solid fa-arrow-left"></i>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19 12H5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                    <path d="M12 19L5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                </svg>
             </div>
 
             <div class="chat-panel-avatar" id="chatPanelAvatar">${chat.name.charAt(0).toUpperCase()}</div>
@@ -21,7 +24,11 @@ window.openChatPanel = function(chat) {
             </div>
 
             <div class="chat-panel-menu">
-                <i class="fa-solid fa-ellipsis-vertical"></i>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="5" r="2" fill="currentColor"></circle>
+                    <circle cx="12" cy="12" r="2" fill="currentColor"></circle>
+                    <circle cx="12" cy="19" r="2" fill="currentColor"></circle>
+                </svg>
             </div>
         </div>
 
