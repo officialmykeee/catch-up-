@@ -632,7 +632,7 @@ body {
     --fab-size: 56px;
     --fab-color: #749cbf;
     --fab-shadow: 0 3px 8px rgba(116, 156, 191, 0.35);
-    --icon-size: 24px; /* Adjusted to reduce scaling issues */
+    --icon-size: 24px; /* For Font Awesome icon */
 }
 
 .fab {
@@ -653,7 +653,7 @@ body {
     right: 20px;
     z-index: 1000;
     transition: opacity 0.3s ease;
-    padding: 0; /* Ensure no padding offsets SVG */
+    padding: 0; /* Ensure no padding offsets icon */
 }
 
 .fab.hidden {
@@ -665,22 +665,7 @@ body {
     transform: translateY(1px) scale(0.98);
 }
 
-.fab svg {
-    width: var(--icon-size);
-    height: var(--icon-size);
-    display: block;
-    /* Override Font Awesome SVG styles */
-    overflow: visible !important;
-    vertical-align: 0 !important;
-    transform: none !important;
-}
-
-.fab .plus-shape {
-    stroke: #fff;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    stroke-width: 6; /* Reduced to prevent visual misalignment */
-    fill: none;
-    /* Prevent Font Awesome pseudo-element interference */
-    content: none !important;
+.fab i {
+    font-size: var(--icon-size);
+    color: #fff;
 }
