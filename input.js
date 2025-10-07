@@ -1,5 +1,11 @@
 // Expose renderInput globally
 window.renderInput = function(chatPanel) {
+    // Remove any existing .chat-panel-input to prevent duplicates
+    const existingInput = chatPanel.querySelector('.chat-panel-input');
+    if (existingInput) {
+        existingInput.remove();
+    }
+
     const inputContainer = document.createElement('div');
     inputContainer.className = 'chat-panel-input';
     inputContainer.innerHTML = `
@@ -25,4 +31,5 @@ window.renderInput = function(chatPanel) {
         </div>
     `;
     chatPanel.appendChild(inputContainer);
+    console.log('Input section appended to chat panel');
 };
