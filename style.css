@@ -1,4 +1,5 @@
 /* style.css */
+
 * {
     margin: 0;
     padding: 0;
@@ -632,7 +633,7 @@ body {
     --fab-size: 56px;
     --fab-color: #749cbf;
     --fab-shadow: 0 3px 8px rgba(116, 156, 191, 0.35);
-    --icon-size: 24px; /* Adjusted for better centering */
+    --icon-size: 22px; /* Fine-tuned for precise centering */
 }
 
 .fab {
@@ -641,7 +642,7 @@ body {
     border-radius: 50%;
     background: var(--fab-color);
     box-shadow: var(--fab-shadow);
-    display: flex; /* Changed to flex for better SVG centering */
+    display: flex;
     align-items: center;
     justify-content: center;
     user-select: none;
@@ -654,7 +655,7 @@ body {
     right: 20px;
     z-index: 1000;
     transition: opacity 0.3s ease;
-    padding: 0; /* Ensure no padding offsets SVG */
+    padding: 0;
 }
 
 .fab.hidden {
@@ -676,14 +677,15 @@ body {
     stroke: #fff;
     stroke-linecap: round;
     stroke-linejoin: round;
-    stroke-width: 6; /* Reduced for better centering */
+    stroke-width: 6;
     fill: none;
+    stroke-alignment: center; /* Modern SVG stroke centering for better alignment */
 }
 
 /* Mobile adjustments */
 @media (max-width: 768px) {
     :root {
-        --fab-size: 48px; /* Smaller for mobile */
-        --icon-size: 20px; /* Smaller SVG for mobile */
+        --fab-size: 48px;
+        --icon-size: 18px;
     }
 }
