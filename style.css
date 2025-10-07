@@ -633,7 +633,7 @@ body {
     --fab-size: 56px;
     --fab-color: #749cbf;
     --fab-shadow: 0 3px 8px rgba(116, 156, 191, 0.35);
-    --icon-size: 22px; /* Fine-tuned for precise centering */
+    --icon-size: 28px;
 }
 
 .fab {
@@ -642,9 +642,8 @@ body {
     border-radius: 50%;
     background: var(--fab-color);
     box-shadow: var(--fab-shadow);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: inline-grid;
+    place-items: center;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
     border: none;
@@ -655,7 +654,6 @@ body {
     right: 20px;
     z-index: 1000;
     transition: opacity 0.3s ease;
-    padding: 0;
 }
 
 .fab.hidden {
@@ -677,15 +675,6 @@ body {
     stroke: #fff;
     stroke-linecap: round;
     stroke-linejoin: round;
-    stroke-width: 6;
+    stroke-width: 8;
     fill: none;
-    stroke-alignment: center; /* Modern SVG stroke centering for better alignment */
-}
-
-/* Mobile adjustments */
-@media (max-width: 768px) {
-    :root {
-        --fab-size: 48px;
-        --icon-size: 18px;
-    }
 }
