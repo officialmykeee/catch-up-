@@ -251,7 +251,7 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
     const storyViewerOverlay = document.getElementById('storyViewerOverlay');
     const storyViewerContent = document.getElementById('storyViewerContent');
     const storyCon = storyViewerContent.closest('.storycon');
-    const closeThreshold = 5; // Reduced for excessive sensitivity
+    const closeThreshold = 1; // Extremely sensitive for slide-down close
 
     console.log('Opening story for user:', userId, 'with stories:', storyData);
 
