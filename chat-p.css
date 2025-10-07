@@ -7,17 +7,15 @@
     max-width: 384px;
     height: 100%;
     background-color: white;
-
-    /* Prevent flash on load */
     transform: translateX(100%);
     visibility: hidden;
     opacity: 0;
-
     transition: transform 0.3s ease-in-out, opacity 0.2s ease, visibility 0.2s ease;
     z-index: 30;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
+    overflow: hidden; /* Prevent content overflow */
 }
 
 #chatPanel.open {
