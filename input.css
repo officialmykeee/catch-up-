@@ -6,6 +6,7 @@
     position: sticky;
     bottom: 0;
     z-index: 10;
+    margin: 0; /* Ensure no extra margins push it down */
 }
 
 .input-wrapper {
@@ -162,21 +163,21 @@
 /* Media Queries for input-wrapper related elements */
 @media (max-width: 480px) {
     .input-wrapper {
-        width: 102% !important;
+        width: 100%; /* Adjusted from 102% to prevent overflow */
         gap: 6px;
         background: #fff;
         min-height: 52px;
     }
     .message-bubble {
         padding: 6px 12px;
-        box-shadow: 0 2px 6px 5px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); /* Removed excessive shadow */
     }
     .mic-btn {
         width: 55px;
         height: 55px;
-        top: 2px;
-        left: 2px;
-        margin-top: -3px;
+        top: 0; /* Adjusted to align better */
+        left: 0;
+        margin-top: 0; /* Removed negative margin */
     }
     .mic-btn.hold-state {
         transform: scale(1.5) translateY(-5px);
