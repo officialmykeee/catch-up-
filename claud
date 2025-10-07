@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fleet Stories</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #15202b;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            padding: 20px 0;
+            border-bottom: 1px solid #38444d;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .fleets-container {
+            display: flex;
+            gap: 12px;
+            padding: 20px 0;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .fleets-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        .fleet-item {
+            flex-shrink: 0;
+            width: 80px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .fleet-item:hover {
+            transform: scale(1.05);
+        }
+
+        .fleet-avatar-wrapper {
+            position: relative;
+            width: 80px;
+            height: 80px;
+        }
+
+        .fleet-ring {
+            position: absolute;
+            inset: -3px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #1d9bf0, #7856ff);
+            padding: 3px;
+        }
+
+        .fleet-ring.viewed {
+            background: #38444d;
+        }
+
+        .fleet-avatar {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 3px solid #15202b;
+            object-fit: cover;
+        }
+
+        .add-fleet {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 24px;
+            height: 24px;
+            background: #1d9bf0;
+            border: 2px solid #15202b;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .fleet-username {
+            text-align: center;
+            margin-top: 8px;
+            font-size: 13px;
+            color: #8899a6;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .fleet-viewer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #000;
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            padding: 20px 0;
+        }
+
+        .fleet-viewer.active {
+            display: flex;
+        }
+
+        .fleet-viewer-content {
+            flex: 1;
+            margin: 0 8px;
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+            background: #000;
+        }
+
+        .gradient-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 180px;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.4) 50%, transparent 100%);
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .viewer-header {
+            display: flex;
+            align-items: center;
+            padding: 50px 20px 20px;
+            gap: 12px;
+            position: relative;
+            z-index: 3;
+        }
+
+        .progress-bars {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            gap: 4px;
+            padding: 20px 20px 8px;
+            z-index: 3;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #fff;
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        .viewer-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .viewer-info {
+            flex: 1;
+        }
+
+        .viewer-username {
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .viewer-time {
+            font-size: 13px;
+            color: #8899a6;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 28px;
+            cursor: pointer;
+            padding: 0;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .fleet-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .fleet-content img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .fleet-text {
+            font-size: 32px;
+            font-weight: 600;
+            padding: 40px;
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        .nav-area {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 30%;
+            cursor: pointer;
+        }
+
+        .nav-area.prev {
+            left: 0;
+        }
+
+        .nav-area.next {
+            right: 0;
+        }
+
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Fleets</h1>
+        </div>
+
+        <div class="fleets-container" id="fleetsContainer">
+            <div class="fleet-item" data-user="0">
+                <div class="fleet-avatar-wrapper">
+                    <div class="fleet-ring">
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=you" alt="Your Fleet" class="fleet-avatar">
+                    </div>
+                    <div class="add-fleet">+</div>
+                </div>
+                <div class="fleet-username">Your Fleet</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="fleet-viewer" id="fleetViewer">
+        <div class="fleet-viewer-content">
+            <div class="fleet-content" id="fleetContent">
+                <div class="nav-area prev" id="prevArea"></div>
+                <div class="nav-area next" id="nextArea"></div>
+            </div>
+            <div class="gradient-overlay"></div>
+            <div class="progress-bars" id="progressBars"></div>
+            <div class="viewer-header">
+                <img src="" alt="Avatar" class="viewer-avatar" id="viewerAvatar">
+                <div class="viewer-info">
+                    <div class="viewer-username" id="viewerUsername"></div>
+                    <div class="viewer-time" id="viewerTime"></div>
+                </div>
+                <button class="close-btn" id="closeBtn">&times;</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const users = [
+            {
+                name: 'Your Fleet',
+                avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=you',
+                fleets: [
+                    { type: 'text', content: 'Hello World! 👋', bg: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
+                    { type: 'text', content: 'This is a Fleet clone', bg: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' }
+                ],
+                viewed: false
+            },
+            {
+                name: 'Sarah Chen',
+                avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=sarah',
+                fleets: [
+                    { type: 'text', content: 'Good morning! ☀️', bg: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' },
+                    { type: 'text', content: 'Beautiful day today', bg: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)' }
+                ],
+                viewed: false
+            },
+            {
+                name: 'Mike Johnson',
+                avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=mike',
+                fleets: [
+                    { type: 'text', content: 'Just launched! 🚀', bg: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)' },
+                    { type: 'text', content: 'Check it out!', bg: 'linear-gradient(135deg, #30cfd0 0%, #330867 100%)' }
+                ],
+                viewed: false
+            },
+            {
+                name: 'Emma Wilson',
+                avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=emma',
+                fleets: [
+                    { type: 'text', content: 'Coffee time ☕', bg: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)' },
+                    { type: 'text', content: 'New blog post!', bg: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)' }
+                ],
+                viewed: false
+            },
+            {
+                name: 'Alex Davis',
+                avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=alex',
+                fleets: [
+                    { type: 'text', content: 'Weekend vibes 🎉', bg: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)' },
+                    { type: 'text', content: 'Let\'s connect!', bg: 'linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%)' }
+                ],
+                viewed: false
+            }
+        ];
+
+        let currentUser = 0;
+        let currentFleet = 0;
+        let progressInterval;
+        
+        // Touch/swipe variables
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchEndX = 0;
+        let touchEndY = 0;
+
+        function renderFleets() {
+            const container = document.getElementById('fleetsContainer');
+            container.innerHTML = users.map((user, i) => `
+                <div class="fleet-item" data-user="${i}">
+                    <div class="fleet-avatar-wrapper">
+                        <div class="fleet-ring ${user.viewed ? 'viewed' : ''}">
+                            <img src="${user.avatar}" alt="${user.name}" class="fleet-avatar">
+                        </div>
+                        ${i === 0 ? '<div class="add-fleet">+</div>' : ''}
+                    </div>
+                    <div class="fleet-username">${user.name}</div>
+                </div>
+            `).join('');
+
+            document.querySelectorAll('.fleet-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const userIndex = parseInt(item.dataset.user);
+                    openFleetViewer(userIndex);
+                });
+            });
+        }
+
+        function openFleetViewer(userIndex) {
+            currentUser = userIndex;
+            currentFleet = 0;
+            const viewer = document.getElementById('fleetViewer');
+            viewer.classList.add('active');
+            setupSwipeListeners();
+            showFleet();
+        }
+        
+        function setupSwipeListeners() {
+            const viewer = document.getElementById('fleetViewer');
+            
+            viewer.addEventListener('touchstart', handleTouchStart, { passive: true });
+            viewer.addEventListener('touchmove', handleTouchMove, { passive: true });
+            viewer.addEventListener('touchend', handleTouchEnd, { passive: true });
+        }
+        
+        function handleTouchStart(e) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        }
+        
+        function handleTouchMove(e) {
+            touchEndX = e.touches[0].clientX;
+            touchEndY = e.touches[0].clientY;
+        }
+        
+        function handleTouchEnd() {
+            const deltaX = touchEndX - touchStartX;
+            const deltaY = touchEndY - touchStartY;
+            const minSwipeDistance = 50;
+            
+            // Check if horizontal swipe is dominant
+            if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
+                if (deltaX > 0) {
+                    // Swipe right - previous user
+                    swipeToUser('prev');
+                } else {
+                    // Swipe left - next user
+                    swipeToUser('next');
+                }
+            }
+            
+            // Reset touch positions
+            touchStartX = 0;
+            touchStartY = 0;
+            touchEndX = 0;
+            touchEndY = 0;
+        }
+        
+        function swipeToUser(direction) {
+            clearInterval(progressInterval);
+            
+            if (direction === 'next') {
+                if (currentUser < users.length - 1) {
+                    users[currentUser].viewed = true;
+                    currentUser++;
+                    currentFleet = 0;
+                    showFleet();
+                } else {
+                    closeFleetViewer();
+                }
+            } else {
+                if (currentUser > 0) {
+                    currentUser--;
+                    currentFleet = 0;
+                    showFleet();
+                }
+            }
+        }
+
+        function showFleet() {
+            const user = users[currentUser];
+            const fleet = user.fleets[currentFleet];
+
+            document.getElementById('viewerAvatar').src = user.avatar;
+            document.getElementById('viewerUsername').textContent = user.name;
+            document.getElementById('viewerTime').textContent = '2h ago';
+
+            const progressBars = document.getElementById('progressBars');
+            progressBars.innerHTML = user.fleets.map((_, i) => `
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-${i}"></div>
+                </div>
+            `).join('');
+
+            const content = document.getElementById('fleetContent');
+            if (fleet.type === 'text') {
+                content.style.background = fleet.bg;
+                content.innerHTML = `
+                    <div class="fleet-text">${fleet.content}</div>
+                    <div class="nav-area prev"></div>
+                    <div class="nav-area next"></div>
+                `;
+            }
+
+            setupNavigation();
+            startProgress();
+        }
+
+        function setupNavigation() {
+            const prevArea = document.querySelector('.nav-area.prev');
+            const nextArea = document.querySelector('.nav-area.next');
+
+            prevArea.onclick = () => navigateFleet('prev');
+            nextArea.onclick = () => navigateFleet('next');
+        }
+
+        function startProgress() {
+            if (progressInterval) clearInterval(progressInterval);
+
+            for (let i = 0; i < currentFleet; i++) {
+                const bar = document.getElementById(`progress-${i}`);
+                if (bar) bar.style.width = '100%';
+            }
+
+            const currentBar = document.getElementById(`progress-${currentFleet}`);
+            if (!currentBar) return;
+
+            let progress = 0;
+            progressInterval = setInterval(() => {
+                progress += 1;
+                currentBar.style.width = progress + '%';
+
+                if (progress >= 100) {
+                    navigateFleet('next');
+                }
+            }, 50);
+        }
+
+        function navigateFleet(direction) {
+            clearInterval(progressInterval);
+
+            if (direction === 'next') {
+                if (currentFleet < users[currentUser].fleets.length - 1) {
+                    currentFleet++;
+                    showFleet();
+                } else {
+                    if (currentUser < users.length - 1) {
+                        users[currentUser].viewed = true;
+                        currentUser++;
+                        currentFleet = 0;
+                        showFleet();
+                    } else {
+                        closeFleetViewer();
+                    }
+                }
+            } else {
+                if (currentFleet > 0) {
+                    currentFleet--;
+                    showFleet();
+                } else {
+                    if (currentUser > 0) {
+                        currentUser--;
+                        currentFleet = users[currentUser].fleets.length - 1;
+                        showFleet();
+                    }
+                }
+            }
+        }
+
+        function closeFleetViewer() {
+            users[currentUser].viewed = true;
+            clearInterval(progressInterval);
+            document.getElementById('fleetViewer').classList.remove('active');
+            renderFleets();
+        }
+
+        document.getElementById('closeBtn').addEventListener('click', closeFleetViewer);
+
+        renderFleets();
+    </script>
+</body>
+</html>
