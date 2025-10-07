@@ -39,6 +39,13 @@ window.openChatPanel = function(chat) {
         </div>
     `;
 
+    // Append the input section
+    if (typeof window.renderInput === 'function') {
+        window.renderInput(chatPanel);
+    } else {
+        console.warn('renderInput function not found. Ensure input.js is loaded.');
+    }
+
     // Slide in chat panel, slide out app container
     chatPanel.classList.add('open');
     appContainer.classList.add('slide-out');
