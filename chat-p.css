@@ -134,6 +134,8 @@
     justify-content: center;
     z-index: 20;
     transition: opacity 0.2s ease;
+    box-sizing: border-box; /* Ensure padding doesn’t affect size */
+    padding: 0; /* Remove any default padding */
 }
 
 .fab.hidden {
@@ -142,13 +144,14 @@
 }
 
 .fab svg {
-    width: 24px;
-    height: 24px;
+    width: 28px; /* Slightly larger for better visibility */
+    height: 28px;
+    display: block; /* Ensure SVG is treated as a block for centering */
 }
 
 .fab .plus-shape {
     stroke: white;
-    stroke-width: 8;
+    stroke-width: 6; /* Reduced from 8 to prevent overflow */
     stroke-linecap: round;
 }
 
@@ -160,5 +163,15 @@
         background-position: center top;
         background-size: cover;
         background-color: transparent;
+    }
+
+    .fab {
+        width: 48px; /* Smaller size for mobile */
+        height: 48px;
+    }
+
+    .fab svg {
+        width: 24px; /* Adjust SVG size for mobile */
+        height: 24px;
     }
 }
