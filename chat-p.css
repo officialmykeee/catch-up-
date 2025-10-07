@@ -15,7 +15,7 @@
     margin: 0 auto;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow: hidden; /* Prevent overflow */
 }
 
 #chatPanel.open {
@@ -27,7 +27,7 @@
 /* ===== Updated Header (Navbar) ===== */
 .chat-panel-header {
     background-color: white;
-    padding: 8px 14px;
+    padding: 8px 14px; /* Reduced padding to match input */
     display: flex;
     align-items: center;
     gap: 12px;
@@ -105,7 +105,7 @@
     padding: 16px;
     overflow-y: auto;
     background-color: #f3f4f6;
-    margin-bottom: 0;
+    margin-bottom: 0; /* Ensure no gap before input */
 }
 
 .chat-panel-message {
@@ -117,44 +117,6 @@
     color: #374151;
 }
 
-/* ===== FAB Button ===== */
-.fab {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 56px;
-    height: 56px;
-    background-color: #749cbf;
-    border-radius: 50%;
-    border: none;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 20;
-    transition: opacity 0.2s ease;
-    box-sizing: border-box; /* Ensure padding doesn’t affect size */
-    padding: 0; /* Remove any default padding */
-}
-
-.fab.hidden {
-    opacity: 0;
-    pointer-events: none;
-}
-
-.fab svg {
-    width: 28px; /* Slightly larger for better visibility */
-    height: 28px;
-    display: block; /* Ensure SVG is treated as a block for centering */
-}
-
-.fab .plus-shape {
-    stroke: white;
-    stroke-width: 6; /* Reduced from 8 to prevent overflow */
-    stroke-linecap: round;
-}
-
 /* ===== Mobile Background ===== */
 @media (max-width: 768px) {
     .chat-panel-content {
@@ -163,15 +125,5 @@
         background-position: center top;
         background-size: cover;
         background-color: transparent;
-    }
-
-    .fab {
-        width: 48px; /* Smaller size for mobile */
-        height: 48px;
-    }
-
-    .fab svg {
-        width: 24px; /* Adjust SVG size for mobile */
-        height: 24px;
     }
 }
