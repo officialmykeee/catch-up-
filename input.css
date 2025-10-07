@@ -1,0 +1,193 @@
+/* ===== Input Section ===== */
+.chat-panel-input {
+    background-color: white;
+    padding: 10px 14px;
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+}
+
+.input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    position: relative;
+}
+
+.message-bubble {
+    background: #fff;
+    display: flex;
+    align-items: center;
+    flex: 1;
+    padding: 10px 12px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 30px;
+    position: relative;
+}
+
+.message-bubble::after {
+    content: '';
+    position: absolute;
+    top: auto;
+    bottom: 12px;
+    right: -6px;
+    width: 15px;
+    height: 15px;
+    background-color: #fff;
+    transform: translateY(0) rotate(45deg);
+    border-radius: 0 4px 0 0;
+    box-shadow: 2px -2px 6px rgba(0, 0, 0, 0.1);
+    z-index: -1;
+}
+
+.message-bubble .icon {
+    font-size: 20px;
+    color: #555;
+    cursor: pointer;
+    align-self: flex-end;
+    flex-shrink: 0;
+    position: relative;
+    top: -5px;
+}
+
+.message-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    padding: 8px;
+    font-size: 16px;
+    margin: 0 6px;
+    background: transparent;
+    color: #000;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    min-height: 20px;
+    max-height: 120px;
+    box-sizing: border-box;
+    line-height: 1.4;
+    overflow-y: auto;
+}
+
+.message-input[contenteditable][data-placeholder]:empty::before {
+    content: attr(data-placeholder);
+    color: #999;
+    pointer-events: none;
+    display: block;
+}
+
+.attach-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    align-self: flex-end;
+    flex-shrink: 0;
+    top: -7px;
+    position: relative;
+}
+
+.attach-btn i {
+    font-size: 20px;
+    color: #555;
+}
+
+.mic-btn {
+    background: #749cbf;
+    border: none;
+    border-radius: 50%;
+    width: 54px;
+    height: 54px;
+    display: flex;
+    position: relative;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    transition: transform 0.1s ease;
+    touch-action: none;
+    z-index: 1001;
+    align-self: flex-end;
+    flex-shrink: 0;
+}
+
+.mic-btn.hold-state {
+    transform: scale(1.4) translateY(-5px);
+}
+
+.mic-btn.lock-state {
+    transform: translateY(-1px);
+}
+
+.mic-btn.dragging {
+    transition: none;
+}
+
+.mic-btn svg {
+    width: 21px;
+    height: 21px;
+    fill: white;
+}
+
+.mic-btn.delete-state svg {
+    animation: drip-fall 3s forwards ease-in-out;
+}
+
+.recording-overlay {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 62px;
+    height: 100%;
+    background: #fff;
+    border-radius: 30px;
+    z-index: 1000;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.recording-overlay.active {
+    display: block;
+}
+
+@keyframes drip-fall {
+    0%   { transform: scaleY(1) translateY(0); opacity: 1; }
+    40%  { transform: scaleY(1.2) translateY(3px); opacity: 1; }
+    70%  { transform: scaleY(0.8) translateY(15px); opacity: 0.8; }
+    100% { transform: scaleY(0.5) translateY(40px); opacity: 0; }
+}
+
+/* Media Queries for input-wrapper related elements */
+@media (max-width: 480px) {
+    .input-wrapper {
+        width: 102% !important;
+        gap: 6px;
+        background: #fff;
+        min-height: 52px;
+    }
+    .message-bubble {
+        padding: 6px 12px;
+        box-shadow: 0 2px 6px 5px rgba(0, 0, 0, 0.1);
+    }
+    .mic-btn {
+        width: 55px;
+        height: 55px;
+        top: 2px;
+        left: 2px;
+        margin-top: -3px;
+    }
+    .mic-btn.hold-state {
+        transform: scale(1.5) translateY(-5px);
+    }
+    .mic-btn.lock-state {
+        transform: translateY(-1px);
+    }
+    .message-input {
+        font-size: 15px;
+    }
+    .recording-overlay {
+        right: 63px;
+    }
+}
