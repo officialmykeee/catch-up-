@@ -50,7 +50,7 @@ function updateStoryViewer() {
     storyViewerContent.src = '';
     // IMPORTANT: Reset transformation and transition after user swipe navigation
     storyCon.style.transition = 'none';
-    // Reset the story container to its default, front-facing position
+    // Reset the story container to its default, front-facing position relative to the viewport
     storyCon.style.transform = 'rotateY(0deg)'; 
     storyCon.querySelectorAll('.story-blur-bg, .story-gradient-overlay').forEach(el => el.remove());
 
@@ -296,7 +296,8 @@ const handleEscape = (e) => {
 window.openStoryViewer = function (userId, storyData, startIndex = 0) {
     const storyViewerOverlay = document.getElementById('storyViewerOverlay');
     const storyViewerContent = document.getElementById('storyViewerContent');
-    const storyCon = storyViewerContent.closest('.storycon');
+    // Ensure we are rotating the element containing all content
+    const storyCon = storyViewerContent.closest('.storycon'); 
     const closeThreshold = 100; // Vertical drag close threshold
     const swipeThreshold = 50; // Horizontal swipe distance (min distance to trigger navigation)
     const snapBackSpeed = '0.3s'; // CSS transition time for snap back/flip animation
@@ -318,7 +319,7 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
     storyCon.querySelectorAll('.story-blur-bg, .story-gradient-overlay').forEach(el => el.remove());
     clearTimeout(window.storyProgressTimeout);
 
-    // Create progress bars container inside storycon (unchanged)
+    // Create progress bars container (unchanged)
     let progressBarsContainer = document.querySelector('.story-progress-bars');
     if (!progressBarsContainer) {
         progressBarsContainer = document.createElement('div');
@@ -448,6 +449,8 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
             deltaX = Math.max(-maxDragDistance, Math.min(maxDragDistance, deltaX));
             
             // Calculate relative rotation from the current cube state
+            // The cube is always logically at 0 degrees when content is fully visible, 
+            // but we use the delta to calculate the in-progress rotation.
             const relativeRotation = (deltaX / maxDragDistance) * 90; 
             const newRotation = cubeRotationAngle + relativeRotation;
 
@@ -479,7 +482,7 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
             // Check if the cube flip threshold is met
             if (Math.abs(deltaX) > swipeThreshold) {
                 if (deltaX < 0) {
-                    // Swipe Left (Next User) -> Rotate -90 degrees more
+                    // Swipe Left (Next User) -> Rotate -90 degrees
                     cubeRotationAngle -= 90;
                     storyCon.style.transform = `rotateY(${cubeRotationAngle}deg)`;
                     
@@ -487,10 +490,11 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
                         storyCon.removeEventListener('transitionend', handler);
                         // Load next user's content and reset state
                         goToNextUser(); 
-                        cubeRotationAngle = 0; // Reset global rotation for the new user's story
+                        // The next user's content should immediately snap back to the 0-degree visual state
+                        cubeRotationAngle = 0; 
                     });
                 } else {
-                    // Swipe Right (Previous User) -> Rotate +90 degrees more
+                    // Swipe Right (Previous User) -> Rotate +90 degrees
                     cubeRotationAngle += 90;
                     storyCon.style.transform = `rotateY(${cubeRotationAngle}deg)`;
                     
@@ -498,12 +502,14 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
                         storyCon.removeEventListener('transitionend', handler);
                         // Load previous user's content and reset state
                         goToPreviousUser(); 
-                        cubeRotationAngle = 0; // Reset global rotation for the new user's story
+                        // The new content snaps back to the 0-degree visual state
+                        cubeRotationAngle = 0; 
                     });
                 }
             } else {
-                // Not enough drag, snap back to the last 90-degree step
-                storyCon.style.transform = `rotateY(${cubeRotationAngle}deg)`;
+                // Not enough drag, snap back to the last 0-degree visual position
+                // Since the content is always logically viewed at 0 degrees, we snap back to 0.
+                storyCon.style.transform = `rotateY(${cubeRotationAngle}deg)`; 
                 resumeStory();
             }
         } else {
@@ -589,7 +595,7 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
         if (isDragging) {
             // Simulate mouseup snap-back if mouse leaves the area
             storyCon.style.transition = `transform ${snapBackSpeed} ease-out`; 
-            storyCon.style.transform = `rotateY(${cubeRotationAngle}deg)`; // Snap back to the current 90-degree step
+            storyCon.style.transform = `rotateY(${cubeRotationAngle}deg)`; 
             resumeStory();
         }
         isDragging = false;
