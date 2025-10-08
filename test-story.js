@@ -139,7 +139,7 @@ function goToPreviousStory() {
     } else {
         // Mark current story as viewed
         window.markStoryAsViewed(currentUserId, currentStoryIndex);
-        // Navigate to previous user's last story
+        // Navigate to previous user's last story (This is the logic used by the nav areas, not the swipe)
         const currentUserIndex = window.stories.findIndex(story => story.id === currentUserId);
         if (currentUserIndex > 0) { // Ensure not at the first user
             const prevUser = window.stories[currentUserIndex - 1];
@@ -169,7 +169,7 @@ function goToNextStory() {
         currentStoryIndex++;
         updateStoryViewer();
     } else {
-        // Navigate to next user's first story
+        // Navigate to next user's first story (This is the logic used by the nav areas, not the swipe)
         const currentUserIndex = window.stories.findIndex(story => story.id === currentUserId);
         if (currentUserIndex < window.stories.length - 1) {
             const nextUser = window.stories[currentUserIndex + 1];
@@ -188,7 +188,7 @@ function goToNextStory() {
     }
 }
 
-// *** NEW: User Navigation Functions for Swiping ***
+// *** User Navigation Functions for Swiping ***
 function goToPreviousUser() {
     clearTimeout(window.storyProgressTimeout);
     window.markStoryAsViewed(currentUserId, currentStoryIndex);
@@ -202,13 +202,10 @@ function goToPreviousUser() {
             currentStoryData = prevUserStories;
             currentStoryIndex = 0; // Start at first story of the previous user
             updateStoryViewer();
-        } else {
-            closeStoryViewer();
+            return true;
         }
-    } else {
-        // Do nothing or close if at the very first user
-        closeStoryViewer();
     }
+    return false; // Return false if no navigation occurred
 }
 
 function goToNextUser() {
@@ -224,13 +221,10 @@ function goToNextUser() {
             currentStoryData = nextUserStories;
             currentStoryIndex = 0; // Start at first story of the next user
             updateStoryViewer();
-        } else {
-            closeStoryViewer();
+            return true;
         }
-    } else {
-        // Do nothing or close if at the very last user
-        closeStoryViewer();
     }
+    return false; // Return false if no navigation occurred
 }
 
 
@@ -295,8 +289,9 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
     const storyViewerOverlay = document.getElementById('storyViewerOverlay');
     const storyViewerContent = document.getElementById('storyViewerContent');
     const storyCon = storyViewerContent.closest('.storycon');
-    const closeThreshold = 10; // Vertical drag close threshold
-    const swipeThreshold = 50; // New: Horizontal swipe threshold
+    const closeThreshold = 100; // Vertical drag close threshold increased for better UX
+    const swipeThreshold = 50; // Horizontal swipe threshold
+    const tapMaxDistance = 10; // Max distance for a movement to be considered a tap
 
     console.log('Opening story for user:', userId, 'with stories:', storyData);
 
@@ -319,10 +314,11 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
         storyCon.appendChild(progressBarsContainer);
     }
 
-    // Create reply container
+    // Create reply container (unchanged setup)
     let replyContainer = document.querySelector('.story-reply-container');
     let iconBtn;
     if (!replyContainer) {
+        // ... (reply container creation logic remains here)
         replyContainer = document.createElement('div');
         replyContainer.className = 'story-reply-container';
         const replyDiv = document.createElement('div');
@@ -339,7 +335,7 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
         `;
 
         iconBtn.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent navigation areas from capturing click
+            e.stopPropagation(); 
             console.log('Like button clicked for story:', currentStoryData[currentStoryIndex].id);
             iconBtn.classList.toggle('active');
             const heartPath = iconBtn.querySelector('path');
@@ -360,7 +356,7 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
         heartPath.setAttribute('stroke', currentStoryData[currentStoryIndex].isLiked ? '#e1306c' : '#9ca3af');
     }
 
-    // Create navigation areas
+    // Create navigation areas (unchanged setup for tap/click)
     let prevArea = document.querySelector('.story-nav-prev');
     let nextArea = document.querySelector('.story-nav-next');
     if (!prevArea) {
@@ -369,7 +365,7 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
         storyViewerOverlay.appendChild(prevArea);
         prevArea.addEventListener('click', (e) => {
             e.stopPropagation();
-            console.log('Previous navigation clicked');
+            console.log('Previous navigation clicked (internal story)');
             goToPreviousStory();
         });
     }
@@ -379,7 +375,7 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
         storyViewerOverlay.appendChild(nextArea);
         nextArea.addEventListener('click', (e) => {
             e.stopPropagation();
-            console.log('Next navigation clicked');
+            console.log('Next navigation clicked (internal story)');
             goToNextStory();
         });
     }
@@ -391,27 +387,42 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
     // Update viewer with initial story
     updateStoryViewer();
 
-    // --- Drag and Close/Swipe Logic (UPDATED) ---
+    // --- Drag and Close/Swipe Logic (REVISED & ATTACHED TO OVERLAY) ---
     let startY = 0;
     let startX = 0;
     let isDragging = false;
-    let isVerticalDrag = false;
+    let draggedHorizontal = false;
 
-    // Use the story container for a larger touch area for swipe gestures
-    const dragTarget = storyCon;
+    const dragTarget = storyViewerOverlay;
+
+    const pauseStory = () => {
+        clearTimeout(window.storyProgressTimeout);
+        const activeBar = document.querySelector('.progress-bar.active');
+        if (activeBar) {
+            activeBar.style.animationPlayState = 'paused';
+        }
+    };
+
+    const resumeStory = () => {
+        const activeBar = document.querySelector('.progress-bar.active');
+        if (activeBar) {
+            activeBar.style.animationPlayState = 'running';
+        }
+        // Restart the timeout if the animation was resumed
+        if (!window.storyProgressTimeout) {
+             window.storyProgressTimeout = setTimeout(() => {
+                goToNextStory();
+            }, STORY_DURATION - (activeBar.offsetWidth / progressBarsContainer.offsetWidth * STORY_DURATION)); // Basic approximation
+        }
+    };
 
     dragTarget.ontouchstart = (e) => {
         if (e.touches.length === 1) {
             startY = e.touches[0].clientY;
             startX = e.touches[0].clientX;
             isDragging = true;
-            isVerticalDrag = false;
-            // Clear any active progress animation
-            clearTimeout(window.storyProgressTimeout);
-            const activeBar = document.querySelector('.progress-bar.active');
-            if (activeBar) {
-                activeBar.style.animationPlayState = 'paused';
-            }
+            draggedHorizontal = false;
+            pauseStory();
         }
     };
     
@@ -423,66 +434,61 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
         const deltaY = currentY - startY;
         const deltaX = currentX - startX;
 
-        // Determine if it's primarily a vertical or horizontal drag
-        if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > closeThreshold) {
-            isVerticalDrag = true;
-            if (deltaY > closeThreshold) {
-                // Vertical drag down to close
-                closeStoryViewer();
-                isDragging = false; // Stop further processing
-            }
+        // Vertical Drag (Close)
+        if (Math.abs(deltaY) > Math.abs(deltaX) && deltaY > closeThreshold) {
+            console.log('Vertical Drag Down: Closing');
+            closeStoryViewer();
+            isDragging = false;
         }
-        // Prevent default on move to stop scrolling the underlying page
-        if (isDragging) e.preventDefault();
+
+        // Horizontal Drag (Visual Feedback for Swipe)
+        if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > tapMaxDistance) {
+            draggedHorizontal = true;
+            // Optional: Add CSS transform here for the storyCon to follow the finger
+            // storyCon.style.transform = `translateX(${deltaX}px)`;
+            e.preventDefault(); // Prevent page scroll when dragging horizontally
+        }
     };
 
-    dragTarget.ontouchend = () => {
+    dragTarget.ontouchend = (e) => {
         if (!isDragging) return;
         
-        const endY = event.changedTouches[0].clientY;
-        const endX = event.changedTouches[0].clientX;
+        const endX = e.changedTouches[0].clientX;
+        const endY = e.changedTouches[0].clientY;
         const deltaX = endX - startX;
+        const totalMovement = Math.sqrt(deltaX * deltaX + (endY - startY) * (endY - startY));
 
-        // Restart progress animation if no user navigation occurred
-        const activeBar = document.querySelector('.progress-bar.active');
-        if (activeBar) {
-            activeBar.style.animationPlayState = 'running';
-        }
+        // storyCon.style.transform = ''; // Reset visual transformation
 
-        // Only process horizontal swipe if it was not a vertical drag to close
-        if (!isVerticalDrag) {
-            if (deltaX < -swipeThreshold) {
+        // 1. Check for **Horizontal Swipe** (User Navigation)
+        if (draggedHorizontal && Math.abs(deltaX) > swipeThreshold) {
+            if (deltaX < 0) {
                 // Swipe Left -> Next User
                 console.log('Swipe Left: Next User');
                 goToNextUser();
-            } else if (deltaX > swipeThreshold) {
+            } else {
                 // Swipe Right -> Previous User
                 console.log('Swipe Right: Previous User');
                 goToPreviousUser();
             }
-        }
+        } 
+        
+        // 2. Resume timer if no navigation happened
+        resumeStory();
         
         isDragging = false;
-        isVerticalDrag = false;
-    };
-
-    // Prevent main overlay click from triggering when interaction is on storyCon
-    storyViewerOverlay.onclick = (e) => {
-        if (e.target === storyViewerOverlay) closeStoryViewer();
+        draggedHorizontal = false;
     };
 
     // NOTE: Mouse drag logic is less common for this feature, but included for desktop/touchscreen use.
     dragTarget.onmousedown = (e) => {
+        // Only trigger on main button click (left mouse button)
+        if (e.button !== 0) return;
         startY = e.clientY;
         startX = e.clientX;
         isDragging = true;
-        isVerticalDrag = false;
-        // Pause animation
-        clearTimeout(window.storyProgressTimeout);
-        const activeBar = document.querySelector('.progress-bar.active');
-        if (activeBar) {
-            activeBar.style.animationPlayState = 'paused';
-        }
+        draggedHorizontal = false;
+        pauseStory();
     };
 
     dragTarget.onmousemove = (e) => {
@@ -490,53 +496,50 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
         
         const deltaY = e.clientY - startY;
         const deltaX = e.clientX - startX;
-
-        if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > closeThreshold) {
-            isVerticalDrag = true;
-            if (deltaY > closeThreshold) {
-                closeStoryViewer();
-                isDragging = false;
-            }
+        
+        // Vertical Drag (Close)
+        if (Math.abs(deltaY) > Math.abs(deltaX) && deltaY > closeThreshold) {
+            closeStoryViewer();
+            isDragging = false;
+        }
+        
+        // Horizontal Drag (Mark as horizontal for mouse)
+        if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > tapMaxDistance) {
+            draggedHorizontal = true;
         }
     };
 
     dragTarget.onmouseup = (e) => {
         if (!isDragging) return;
 
-        // Restart progress animation
-        const activeBar = document.querySelector('.progress-bar.active');
-        if (activeBar) {
-            activeBar.style.animationPlayState = 'running';
-        }
-
         const deltaX = e.clientX - startX;
         
-        if (!isVerticalDrag) {
-            if (deltaX < -swipeThreshold) {
+        // Check for Horizontal Swipe (User Navigation)
+        if (draggedHorizontal && Math.abs(deltaX) > swipeThreshold) {
+            if (deltaX < 0) {
                 // Swipe Left -> Next User
                 console.log('Mouse Swipe Left: Next User');
                 goToNextUser();
-            } else if (deltaX > swipeThreshold) {
+            } else {
                 // Swipe Right -> Previous User
                 console.log('Mouse Swipe Right: Previous User');
                 goToPreviousUser();
             }
-        }
+        } 
+
+        // Resume timer if no navigation happened
+        resumeStory();
 
         isDragging = false;
-        isVerticalDrag = false;
+        draggedHorizontal = false;
     };
 
     dragTarget.onmouseleave = () => {
         if (isDragging) {
-            // Restart progress animation if mouse leaves the area while dragging
-            const activeBar = document.querySelector('.progress-bar.active');
-            if (activeBar) {
-                activeBar.style.animationPlayState = 'running';
-            }
+            resumeStory();
         }
         isDragging = false;
-        isVerticalDrag = false;
+        draggedHorizontal = false;
     };
 
 
