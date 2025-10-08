@@ -47,6 +47,7 @@ function updateStoryViewer() {
 
     // Reset existing content
     storyViewerContent.src = '';
+    storyViewerContent.style.transform = 'translateX(0)';
     storyCon.querySelectorAll('.story-blur-bg, .story-gradient-overlay').forEach(el => el.remove());
 
     // Set new story content
@@ -135,11 +136,17 @@ function goToPreviousStory() {
         // Mark current story as viewed before navigating back
         window.markStoryAsViewed(currentUserId, currentStoryIndex);
         currentStoryIndex--;
+        console.log(`Navigating to previous story: ${currentUserId}, index: ${currentStoryIndex}`);
         updateStoryViewer();
     } else if (currentUserId !== 'your-story') {
         // Mark current story as viewed
         window.markStoryAsViewed(currentUserId, currentStoryIndex);
         // Navigate to previous user's last story
+        if (!window.stories) {
+            console.error('Error: window.stories is undefined');
+            closeStoryViewer();
+            return;
+        }
         const currentUserIndex = window.stories.findIndex(story => story.id === currentUserId);
         if (currentUserIndex > 0) { // Ensure not at the first user
             const prevUser = window.stories[currentUserIndex - 1];
@@ -173,9 +180,15 @@ function goToNextStory() {
     window.markStoryAsViewed(currentUserId, currentStoryIndex);
     if (currentStoryIndex < currentStoryData.length - 1) {
         currentStoryIndex++;
+        console.log(`Navigating to next story: ${currentUserId}, index: ${currentStoryIndex}`);
         updateStoryViewer();
     } else {
         // Navigate to next user's first story
+        if (!window.stories) {
+            console.error('Error: window.stories is undefined');
+            closeStoryViewer();
+            return;
+        }
         const currentUserIndex = window.stories.findIndex(story => story.id === currentUserId);
         if (currentUserIndex < window.stories.length - 1) {
             const nextUser = window.stories[currentUserIndex + 1];
@@ -218,10 +231,11 @@ function closeStoryViewer() {
     storyViewerOverlay.classList.remove('show');
     document.body.style.overflow = '';
     storyViewerContent.src = '';
+    storyViewerContent.style.transform = 'translateX(0)';
     if (replyContainer) replyContainer.remove();
     if (progressBarsContainer) progressBarsContainer.remove();
     if (prevArea) prevArea.remove();
-    if (nextArea) prevArea.remove();
+    if (nextArea) nextArea.remove();
     storyCon.querySelectorAll('.story-blur-bg, .story-gradient-overlay').forEach(el => el.remove());
 
     // Reset state
@@ -244,6 +258,7 @@ window.closeStoryViewer = closeStoryViewer;
 
 const handleEscape = (e) => {
     if (e.key === 'Escape') {
+        console.log('Escape key pressed: Closing viewer');
         closeStoryViewer();
     }
 };
@@ -259,9 +274,22 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
     const storyViewerContent = document.getElementById('storyViewerContent');
     const storyCon = storyViewerContent.closest('.storycon');
     const closeThreshold = 5; // Adjusted for balance with swipe navigation
-    const swipeThreshold = 30; // Lowered for easier swipe detection
+    const swipeThreshold = 15; // Lowered for easier swipe detection
 
     console.log('Opening story for user:', userId, 'with stories:', storyData);
+
+    // Validate inputs
+    if (!storyViewerOverlay || !storyViewerContent || !storyCon) {
+        console.error('Error: Required DOM elements missing', {
+            storyViewerOverlay: !!storyViewerOverlay,
+            storyViewerContent: !!storyViewerContent,
+            storyCon: !!storyCon
+        });
+        return;
+    }
+
+    // Inline CSS for drag transition
+    storyViewerContent.style.transition = 'transform 0.3s ease';
 
     // Set global state
     currentUserId = userId;
@@ -271,6 +299,7 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
     // Reset existing content
     storyViewerOverlay.classList.remove('show');
     storyViewerContent.src = '';
+    storyViewerContent.style.transform = 'translateX(0)';
     storyCon.querySelectorAll('.story-blur-bg, .story-gradient-overlay').forEach(el => el.remove());
     clearTimeout(window.storyProgressTimeout);
 
@@ -363,6 +392,7 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
         startX = e.touches[0].clientX;
         startY = e.touches[0].clientY;
         isDragging = true;
+        storyViewerContent.style.transition = 'none'; // Disable transition during drag
         console.log(`Touch start: X=${startX}, Y=${startY}`);
     };
 
@@ -374,7 +404,12 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
         const absDeltaY = Math.abs(deltaY);
         console.log(`Touch move: deltaX=${deltaX}, deltaY=${deltaY}, absDeltaX=${absDeltaX}, absDeltaY=${absDeltaY}`);
 
-        // Handle horizontal swipe for user navigation first
+        // Apply visual drag feedback for horizontal swipes
+        if (absDeltaX > absDeltaY) {
+            storyViewerContent.style.transform = `translateX(${deltaX}px)`;
+        }
+
+        // Handle horizontal swipe for user navigation
         if (absDeltaX > swipeThreshold && absDeltaX > absDeltaY) {
             console.log(`Horizontal swipe detected: deltaX=${deltaX}`);
             if (deltaX > 0) {
@@ -386,7 +421,9 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
                 console.log('Swipe left: Navigating to next user');
                 goToNextStory();
             }
-            isDragging = false; // Reset to prevent multiple triggers
+            isDragging = false;
+            storyViewerContent.style.transform = 'translateX(0)';
+            storyViewerContent.style.transition = 'transform 0.3s ease';
             return;
         }
 
@@ -395,6 +432,8 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
             console.log('Vertical swipe detected: Closing viewer');
             closeStoryViewer();
             isDragging = false;
+            storyViewerContent.style.transform = 'translateX(0)';
+            storyViewerContent.style.transition = 'transform 0.3s ease';
             return;
         }
     };
@@ -402,12 +441,15 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
     storyViewerContent.ontouchend = () => {
         console.log('Touch end');
         isDragging = false;
+        storyViewerContent.style.transform = 'translateX(0)';
+        storyViewerContent.style.transition = 'transform 0.3s ease';
     };
 
     storyViewerContent.onmousedown = (e) => {
         startX = e.clientX;
         startY = e.clientY;
         isDragging = true;
+        storyViewerContent.style.transition = 'none';
         console.log(`Mouse down: X=${startX}, Y=${startY}`);
     };
 
@@ -419,7 +461,12 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
         const absDeltaY = Math.abs(deltaY);
         console.log(`Mouse move: deltaX=${deltaX}, deltaY=${deltaY}, absDeltaX=${absDeltaX}, absDeltaY=${absDeltaY}`);
 
-        // Handle horizontal swipe for user navigation first
+        // Apply visual drag feedback for horizontal swipes
+        if (absDeltaX > absDeltaY) {
+            storyViewerContent.style.transform = `translateX(${deltaX}px)`;
+        }
+
+        // Handle horizontal swipe for user navigation
         if (absDeltaX > swipeThreshold && absDeltaX > absDeltaY) {
             console.log(`Horizontal swipe detected: deltaX=${deltaX}`);
             if (deltaX > 0) {
@@ -431,7 +478,9 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
                 console.log('Swipe left: Navigating to next user');
                 goToNextStory();
             }
-            isDragging = false; // Reset to prevent multiple triggers
+            isDragging = false;
+            storyViewerContent.style.transform = 'translateX(0)';
+            storyViewerContent.style.transition = 'transform 0.3s ease';
             return;
         }
 
@@ -440,6 +489,8 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
             console.log('Vertical swipe detected: Closing viewer');
             closeStoryViewer();
             isDragging = false;
+            storyViewerContent.style.transform = 'translateX(0)';
+            storyViewerContent.style.transition = 'transform 0.3s ease';
             return;
         }
     };
@@ -447,6 +498,8 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
     storyViewerContent.onmouseup = () => {
         console.log('Mouse up');
         isDragging = false;
+        storyViewerContent.style.transform = 'translateX(0)';
+        storyViewerContent.style.transition = 'transform 0.3s ease';
     };
 
     storyViewerOverlay.addEventListener('touchmove', (e) => {
