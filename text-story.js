@@ -5,6 +5,7 @@ let currentUserId = null;
 let currentStoryData = [];
 let currentStoryIndex = 0;
 const STORY_DURATION = 5000; // 5 seconds per story
+let cubeRotationAngle = 0; // Tracks the current rotation for the cube flip effect
 
 // Access storyDataMocks globally
 const storyDataMocks = window.storyDataMocks || {
@@ -49,7 +50,8 @@ function updateStoryViewer() {
     storyViewerContent.src = '';
     // IMPORTANT: Reset transformation and transition after user swipe navigation
     storyCon.style.transition = 'none';
-    storyCon.style.transform = 'translateX(0) rotateY(0deg)'; // Reset translation/rotation
+    // Reset the story container to its default, front-facing position
+    storyCon.style.transform = 'rotateY(0deg)'; 
     storyCon.querySelectorAll('.story-blur-bg, .story-gradient-overlay').forEach(el => el.remove());
 
     // Set new story content
@@ -191,7 +193,7 @@ function goToNextStory() {
     }
 }
 
-// *** User Navigation Functions for Swiping ***
+// *** User Navigation Functions for Swiping (Cube Flip Implementation) ***
 function goToPreviousUser() {
     clearTimeout(window.storyProgressTimeout);
     window.markStoryAsViewed(currentUserId, currentStoryIndex);
@@ -260,10 +262,11 @@ function closeStoryViewer() {
 
     // Reset state and styles
     storyCon.style.transition = 'none';
-    storyCon.style.transform = 'translateX(0) rotateY(0deg)'; // Reset styles
+    storyCon.style.transform = 'rotateY(0deg)'; // Reset rotation
     currentUserId = null;
     currentStoryData = [];
     currentStoryIndex = 0;
+    cubeRotationAngle = 0; // Reset cube rotation state
 
     // Remove event listeners
     document.removeEventListener('keydown', handleEscape);
@@ -297,8 +300,7 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
     const closeThreshold = 100; // Vertical drag close threshold
     const swipeThreshold = 50; // Horizontal swipe distance (min distance to trigger navigation)
     const snapBackSpeed = '0.3s'; // CSS transition time for snap back/flip animation
-    // Define max rotation and translation (using 100vw for translation distance)
-    const MAX_ROTATION = 20; // Max rotation angle in degrees
+    const maxDragDistance = storyCon.offsetWidth / 2; // Distance needed for full 90 deg rotation
 
     console.log('Opening story for user:', userId, 'with stories:', storyData);
 
@@ -306,12 +308,13 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
     currentUserId = userId;
     currentStoryData = storyData;
     currentStoryIndex = startIndex; 
+    cubeRotationAngle = 0; // Ensure rotation starts at 0
 
     // Reset existing content
     storyViewerOverlay.classList.remove('show');
     storyViewerContent.src = '';
     storyCon.style.transition = 'none'; // Remove transition before setting new story
-    storyCon.style.transform = 'translateX(0) rotateY(0deg)'; // Reset translation/rotation
+    storyCon.style.transform = 'rotateY(0deg)'; // Reset rotation
     storyCon.querySelectorAll('.story-blur-bg, .story-gradient-overlay').forEach(el => el.remove());
     clearTimeout(window.storyProgressTimeout);
 
@@ -393,7 +396,7 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
     // Update viewer with initial story
     updateStoryViewer();
 
-    // --- Drag and Close/Swipe Logic (Instagram Peel) ---
+    // --- Drag and Close/Swipe Logic (90 degree Cube Flip) ---
     let startY = 0;
     let startX = 0;
     let isDragging = false;
@@ -441,14 +444,14 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
         }
 
         if (isHorizontalSwipe) {
-            // Clamp deltaX to prevent over-translation
-            deltaX = Math.max(-window.innerWidth, Math.min(window.innerWidth, deltaX));
+            // Clamp deltaX and map drag distance to rotation angle (max 90 degrees)
+            deltaX = Math.max(-maxDragDistance, Math.min(maxDragDistance, deltaX));
             
-            // Map drag distance to rotation (up to MAX_ROTATION degrees)
-            const rotationAngle = (deltaX / window.innerWidth) * MAX_ROTATION; 
+            // Calculate relative rotation from the current cube state
+            const relativeRotation = (deltaX / maxDragDistance) * 90; 
+            const newRotation = cubeRotationAngle + relativeRotation;
 
-            // Apply translation and rotation for the peel effect
-            storyCon.style.transform = `translateX(${deltaX}px) rotateY(${rotationAngle}deg)`;
+            storyCon.style.transform = `rotateY(${newRotation}deg)`;
             e.preventDefault(); // Prevent page scroll when dragging horizontally
 
         } else if (Math.abs(deltaY) > 10) {
@@ -473,26 +476,34 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
 
         if (isHorizontalSwipe) {
             
-            // Check if the swipe threshold is met
+            // Check if the cube flip threshold is met
             if (Math.abs(deltaX) > swipeThreshold) {
                 if (deltaX < 0) {
-                    // Swipe Left (Next User) -> Slide off screen left and rotate back
-                    storyCon.style.transform = `translateX(-100vw) rotateY(-${MAX_ROTATION}deg)`;
+                    // Swipe Left (Next User) -> Rotate -90 degrees more
+                    cubeRotationAngle -= 90;
+                    storyCon.style.transform = `rotateY(${cubeRotationAngle}deg)`;
+                    
                     storyCon.addEventListener('transitionend', function handler() {
                         storyCon.removeEventListener('transitionend', handler);
-                        goToNextUser(); // Load next user's content (resets styles in updateStoryViewer)
+                        // Load next user's content and reset state
+                        goToNextUser(); 
+                        cubeRotationAngle = 0; // Reset global rotation for the new user's story
                     });
                 } else {
-                    // Swipe Right (Previous User) -> Slide off screen right and rotate forward
-                    storyCon.style.transform = `translateX(100vw) rotateY(${MAX_ROTATION}deg)`;
+                    // Swipe Right (Previous User) -> Rotate +90 degrees more
+                    cubeRotationAngle += 90;
+                    storyCon.style.transform = `rotateY(${cubeRotationAngle}deg)`;
+                    
                     storyCon.addEventListener('transitionend', function handler() {
                         storyCon.removeEventListener('transitionend', handler);
-                        goToPreviousUser(); // Load previous user's content (resets styles in updateStoryViewer)
+                        // Load previous user's content and reset state
+                        goToPreviousUser(); 
+                        cubeRotationAngle = 0; // Reset global rotation for the new user's story
                     });
                 }
             } else {
-                // Not enough drag, snap back to center
-                storyCon.style.transform = 'translateX(0) rotateY(0deg)';
+                // Not enough drag, snap back to the last 90-degree step
+                storyCon.style.transform = `rotateY(${cubeRotationAngle}deg)`;
                 resumeStory();
             }
         } else {
@@ -525,9 +536,10 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
         }
 
         if (isHorizontalSwipe) {
-            deltaX = Math.max(-window.innerWidth, Math.min(window.innerWidth, deltaX));
-            const rotationAngle = (deltaX / window.innerWidth) * MAX_ROTATION;
-            storyCon.style.transform = `translateX(${deltaX}px) rotateY(${rotationAngle}deg)`;
+            deltaX = Math.max(-maxDragDistance, Math.min(maxDragDistance, deltaX));
+            const relativeRotation = (deltaX / maxDragDistance) * 90; 
+            const newRotation = cubeRotationAngle + relativeRotation;
+            storyCon.style.transform = `rotateY(${newRotation}deg)`;
         } else if (Math.abs(deltaY) > 10) {
             if (deltaY > closeThreshold) {
                 closeStoryViewer();
@@ -546,20 +558,24 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
         if (isHorizontalSwipe) {
             if (Math.abs(deltaX) > swipeThreshold) {
                 if (deltaX < 0) {
-                    storyCon.style.transform = `translateX(-100vw) rotateY(-${MAX_ROTATION}deg)`;
+                    cubeRotationAngle -= 90;
+                    storyCon.style.transform = `rotateY(${cubeRotationAngle}deg)`;
                     storyCon.addEventListener('transitionend', function handler() {
                         storyCon.removeEventListener('transitionend', handler);
                         goToNextUser();
+                        cubeRotationAngle = 0;
                     });
                 } else {
-                    storyCon.style.transform = `translateX(100vw) rotateY(${MAX_ROTATION}deg)`;
+                    cubeRotationAngle += 90;
+                    storyCon.style.transform = `rotateY(${cubeRotationAngle}deg)`;
                     storyCon.addEventListener('transitionend', function handler() {
                         storyCon.removeEventListener('transitionend', handler);
                         goToPreviousUser();
+                        cubeRotationAngle = 0;
                     });
                 }
             } else {
-                storyCon.style.transform = 'translateX(0) rotateY(0deg)';
+                storyCon.style.transform = `rotateY(${cubeRotationAngle}deg)`;
                 resumeStory();
             }
         } else {
@@ -573,7 +589,7 @@ window.openStoryViewer = function (userId, storyData, startIndex = 0) {
         if (isDragging) {
             // Simulate mouseup snap-back if mouse leaves the area
             storyCon.style.transition = `transform ${snapBackSpeed} ease-out`; 
-            storyCon.style.transform = 'translateX(0) rotateY(0deg)';
+            storyCon.style.transform = `rotateY(${cubeRotationAngle}deg)`; // Snap back to the current 90-degree step
             resumeStory();
         }
         isDragging = false;
