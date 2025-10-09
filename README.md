@@ -1,15 +1,21 @@
 Using Docker Dockploy, Traefik, Valkey
 
-I'll use C++ to compress and scale it
+I'll use C++ 
 
-it CAN help you squeeze more performance out of what you have!
+1.1 Server Preparation
+Get the VPS:
+Sign up for the $1.99/month VPS
+Choose Ubuntu 22.04 LTS or Debian 12 (minimal installs)
+Enable SSH key authentication immediately
+Disable password login for security
 
-Cloudflare CDN + aggressive caching can absolutely get you to 1,000+ concurrent users on 1 GB RAM by offloading 80-95% of requests.:
+OS Optimization:
+Update system: apt update && apt upgrade
+Install only essentials: build tools (gcc, cmake, git), no GUI, no unnecessary services
 
-Design your app to be cache-friendly:
-// ✅ GOOD - can cache (public)
-GET /api/posts?page=1  // Same for everyone
-GET /api/user/123/profile  // Cacheable by user ID
+Remove snapd, unattended-upgrades if present (saves 100+ MB RAM)
 
-// Then add personalization client-side from:
-GET /api/me  // Small, only user's data
+Configure swap: Create 1GB swap file on NVMe for emergency overflow
+
+Kernel Tuning:
+
