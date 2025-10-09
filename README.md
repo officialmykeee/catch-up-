@@ -45,4 +45,59 @@ Phase 2: Core Technology Stack (Week 1-2)
 
 -- Choose Your Framework: --
 
-Best choice: uWebSockets (lightest, fastest for WebSockets)
+Best choice: Drogon
+
+Avoid: Boost.Beast (too heavy), cpp-httplib (no async)
+
+Libraries to Install:
+--------------------
+
+hiredis or redis-plus-plus (Valkey client)
+
+simdjson (fastest JSON parsing, 5x faster than nlohmann)
+
+liburing (if kernel 5.1+, for io_uring support)
+
+moodycamel::ConcurrentQueue (lock-free message queues)
+
+robin-hood-hashing (faster maps, 50% less memory)
+
+Build System:
+-----------
+Use CMake with aggressive optimization flags
+
+Enable -O3 -march=native -flto (Link Time Optimization)
+
+Disable RTTI and exceptions (-fno-rtti -fno-exceptions)
+
+Use static linking where possible to reduce memory
+
+
+Use static linking where possible to reduce memory
+
+Compilation Strategy:
+---------------------
+Build with Profile-Guided Optimization (PGO):
+
+First build with profiling enabled
+Run server under realistic load for 1 hour
+
+Rebuild using the profile data (10-20% faster)
+
+2.2 Valkey Configuration
+-------------------------
+
+Installation:
+
+Use official Valkey Docker image (Alpine variant, smallest)
+
+Or compile from source with jemalloc disabled (saves 20 MB)
+
+Critical Settings in valkey.conf:
+---------------------------------
+
+maxmemory 80mb (strict limit, adjust based on shards)
+
+maxmemory-policy volatile-lru (only evict keys with TTL)
+
+save "" (disable RDB snapshots to save I/O)
